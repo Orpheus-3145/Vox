@@ -163,7 +163,7 @@ void	VoxelMap::init()
 		}
 	}
 	setAdjacentPointers();
-	for (VoxelChunk& chunk : map)
+	for (size_t i = 0; i < map.size(); i++)
 	{
 		threadManager.enqueue([&] {
 			chunk.generateMap();
@@ -176,7 +176,9 @@ void	VoxelMap::init()
 	timer.start();
 	for (size_t i = 0; i < map.size(); i++)
 	{
-		map[i].generateVertexes();
+		threadManager.enqueue([this, i] {
+			map[i].generateVertexes();
+		});
 	}
 	threadManager.waitIdle();
 	timer.stop();
