@@ -7,6 +7,37 @@ namespace vox {
 
 /*	From -x (left/west) to +x (right/east) horizontally, y (up/north) to -y (down/south) vertically. */
 
+VoxelType	VoxelMap::getVoxelAt(const vec3& location)
+{
+	vec2i chunk = voxelToChunkPosition(location);
+	ui32 index = chunk.x * squareSize + chunk.y;
+	vec3i	voxelLoc = {
+		static_cast<i32>(location.x),
+		static_cast<i32>(location.y),
+		static_cast<i32>(location.z)
+	};
+	vec3i	chunkLoc = voxelLoc - map[index].getWorldPos();
+
+	return map[index].at(chunkLoc.x, chunkLoc.y, chunkLoc.z);
+}
+
+void	VoxelMap::detectCollision(vec3& movement)
+{
+	const vec3	movementNorm = movement.normalized();
+	vec3	position = rawPosition;
+	float	steps = movement.length();
+
+	for (ui32 i = 0; i < static_cast<ui32>(steps); i++)
+	{
+		position += movementNorm;
+		if (getVoxelAt(position) != VoxelType::Air)
+		{
+			movement = position - movementNorm;
+			return ;
+		}
+	}
+}
+
 bool	VoxelMap::update(const vec3& newPosition)
 {
 	Stopwatch	timer;

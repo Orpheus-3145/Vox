@@ -189,9 +189,9 @@ void Vox::run( void )
 					this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
 			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
 				}
-				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-					return voxelMap.update(playerPos);
-				});
+				// mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				// 	return voxelMap.update(playerPos);
+				// });
 			}
 		}
 
@@ -282,6 +282,10 @@ void Vox::moveCamera( float deltaTime )
 		// test for movement
 		this->camera.move(moveDirection);
 		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+		// vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
+
+		// this->voxelMap.detectCollision(relativeMoveDirection);
+		// this->camera.move(relativeMoveDirection);
 	}
 }
 

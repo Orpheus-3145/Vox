@@ -33,6 +33,13 @@ class VoxelMap
 
 		std::unique_ptr<ve::VulkanModel> createNewModelTerrain( ve::VulkanDevice& device, ui32 binding = 0U );
 		std::unique_ptr<ve::VulkanModel> createNewModelUnderground( ve::VulkanDevice& device, ui32 binding = 0U );
+		vec3	getMapMiddle() const noexcept;
+		void	detectCollision(vec3& movement);
+		std::unique_ptr<ve::VulkanModel> createNewModel( ve::VulkanDevice& device );
+
+		VoxelType	getVoxelAt(const vec3& location);
+
+		private:
 
 	private:
 		std::vector<VoxelChunk>	map;

@@ -38,7 +38,9 @@ class Camera
 		void	move(const vec3& direction) noexcept;
 		void	rotate( float, float, float ) noexcept;
 
-		void	move(const vec3& direction) noexcept;
+		void	move(const vec3& translation) noexcept;
+
+		vec3	getRelativeMoveDirection(const vec3& rawDirection);
 
 	private:
 		void	updateCameraAxis( void ) noexcept;
@@ -46,7 +48,7 @@ class Camera
 		vec3	position;										// position of the camera
 		vec3	forward;										// where the camera is looking at
 		float	aspect;											// ratio screen width / height
-		vec3	_up{CameraSettings::cameraDefaultUp};			// general up, stored in a variabile since it can change due to roll rotations
+		vec3	_up{CameraSettings::cameraUpDefault};			// general up, stored in a variabile since it can change due to roll rotations
 		vec3	cameraForward;									// z axis of the camera
 		vec3	cameraRight;									// x axis of the camera
 		vec3	cameraUp;										// y axis of the camera
