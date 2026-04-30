@@ -9,67 +9,109 @@ namespace vox {
 
 bool	VoxelMap::update(const vec3& newPosition)
 {
-	vec2i	moveDirection = voxelToChunkPosition(newPosition) - playerOnChunk;
-	Stopwatch timer;
+	Stopwatch	timer;
+	vec2i		delta = voxelToChunkPosition(newPosition) - playerOnChunk;
 
-	timer.start();
-	if (moveDirection == vec2i::zero())
+	if (delta == vec2i::zero())
 	{
 		return false;
 	}
-	playerOnChunk = playerOnChunk + moveDirection;
-	minPositions = minPositions + moveDirection;
-	maxPositions = maxPositions + moveDirection;
+	timer.start();
+	playerOnChunk = playerOnChunk + delta;
+	minPositions = minPositions + delta;
+	maxPositions = maxPositions + delta;
 	rawPosition = newPosition;
 	assert(squareSize >= 2 && "squaresize too small");
-	while (moveDirection.depth > 0)
-	{
-		north();
-		moveDirection.depth--;
-	}
-	while (moveDirection.width > 0)
-	{
-		east();
-		moveDirection.width--;
-	}
-	while (moveDirection.depth < 0)
-	{
-		south();
-		moveDirection.depth++;
-	}
-	while (moveDirection.width < 0)
-	{
-		west();
-		moveDirection.width++;
-	}
+	vec2i remaining = delta;
+
+	while (remaining.depth > 0) { north(); remaining.depth--; }
+	while (remaining.width > 0) { east();  remaining.width--; }
+	while (remaining.depth < 0) { south(); remaining.depth++; }
+	while (remaining.width < 0) { west();  remaining.width++; }
+
+	setAdjacentPointers();
+	enqueueMeshing(delta);
+	updateModel();
+	threadManager.waitIdle();
+
 	timer.stop();
 	std::cout << "regeneration took: " << timer << std::endl;
-	// std::cout << "New map limits: " << minPositions << " to " << maxPositions << std::endl;
 	assert(minPositions.x + squareSize - 1 == maxPositions.x && "Error: min/max X don't line up");
 	assert(minPositions.y + squareSize - 1 == maxPositions.y && "Error: min/max Y don't line up");
 	return true;
 }
 
-void	VoxelMap::meshRow(i32 index)
+void	VoxelMap::enqueueRowMeshes(i32 row, std::vector<bool>& scheduled)
 {
-	for (i32 i = 0; i < squareSize; i++)
+	i32 index = row * squareSize;
+
+	for (i32 col = 0; col < squareSize; col++)
 	{
-		threadManager.enqueue([this, index] {
-			map[index].generateVertexes();
-		});
+		scheduled[index] = true;
 		index++;
 	}
 }
 
-void	VoxelMap::meshColumn(i32 index)
+void	VoxelMap::enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled)
 {
-	for (i32 i = 0; i < squareSize; i++)
+	i32 index = col;
+
+	for (i32 row = 0; row < squareSize; row++)
 	{
-		threadManager.enqueue([this, index] {
-			map[index].generateVertexes();
-		});
+		scheduled[index] = true;
 		index += squareSize;
 	}
+}
+
+void	VoxelMap::enqueueMeshing(const vec2i& delta)
+{
+	static std::vector<bool> scheduled(static_cast<size_t>(squareSize * squareSize));
+
+	std::fill(scheduled.begin(), scheduled.end(), false);
+
+	/*	Add all north moves	*/
+	for (i32 step = 0; step < delta.depth; step++)
+	{
+		const i32 bottomRow = squareSize - 1 - step;
+		enqueueRowMeshes(bottomRow, scheduled);
+		enqueueRowMeshes(bottomRow - 1, scheduled);
+	}
+
+	/*	Add all south moves	*/
+	for (i32 step = 0; step < -delta.depth; step++)
+	{
+		const i32 topRow = step;
+		enqueueRowMeshes(topRow, scheduled);
+		enqueueRowMeshes(topRow + 1, scheduled);
+	}
+
+	/*	Add all east moves	*/
+	for (i32 step = 0; step < delta.width; step++)
+	{
+		const i32 rightCol = squareSize - 1 - step;
+		enqueueColumnMeshes(rightCol, scheduled);
+		enqueueColumnMeshes(rightCol - 1, scheduled);
+	}
+
+	/*	Add all west moves	*/
+	for (i32 step = 0; step < -delta.width; step++)
+	{
+		const i32 leftCol = step;
+		enqueueColumnMeshes(leftCol, scheduled);
+		enqueueColumnMeshes(leftCol + 1, scheduled);
+	}
+
+	for (size_t i = 0; i < scheduled.size(); i++)
+	{
+		if (scheduled[i] == true)
+		{
+			VoxelChunk* c = &map[i];
+			threadManager.enqueue([c] {
+				c->generateVertexes();
+			});
+		}
+	}
+	threadManager.waitIdle();
 }
 
 void	VoxelMap::generateRow(i32 index)
@@ -99,24 +141,13 @@ void	VoxelMap::generateColumn(i32 index)
 void	VoxelMap::north()
 {
 	std::rotate(map.begin(), map.begin() + squareSize, map.end());
-	setAdjacentPointers();
-
-	const i32 bottomRowIndex = squareSize * (squareSize - 1);
-	generateRow(bottomRowIndex);
-	meshRow(bottomRowIndex);
-	meshRow(bottomRowIndex - squareSize);
-	threadManager.waitIdle();
+	generateRow(squareSize * (squareSize - 1));
 }
 
 void	VoxelMap::south()
 {
-    std::rotate(map.begin(), map.end() - squareSize, map.end());
-	setAdjacentPointers();
-	
+	std::rotate(map.begin(), map.end() - squareSize, map.end());
 	generateRow(0);
-	meshRow(0);
-	meshRow(0 + squareSize);
-	threadManager.waitIdle();
 }
 
 void	VoxelMap::west()
@@ -126,12 +157,7 @@ void	VoxelMap::west()
 		auto begin = map.begin() + row * squareSize;
 		std::rotate(begin, begin + (squareSize - 1), begin + squareSize);
 	}
-	setAdjacentPointers();
-
 	generateColumn(0);
-	meshColumn(0);
-	meshColumn(1);
-	threadManager.waitIdle();
 }
 
 void	VoxelMap::east()
@@ -141,12 +167,7 @@ void	VoxelMap::east()
 		auto begin = map.begin() + row * squareSize;
 		std::rotate(begin, begin + 1, begin + squareSize);
 	}
-	setAdjacentPointers();
-
 	generateColumn(squareSize - 1);
-	meshColumn(squareSize - 1);
-	meshColumn(squareSize - 2);
-	threadManager.waitIdle();
 }
 
 }	//namespace vox

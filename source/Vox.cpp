@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <future>
 
 namespace vox {
 
@@ -155,6 +156,8 @@ void Vox::run( void )
 
 	float deltaTime = 0.0f;
 	Stopwatch timer;
+	std::future<bool>	mapUpdateResult;
+
 	std::cout << "\n\n\n\n";
 	while (vulkanWindow.shouldClose() == false)
 	{
@@ -165,10 +168,31 @@ void Vox::run( void )
 		this->moveCamera(deltaTime);
 
 		vec3 playerPos = this->camera.getCameraPos();
-		if (voxelMap.update(playerPos) == true)
+		this->inputHandler.reset();
+
+		if (mapUpdateResult.valid() == false)
 		{
-			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice));
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				return voxelMap.update(playerPos);
+			});
+		}
+		else
+		{
+			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+
+			if (status == std::future_status::ready)
+			{
+				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
+
+				if (changed == true)
+				{
+					this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
+			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
+				}
+				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+					return voxelMap.update(playerPos);
+				});
+			}
 		}
 
 		VkCommandBuffer commandBuffer = this->vulkanRenderer.beginFrame();
@@ -214,7 +238,6 @@ void Vox::run( void )
 			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
 			this->vulkanRenderer.endFrame();
 		}
-		this->inputHandler.reset();
 		timer.stop();
 
 		// std::cout << "\033[K" << "Player position - x: " << playerPos.x << " y: " << playerPos.y << " z: " << playerPos.z << std::endl;

@@ -43,8 +43,8 @@ class VoxelMap
 		vec2i	playerOnChunk;
 		vec3	rawPosition;
 
-		VertexVector	modelVector;
-		IndexVector		modelIndexes;
+		VertexVector	modelVector{};
+		IndexVector		modelIndexes{};
 
 		ThreadManager&	threadManager;
 
@@ -57,8 +57,11 @@ class VoxelMap
 		void	generateRow(i32 index);
 		void	generateColumn(i32 index);
 
-		void	meshRow(i32 index);
-		void	meshColumn(i32 index);
+		void	enqueueMeshing(const vec2i& delta);
+		void	updateModel();
+
+		void	enqueueRowMeshes(i32 row, std::vector<bool>& scheduled);
+		void	enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled);
 		void	setAdjacentPointers();
 };
 
