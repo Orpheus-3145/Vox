@@ -22,8 +22,11 @@ struct Config
 	static constexpr vec3 lightColor{0.6f, 0.6f, 0.6f};
 	static constexpr vec3 lightSpecularColor{0.1f, 0.1f, 0.1f};
 
-	static constexpr i32 chunkLength = 16U;
-	static constexpr i32 chunkHeight = 256U;
+	static constexpr vec3	startingPosition{0.0f, 225.0f, 0.0f};
+
+	static constexpr i32	chunkLength = 16U;
+	static constexpr i32	chunkHeight = 256U;
+	static constexpr i32	seaLevel = 64U;
 
 	static constexpr float movementSpeed = 100.0f;
 	static constexpr float lookSpeed = 25.0f;

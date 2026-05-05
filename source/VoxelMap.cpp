@@ -19,17 +19,17 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 	this->squareSize = visibleVoxels / static_cast<i32>(Config::chunkLength) + 1;
 	i32 visibleChunks = this->squareSize * this->squareSize;
 
-	std::cout << "Visible chunks: " << visibleChunks << std::endl;
 	VoxelChunk::chunkDimensions = vec3i{Config::chunkLength, Config::chunkHeight, Config::chunkLength};
-	std::cout << "Chunk dimensions: " << VoxelChunk::chunkDimensions << std::endl;
 	VoxelChunk::chunkSize = Config::chunkLength * Config::chunkHeight * Config::chunkLength;
 	VoxelChunk::paddedSize = (Config::chunkLength + 2) * (Config::chunkHeight + 2) * (Config::chunkLength + 2);
-
-	std::cout << "Allocating: " << formatBytes(VoxelChunk::chunkSize * visibleChunks * sizeof(VoxelType)) << " for voxel map" << std::endl;
+	
+	this->rawPosition = Config::startingPosition;
 
 	map.reserve(visibleChunks);
-	minPositions = vec2i{0, 0};
+	playerOnChunk = voxelToChunkPosition(this->rawPosition);
+	minPositions = vec2i{playerOnChunk.x - (squareSize - 1) / 2, playerOnChunk.y - (squareSize - 1) / 2};
 	maxPositions = vec2i{minPositions.x + squareSize - 1, minPositions.y + squareSize - 1};
+
 	std::cout << "Map ranges from: " << minPositions << " to: " << maxPositions << std::endl;
 	playerOnChunk = vec2i{minPositions.x + squareSize / 2, minPositions.y + squareSize / 2};
 	rawPosition = vec3::zero();

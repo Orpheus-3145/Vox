@@ -10,32 +10,68 @@ namespace vox {
 VoxelType	VoxelMap::getVoxelAt(const vec3& location)
 {
 	vec2i chunk = voxelToChunkPosition(location);
-	ui32 index = chunk.x * squareSize + chunk.y;
+
+	// std::cout << "location: " << location << std::endl;
+	std::cout << "chunk: " << chunk << std::endl;
+	// std::cout << "min positions: " << minPositions << std::endl;
+	i32 index = (chunk.x - minPositions.x) * squareSize + chunk.y - minPositions.y;
+
+	// std::cout << "index in voxelchunk array: " << index << " (size: " << map.size() << ")" << std::endl;
 	vec3i	voxelLoc = {
 		static_cast<i32>(location.x),
 		static_cast<i32>(location.y),
 		static_cast<i32>(location.z)
 	};
+	if (voxelLoc.y > 255 || voxelLoc.y <= 0)
+	{
+		return VoxelType::Air;
+	}
+	std::cout << "voxel location: " << location << std::endl;
+
+	std::cout << "world position of chunk: " << map[index].getWorldPos() << std::endl;
 	vec3i	chunkLoc = voxelLoc - map[index].getWorldPos();
+
+	std::cout << "chunk location: " << chunkLoc << std::endl;
 
 	return map[index].at(chunkLoc.x, chunkLoc.y, chunkLoc.z);
 }
 
 void	VoxelMap::detectCollision(vec3& movement)
 {
+	static vec3 previous = vec3::zero();
+	const vec3	moveTo = rawPosition + movement;
 	const vec3	movementNorm = movement.normalized();
 	vec3	position = rawPosition;
 	float	steps = movement.length();
+
+	std::cout << "\nwe are at: " << rawPosition << std::endl;
+	std::cout << "movement: " << movement << " length: " << steps << std::endl;
+	std::cout << "move to: " << moveTo << std::endl;
+	std::cout << "single step: " << movementNorm << std::endl;
 
 	for (ui32 i = 0; i < static_cast<ui32>(steps); i++)
 	{
 		position += movementNorm;
 		if (getVoxelAt(position) != VoxelType::Air)
 		{
-			movement = position - movementNorm;
-			return ;
+			if (i == 0)
+			{
+				movement = vec3::zero();
+			}
+			else
+			{
+				movement = position - movementNorm;
+			}
+			break ;
 		}
 	}
+	if (previous != vec3::zero() && vec3{moveTo - previous}.length() > 50.0f)
+	{
+		std::cerr << "moved from: " << previous << " to " << moveTo << " for a length of " << vec3{moveTo - previous}.length() << std::endl;
+		throw std::runtime_error("JUMPED");
+	}
+	std::cout << "movement: " << movement << std::endl;
+	previous = moveTo;
 }
 
 bool	VoxelMap::update(const vec3& newPosition)
