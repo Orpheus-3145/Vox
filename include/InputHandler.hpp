@@ -14,10 +14,10 @@ class InputHandler
 	public:
 
 	InputHandler() = default;
-	InputHandler(std::function<void(vec2 const&)> mouseCb, std::function<void(i32, i32)> resizeCb) noexcept :
-		fpsMode(false),
+	InputHandler(std::function<void(vec2 const&)> mouseCb, std::function<void(i32, i32)> resizeCb, std::function<void()> fullscreenCallback) noexcept :
 		mouseCallback(mouseCb),
-		resizeCallback(resizeCb) {};
+		resizeCallback(resizeCb),
+		fullscreenCallback(fullscreenCallback) {};
 	~InputHandler() noexcept = default;
 	InputHandler(const InputHandler&) = delete;
 	InputHandler& operator=(const InputHandler&) = delete;
@@ -34,17 +34,18 @@ class InputHandler
 	void		setCursorPos(vec2 const& newPos) noexcept { this->mouse.setCursorPos(newPos); };
 	vec2 const&	getCursorPos() const noexcept { return this->mouse.getCursorPos(); };
 
-	void	toggleFpsMode( GLFWwindow* ) noexcept;
-	void	closeWindow( GLFWwindow* ) const noexcept;
+	void	toggleFpsMode(GLFWwindow* window) noexcept;
+	void	closeWindow(GLFWwindow* window) const noexcept;
 
 	private:
 
 	KeyboardInput	keyboard;
 	MouseInput		mouse;
-	bool			fpsMode;
+	bool			fpsMode{false};
 
-	std::function<void(vec2 const&)>		mouseCallback;
-	std::function<void(i32, i32)>	resizeCallback;
+	std::function<void(vec2 const&)>	mouseCallback;
+	std::function<void(i32, i32)>		resizeCallback;
+	std::function<void()>				fullscreenCallback;
 };
 
 } // namespace vox

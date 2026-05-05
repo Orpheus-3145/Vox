@@ -22,9 +22,6 @@ class VulkanWindow
 	VkExtent2D	getFramebufferExtent() const noexcept;
 
 	bool	shouldClose() const noexcept { return glfwWindowShouldClose(window); }
-	bool	wasWindowResized() const noexcept { return resized; }
-	void	resetWindowResizedFlag() noexcept { resized = false; }
-	
 	void	createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;
 	void	resetWindowSize(int32_t width, int32_t height) noexcept;
 	void	toggleFullscreen() noexcept;
@@ -36,8 +33,6 @@ class VulkanWindow
 	int32_t	heightNotFullscreen;
 	int32_t	xPosNotFullscreen;
 	int32_t	yPosNotFullscreen;
-
-	bool	resized{false};
 
 	GLFWmonitor*		monitor;
 	const GLFWvidmode*	monitorInfo;

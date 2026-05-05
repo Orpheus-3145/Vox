@@ -104,6 +104,7 @@ class Vox
 		void moveCamera( float );
 		void rotateCameraFromCursorPos( vec2 const& );
 		void resizeWindow( ui32, ui32 );
+		void toggleFullscreen( void );
 
 	private:
 		std::shared_ptr<ve::VulkanModel> createVoxelMesh( vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );
@@ -132,7 +133,7 @@ class Vox
 
 		// since there's a copy of every descriptor for every frame in flight,
 		// this flag is to update each ubo in a set, for every frame
-		i32	countFramesToUpdate = 0;
+		i32	countFramesToUpdate{0};
 };
 
 }	// namespace vox

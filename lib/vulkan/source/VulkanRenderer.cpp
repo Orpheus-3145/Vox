@@ -108,9 +108,8 @@ void	VulkanRenderer::endFrame()
 		throw std::runtime_error("failed to record command buffer!");
 	}
 	VkResult	result = vulkanSwapChain->submitCommandBuffers(&commandBuffer, &currentImageIndex);
-	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || vulkanWindow.wasWindowResized())
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 	{
-		vulkanWindow.resetWindowResizedFlag();
 		recreateSwapChain();
 	}
 	else if (result != VK_SUCCESS)
@@ -148,12 +147,12 @@ void	VulkanRenderer::beginSwapChainRenderPass(VkCommandBuffer commandBuffer)
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	VkViewport	viewport{};
-	VkRect2D	scissor{{0, 0}, vulkanSwapChain->getSwapChainExtent()};
+	VkRect2D	scissor{{0, 0}, renderPassInfo.renderArea.extent};
 
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(vulkanSwapChain->getSwapChainExtent().width);
-	viewport.height = static_cast<float>(vulkanSwapChain->getSwapChainExtent().height);
+	viewport.width = static_cast<float>(renderPassInfo.renderArea.extent.width);
+	viewport.height = static_cast<float>(renderPassInfo.renderArea.extent.height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);

@@ -50,7 +50,8 @@ Vox::Vox( void ) :
 	voxelMap{threadManager},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
-		[this](i32 width, i32 height) { this->resizeWindow(width, height); }
+		[this](i32 width, i32 height) { this->resizeWindow(width, height); },
+		[this](void) { this->toggleFullscreen(); }
 	}
 {
 	this->voxelMap.init();
@@ -157,8 +158,9 @@ void Vox::run( void )
 	std::cout << "\n\n\n\n";
 	while (vulkanWindow.shouldClose() == false)
 	{
-		glfwPollEvents();
 		timer.start();
+		glfwPollEvents();
+
 		deltaTime = timer.elapsed(Unit::Seconds);
 		this->moveCamera(deltaTime);
 
@@ -290,10 +292,18 @@ void	Vox::rotateCameraFromCursorPos( vec2 const& currPos )
 void Vox::resizeWindow( ui32 width, ui32 height )
 {
 	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
+	this->vulkanRenderer.recreateSwapChain();
 	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
+void Vox::toggleFullscreen( void )
+{
+	this->vulkanWindow.toggleFullscreen();
+	this->vulkanRenderer.recreateSwapChain();
+	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
 /**
  * Creates a new ve::VulkanModel, that loads vertex data into the GPU. It shall be called everytime
  * a new world/chunks is created (i.e. whenever WorldNavigator::spawnCloseByWorlds() returns true)

@@ -97,7 +97,6 @@ void	VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surfac
 
 void	VulkanWindow::resetWindowSize(int32_t width, int32_t height) noexcept
 {
-	resized = true;
 	if (isFullscreenWindow() == false)
 	{
 		widthNotFullscreen = width;
