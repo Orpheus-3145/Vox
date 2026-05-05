@@ -42,7 +42,7 @@ void LightUBO::updateLightDir( vec3 const& lightDir, mat4 const& viewMatrix ) no
  * Create the engine of the game
  */
 Vox::Vox( void ) :
-	vulkanWindow{Config::defaultWindowHeight, Config::defaultWindowWidth, "Vox"},
+	vulkanWindow{"ft_vox", Config::fullScreenMode, Config::defaultWindowWidth, Config::defaultWindowHeight},
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
@@ -289,7 +289,7 @@ void	Vox::rotateCameraFromCursorPos( vec2 const& currPos )
  */
 void Vox::resizeWindow( ui32 width, ui32 height )
 {
-	this->vulkanWindow.resetWindowSize(width, height);
+	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
 	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }

@@ -3,8 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include <stdexcept>
-#include <string>
+#include <cstdint>
 
 namespace ve {
 
@@ -13,31 +12,36 @@ class VulkanWindow
 	public:
 
 	VulkanWindow() = delete;
-	VulkanWindow(int width, int height, const char* title);
+	VulkanWindow(const char* title, bool fullScreen = false, int32_t width = 800, int32_t height = 600);
 	VulkanWindow(const VulkanWindow&) = delete;
 	VulkanWindow& operator=(const VulkanWindow&) = delete;
 	~VulkanWindow();
 
+	GLFWwindow*	getGLFWwindow() const noexcept { return window; }
+	float		getAspectRatio() const noexcept;
+	VkExtent2D	getFramebufferExtent() const noexcept;
+
 	bool	shouldClose() const noexcept { return glfwWindowShouldClose(window); }
 	bool	wasWindowResized() const noexcept { return resized; }
 	void	resetWindowResizedFlag() noexcept { resized = false; }
-	float	getAspectRatio() const noexcept { return static_cast<float>(width) / static_cast<float>(height); }
-	VkExtent2D	getFramebufferExtent() const noexcept { return { static_cast<uint32_t>(width), static_cast<uint32_t>(height) }; }
 	
-	GLFWwindow*	getGLFWwindow() const noexcept { return window; }
-	void	createWindowSurface(VkInstance instance, VkSurfaceKHR* surface);
-	void	resetWindowSize(int width, int height);
+	void	createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;
+	void	resetWindowSize(int32_t width, int32_t height) noexcept;
+	void	toggleFullscreen() noexcept;
+	bool	isFullscreenWindow() const noexcept { return glfwGetWindowMonitor(window) != nullptr; }
 
 	private:
 
-	void	initWindow();
+	int32_t	widthNotFullscreen;
+	int32_t	heightNotFullscreen;
+	int32_t	xPosNotFullscreen;
+	int32_t	yPosNotFullscreen;
 
-	int		width;
-	int		height;
-	bool	resized = false;
+	bool	resized{false};
 
-	std::string	title;
-	GLFWwindow*	window;
+	GLFWmonitor*		monitor;
+	const GLFWvidmode*	monitorInfo;
+	GLFWwindow*			window;
 };
 
 }
