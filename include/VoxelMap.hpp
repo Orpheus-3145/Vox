@@ -54,19 +54,21 @@ class VoxelMap
 
 		ThreadManager&	threadManager;
 
-		void	north();
-		void	south();
-		void	west();
-		void	east();
+		void	north(i32 moves);
+		void	south(i32 moves);
+		void	west(i32 moves);
+		void	east(i32 moves);
 
 		vec2i	voxelToChunkPosition(const vec3& position) const noexcept;
 		void	generateRow(i32 index);
 		void	generateColumn(i32 index);
+		void	meshRow(i32 index);
+		void	meshColumn(i32 index);
 
-		void	enqueueMeshing(const vec2i& delta);
+		// void	enqueueMeshing(const vec2i& delta);
 
-		void	enqueueRowMeshes(i32 row, std::vector<bool>& scheduled);
-		void	enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled);
+		// void	enqueueRowMeshes(i32 row, std::vector<bool>& scheduled);
+		// void	enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled);
 		void	setAdjacentPointers();
 };
 

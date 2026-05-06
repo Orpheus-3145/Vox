@@ -170,30 +170,35 @@ void Vox::run( void )
 		vec3 playerPos = this->camera.getCameraPos();
 		this->inputHandler.reset();
 
-		if (mapUpdateResult.valid() == false)
+		if (voxelMap.update(playerPos) == true)
 		{
-			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-				return voxelMap.update(playerPos);
-			});
-		}
-		else
-		{
-			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
-
-			if (status == std::future_status::ready)
-			{
-				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
-
-				if (changed == true)
-				{
-					this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
+			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
 			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
-				}
-				// mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-				// 	return voxelMap.update(playerPos);
-				// });
-			}
 		}
+		// if (mapUpdateResult.valid() == false)
+		// {
+		// 	mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+		// 		return voxelMap.update(playerPos);
+		// 	});
+		// }
+		// else
+		// {
+		// 	const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+
+		// 	if (status == std::future_status::ready)
+		// 	{
+		// 		const bool changed = mapUpdateResult.get(); // consumes future; now invalid
+
+		// 		if (changed == true)
+		// 		{
+		// 			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
+		// 			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
+		// 		}
+		// 		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+		// 			return voxelMap.update(playerPos);
+		// 		});
+		// 	}
+		// }
 
 		VkCommandBuffer commandBuffer = this->vulkanRenderer.beginFrame();
 		if (commandBuffer != nullptr)
@@ -258,7 +263,7 @@ void Vox::moveCamera( float deltaTime )
 {
 	vec3	moveDirection = vec3::zero();
 	vec3	rotation = vec3::zero();
-	float	moveScalar = deltaTime * Config::movementSpeed;
+	float	moveScalar = std::min(deltaTime * Config::movementSpeed, static_cast<float>(Config::minimumViewingDistance));
 	float	rotationScalar = deltaTime * Config::lookSpeed;
 
 	if (this->inputHandler.isKeyPressed(GLFW_KEY_W)) { moveDirection.z -= moveScalar; }

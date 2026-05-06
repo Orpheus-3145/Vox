@@ -32,14 +32,14 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 
 	std::cout << "Map ranges from: " << minPositions << " to: " << maxPositions << std::endl;
 	playerOnChunk = vec2i{minPositions.x + squareSize / 2, minPositions.y + squareSize / 2};
-	rawPosition = vec3::zero();
 	VoxelChunk::paddedDimensions = VoxelChunk::chunkDimensions + vec3i{2, 2, 2};
 }
 
 std::unique_ptr<ve::VulkanModel>	VoxelMap::createNewModelTerrain(ve::VulkanDevice& device, ui32 binding)
 {
 	size_t totalVertexes = 0;
-
+	
+	modelVector.clear();
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		totalVertexes += map[i].getVertexTerrainSize();
@@ -56,10 +56,6 @@ std::unique_ptr<ve::VulkanModel>	VoxelMap::createNewModelTerrain(ve::VulkanDevic
 			IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
 			modelIndexes.insert(modelIndexes.end(), indexes.begin(), indexes.end());
 		}
-	}
-	else
-	{
-		modelVector.clear();
 	}
 	for (size_t i = 0; i < map.size(); i++)
 	{
