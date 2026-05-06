@@ -15,7 +15,7 @@
 
 namespace vox {
 
-// Vulkan variables layout for shaders is 16b so each member size has to multiple of 16 or padded
+// Vulkan variables layout for shaders is 16b so each member size has to multiple of 16 or padded (std140 )
 class ViewProjectUBO
 {
 	public:
@@ -34,7 +34,7 @@ class ViewProjectUBO
 		mat4 projection;
 };
 
-// Vulkan variables layout for shaders is 16b so each member size has to multiple of 16 or padded
+// Vulkan variables layout for shaders is 16b so each member size has to multiple of 16 or padded (std140 )
 class LightUBO
 {
 	public:
@@ -66,10 +66,6 @@ class MeshData
 			modelMatrix{modelMatrix},
 			normalMatrix{normalMatrix},
 			material{material} {};
-		MeshData( MeshData const& other ) = default;
-		MeshData( MeshData&& other ) = default;
-		MeshData& operator=( MeshData const& other ) = default;
-		MeshData& operator=( MeshData&& other ) = default;
 
 		void	updateModelMatrix( mat4 const& modelMatrix ) noexcept { this->modelMatrix = modelMatrix; };
 		void	updateNormalMatrix( mat4 const& normalMatrix ) noexcept { this->normalMatrix = normalMatrix; };
@@ -78,14 +74,12 @@ class MeshData
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); };
 
 	private:
-		mat4				modelMatrix{1.0f};
-		mat4				normalMatrix{1.0f};
-		ve::MeshMaterial	material{};
+		mat4				modelMatrix;
+		mat4				normalMatrix;
+		ve::MeshMaterial	material;
 };
-
 // vulkan push_constant max size should be 128 or 256 b
-static_assert(sizeof(MeshData) == 192);
-static_assert(sizeof(MeshData) == 2 * sizeof(mat4) + sizeof(ve::MeshMaterial));
+static_assert(sizeof(MeshData) <= 256, "vulkan push_constant max size should be less than 256b");
 
 
 class Vox

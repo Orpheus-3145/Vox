@@ -23,9 +23,7 @@ constexpr ve::MeshMaterial dirtMaterial{
 	vec4(0.2f, 0.2f, 0.2f, 1.0f),		// diffuseColor
 	vec4(0.2f),							// specularColor
 	8.0f,								// shininess
-	1.0f,								// opacity
-	1,									// refractionIndex
-	2									// illuminationModel
+	1.0f								// opacity
 };
 
 
@@ -63,7 +61,7 @@ void Vox::setupVulkan( void )
 {
 	ui32	maxSetsToCreate = 5;
 	ui32	nUniformDescriptors = 2;
-	ui32	nSamplerDescriptors = 4;
+	ui32	nSamplerDescriptors = 3;
 
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
 	this->undergroundObject = std::make_unique<ve::VulkanObject>();
@@ -154,7 +152,7 @@ void Vox::run( void )
 	);
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 
-	float deltaTime = 0.0f;
+ 	float deltaTime = 0.0f;
 	Stopwatch timer;
 	std::future<bool>	mapUpdateResult;
 

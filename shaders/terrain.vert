@@ -15,8 +15,6 @@ layout(push_constant) uniform MeshData {
 	vec4	specularClr;
 	float	shininess;
 	float	opacity;
-	int		refractionIndex;
-	int		illuminationModel;
 } meshData;
 
 layout(location = 0) in vec3 position;

@@ -54,7 +54,6 @@ VulkanWindow::VulkanWindow(const char* title, bool fullScreen, int32_t width, in
 	{
 		glfwSetWindowPos(window, xPosNotFullscreen, yPosNotFullscreen);
 	}
-
 }
 
 VulkanWindow::~VulkanWindow()
