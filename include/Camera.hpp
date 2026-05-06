@@ -38,9 +38,8 @@ class Camera
 		void	move(const vec3& direction) noexcept;
 		void	rotate( float, float, float ) noexcept;
 
-		void	move(const vec3& translation) noexcept;
-
 		vec3	getRelativeMoveDirection(const vec3& rawDirection);
+		void	updateAspect(float aspect) noexcept;
 
 	private:
 		void	updateCameraAxis( void ) noexcept;

@@ -35,7 +35,6 @@ class VoxelMap
 		std::unique_ptr<ve::VulkanModel> createNewModelUnderground( ve::VulkanDevice& device, ui32 binding = 0U );
 		vec3	getMapMiddle() const noexcept;
 		void	detectCollision(vec3& movement);
-		std::unique_ptr<ve::VulkanModel> createNewModel( ve::VulkanDevice& device );
 
 		VoxelType	getVoxelAt(const vec3& location);
 
@@ -65,7 +64,6 @@ class VoxelMap
 		void	generateColumn(i32 index);
 
 		void	enqueueMeshing(const vec2i& delta);
-		void	updateModel();
 
 		void	enqueueRowMeshes(i32 row, std::vector<bool>& scheduled);
 		void	enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled);

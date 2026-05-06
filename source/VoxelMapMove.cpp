@@ -98,7 +98,6 @@ bool	VoxelMap::update(const vec3& newPosition)
 
 	setAdjacentPointers();
 	enqueueMeshing(delta);
-	updateModel();
 	threadManager.waitIdle();
 
 	timer.stop();

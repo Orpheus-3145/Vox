@@ -36,15 +36,7 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 	VoxelChunk::paddedDimensions = VoxelChunk::chunkDimensions + vec3i{2, 2, 2};
 }
 
-std::unique_ptr<ve::VulkanModel> VoxelMap::createNewModelTerrain( ve::VulkanDevice& device, ui32 binding )
-{
-	std::unique_ptr<ve::VulkanModel> model;
-
-	model = std::make_unique<ve::VulkanModel>(device, modelVector, modelIndexes, 0U, ve::DEFAULT_MODEL_LAYOUT);
-	return model;
-}
-
-void	VoxelMap::updateModel()
+std::unique_ptr<ve::VulkanModel>	VoxelMap::createNewModelTerrain(ve::VulkanDevice& device, ui32 binding)
 {
 	size_t totalVertexes = 0;
 
@@ -80,8 +72,7 @@ void	VoxelMap::updateModel()
 		IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
 		modelIndexes.insert(modelIndexes.end(), indexes.begin(), indexes.end());
 	}
-	model = std::make_unique<ve::VulkanModel>(device, modelVector, modelIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
-	return model;
+	return std::make_unique<ve::VulkanModel>(device, modelVector, modelIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
 }
 
 std::unique_ptr<ve::VulkanModel> VoxelMap::createNewModelUnderground( ve::VulkanDevice& device, ui32 binding )
@@ -182,8 +173,8 @@ void	VoxelMap::init()
 	setAdjacentPointers();
 	for (size_t i = 0; i < map.size(); i++)
 	{
-		threadManager.enqueue([&] {
-			chunk.generateMap();
+		threadManager.enqueue([this, i] {
+			map[i].generateMap();
 		});
 	}
 	threadManager.waitIdle();
@@ -198,7 +189,6 @@ void	VoxelMap::init()
 		});
 	}
 	threadManager.waitIdle();
-	updateModel();
 	timer.stop();
 	std::cout << "Initial voxel map generation took: " << timer << std::endl;
 }
@@ -210,6 +200,13 @@ vec2i	VoxelMap::voxelToChunkPosition(const vec3& position) const noexcept
 		static_cast<i32>(std::floor(position.z / static_cast<float>(VoxelChunk::chunkDimensions.z)))
 	};
 	return chunkPos;
+}
+
+vec3	VoxelMap::getMapMiddle() const noexcept
+{
+	return vec3((maxPositions.x + minPositions.x + 1) * VoxelChunk::chunkDimensions.x / 2.0f,
+				VoxelChunk::chunkDimensions.height - 1.0f,
+				(maxPositions.y + minPositions.y + 1) * VoxelChunk::chunkDimensions.z / 2.0f);
 }
 
 }	// namespace vox
