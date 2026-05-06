@@ -107,12 +107,26 @@ void Vox::setupVulkan( void )
 		this->textUndergroundDescriptorSet->getDescriptorSetLayout(),
 		this->textSkyboxDescriptorSet->getDescriptorSetLayout()
 	};
+
+	std::string vertexShader;
+	std::string fragmentShader;
+	if (Config::lightingMode == true)
+	{
+		vertexShader = Config::terrainVertShaderPath;
+		fragmentShader = Config::terrainFragShaderPath;
+	}
+	else
+	{
+		vertexShader = Config::terrainNoLightVertShaderPath;
+		fragmentShader = Config::terrainNoLightFragShaderPath;
+	}
+
 	this->terrainPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
 		descriptorSetLayouts,
 		this->vulkanRenderer.getSwapChainRenderPass(),
-		Config::simpleVertShaderPath,
-		Config::simpleFragShaderPath,
+		vertexShader,
+		fragmentShader,
 		this->terrainObject->getVboLayout(),
 		false,
 		sizeof(MeshData)

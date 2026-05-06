@@ -7,7 +7,9 @@ namespace vox {
 
 struct Config
 {
-	static constexpr bool fullScreenMode = false;
+	static constexpr bool lightingMode = true;
+	static constexpr bool fullScreenMode = true;
+
 	static constexpr ui32 defaultWindowWidth = 1300;
 	static constexpr ui32 defaultWindowHeight = 1300;
 	static constexpr ui32 minimumViewingDistance = 160;
@@ -33,8 +35,10 @@ struct Config
 
 	static constexpr char skyboxVertShaderPath[] = "build/skybox.vert.spv";
 	static constexpr char skyboxFragShaderPath[] = "build/skybox.frag.spv";
-	static constexpr char simpleVertShaderPath[] = "build/terrain.vert.spv";
-	static constexpr char simpleFragShaderPath[] = "build/terrain.frag.spv";
+	static constexpr char terrainVertShaderPath[] = "build/terrain.vert.spv";
+	static constexpr char terrainFragShaderPath[] = "build/terrain.frag.spv";
+	static constexpr char terrainNoLightVertShaderPath[] = "build/terrainNoLight.vert.spv";
+	static constexpr char terrainNoLightFragShaderPath[] = "build/terrainNoLight.frag.spv";
 
 	static constexpr char textureStonePath[] = "textures/texture_stone_mono.jpeg";
 	static constexpr char textureWaterPath[] = "textures/texture_water_mono.jpeg";
