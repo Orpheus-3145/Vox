@@ -1,9 +1,13 @@
 #include "ThreadManager.hpp"
+
 #include <iostream>
+
+
+namespace vox {
 
 ThreadManager::ThreadManager() : shouldRun(true), activeWorkers(0)
 {
-	int workers = std::thread::hardware_concurrency();
+	i32 workers = std::thread::hardware_concurrency();
 
 	if (workers <= 0)
 	{
@@ -13,7 +17,7 @@ ThreadManager::ThreadManager() : shouldRun(true), activeWorkers(0)
 
 	std::cout << "Created " << workers << " worker threads" << std::endl;
 	workerThreads.reserve(workers);
-	for (int i = 0; i < workers; i++)
+	for (i32 i = 0; i < workers; i++)
 	{
 		workerThreads.emplace_back(&ThreadManager::workerLoop, this);
 	}
@@ -92,3 +96,4 @@ void	ThreadManager::waitIdle()
 	idleCv.wait(lock, [this] { return jobs.empty() == true && activeWorkers == 0; });
 }
 
+}	// namespace vox

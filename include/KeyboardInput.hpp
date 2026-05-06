@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
+#include "TypeAliases.hpp"
+
 
 namespace vox {
 
@@ -20,7 +22,7 @@ class KeyboardInput
 
 	void	reset() noexcept;
 
-	static constexpr int maxKeys = GLFW_KEY_LAST + 1;
+	static constexpr i32 maxKeys = GLFW_KEY_LAST + 1;
 
 	std::array<bool, maxKeys>	keyStates;
 	std::array<bool, maxKeys>	keysPressed;

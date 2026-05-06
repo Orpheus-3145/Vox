@@ -3,7 +3,6 @@
 
 namespace vox {
 
-
 /**
  * Zero all data
  */

@@ -66,11 +66,11 @@ static int	testVectorLength()
 	int	failures = 0;
 
 	std::cout << RESET << "Vector length test:\n";
-	failures += testLength(vec3(1, 1, 1), glm::vec3(1, 1, 1));
-	failures += testLength(vec3(0.57, 0.57, 0.57), glm::vec3(0.57, 0.57, 0.57));
-	failures += testLength(vec3(-1, -4, 5.5), glm::vec3(-1, -4, 5.5));
-	failures += testLength(vec3(-1, 0, 100), glm::vec3(-1, 0, 100));
-	failures += testLength(vec3(4000, -7000, 9999), glm::vec3(4000, -7000, 9999));
+	failures += testLength(vec3(1.f, 1.f, 1.f), glm::vec3(1.f, 1.f, 1.f));
+	failures += testLength(vec3(0.57f, 0.57f, 0.57f), glm::vec3(0.57f, 0.57f, 0.57f));
+	failures += testLength(vec3(-1.f, -4.f, 5.5f), glm::vec3(-1.f, -4.f, 5.5f));
+	failures += testLength(vec3(-1.f, 0.f, 100.f), glm::vec3(-1.f, 0.f, 100.f));
+	failures += testLength(vec3(4000.f, -7000.f, 9999.f), glm::vec3(4000.f, -7000.f, 9999.f));
 	return failures;
 }
 

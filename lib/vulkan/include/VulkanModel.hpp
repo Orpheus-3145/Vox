@@ -19,25 +19,30 @@ struct	BoundingBox
 	vec3	max;
 };
 
-enum class ModelLayout : uint32_t {
-	UNSET = 0,
+enum class MeshLayout : uint32_t {
 	VERTEX = 1 << 0,
 	NORMAL = 1 << 1,
 	TEXTURE = 1 << 2
 };
 
-constexpr ModelLayout operator|(ModelLayout a, ModelLayout b) {
-	return static_cast<ModelLayout>(
+constexpr MeshLayout operator|(MeshLayout a, MeshLayout b) {
+	return static_cast<MeshLayout>(
 		static_cast<uint32_t>(a) | static_cast<uint32_t>(b)
 	);
 }
 
-constexpr bool operator&(ModelLayout a, ModelLayout b) {
+constexpr bool operator&(MeshLayout a, MeshLayout b) {
 	return static_cast<uint32_t>(a) & static_cast<uint32_t>(b);
 }
 
-constexpr inline ModelLayout DEFAULT_MODEL_LAYOUT = ModelLayout::VERTEX | ModelLayout::NORMAL | ModelLayout::TEXTURE;
+constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::NORMAL | MeshLayout::TEXTURE;
 
+
+struct MeshlayoutDescription
+{
+	std::vector<VkVertexInputBindingDescription>	bindingConfig;
+	std::vector<VkVertexInputAttributeDescription>	attributeConfig;
+};
 
 class VulkanModel
 {
@@ -83,35 +88,33 @@ class VulkanModel
 	};
 
 	VulkanModel() = delete;
-	VulkanModel(VulkanDevice& device, const Builder& builder, uint32_t binding = 0U, ModelLayout = DEFAULT_MODEL_LAYOUT);
-	VulkanModel(VulkanDevice& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, ModelLayout = DEFAULT_MODEL_LAYOUT);
-	VulkanModel(VulkanDevice& device, const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, ModelLayout = ModelLayout::VERTEX);
-	VulkanModel(VulkanDevice& device, const std::vector<std::vector<Vertex>>& vertices, const std::array<uint32_t, INDEX_PER_VOXEL>& indexesVoxel, uint32_t binding = 0U, ModelLayout = DEFAULT_MODEL_LAYOUT);
+	VulkanModel(VulkanDevice& device, const Builder& builder, uint32_t binding = 0U, MeshLayout = DEFAULT_MODEL_LAYOUT);
+	VulkanModel(VulkanDevice& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, MeshLayout = DEFAULT_MODEL_LAYOUT);
+	VulkanModel(VulkanDevice& device, const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, MeshLayout = MeshLayout::VERTEX);
+	VulkanModel(VulkanDevice& device, const std::vector<std::vector<Vertex>>& vertices, const std::array<uint32_t, INDEX_PER_VOXEL>& indexesVoxel, uint32_t binding = 0U, MeshLayout = DEFAULT_MODEL_LAYOUT);
 	~VulkanModel() noexcept = default;
 
 	VulkanModel(const VulkanModel&) = delete;
-	VulkanModel(VulkanModel&&) = delete;
+	VulkanModel(VulkanModel&&) = default;
 	VulkanModel& operator=(const VulkanModel&) = delete;
 	VulkanModel& operator=(VulkanModel&&) = delete;
-
-	void	bind(VkCommandBuffer commandBuffer);
-	void	draw(VkCommandBuffer commandBuffer);
-	void	setName(const std::string& name) { this->name = name; }
-	void	setBoundingBox(const std::vector<Vertex>& vertices) noexcept;
-
-	std::vector<VkVertexInputBindingDescription>	getBindingDescriptions() const noexcept;
-	std::vector<VkVertexInputAttributeDescription>	getAttributeDescriptions() const noexcept;
-
-	const vec3&	getVertexCenter() const noexcept { return vertexCenter; }
-	const vec3&	getBoundingCenter() const noexcept { return boundingCenter; }
-	const BoundingBox&	getBoundingBox() const noexcept { return boundingBox; }
+	
+	void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
+	void	draw(VkCommandBuffer commandBuffer) const noexcept;
+	
+	MeshlayoutDescription	getVboLayout() const noexcept;
+	void					setName(const std::string& name) { this->name = name; }
+	const vec3&				getVertexCenter() const noexcept { return this->vertexCenter; }
+	const vec3&				getBoundingCenter() const noexcept { return this->boundingCenter; }
+	const BoundingBox&		getBoundingBox() const noexcept { return this->boundingBox; }
+	void					setBoundingBox(const std::vector<Vertex>& vertices) noexcept;
 
 	private:
 
 	std::string		name;
 	VulkanDevice&	vulkanDevice;
 	uint32_t		binding;
-	ModelLayout		type;
+	MeshLayout		type;
 	bool			isIndexed;
 
 	uint32_t		vertexCount;

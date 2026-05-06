@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <thread>
 
-int	main( void )
+i32	main( void )
 {
 	try
 	{

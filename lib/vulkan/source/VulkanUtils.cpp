@@ -2,16 +2,36 @@
 
 #include <fstream>
 #include <string>
+#include <cassert>
 
 
 namespace ve {
 
-float randomFloat()
+float randomFloat(float min, float max)
 {
+	assert( min < max && "Min value is bigger than max");
 	static std::default_random_engine	engine(std::chrono::system_clock::now().time_since_epoch().count());
-	static std::uniform_real_distribution<float>	distribution(0.0f, 1.0f);
+	static std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
 
-	return distribution(engine);
+	return distribution(engine) * (max - min) + min;
+}
+
+int32_t randomInt(int32_t min, int32_t max)
+{
+	assert( min < max && "Min value is bigger than max");
+
+	static std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<int32_t> distribution(min, max);
+    return distribution(engine);
+}
+
+uint32_t randomUint(uint32_t min, uint32_t max)
+{
+	assert( min < max && "Min value is bigger than max");
+
+	static std::default_random_engine engine(std::chrono::system_clock::now().time_since_epoch().count());
+    std::uniform_int_distribution<uint32_t> distribution(min, max);
+    return distribution(engine);
 }
 
 vec3	generateRandomColor()
@@ -53,4 +73,5 @@ std::vector<char> readFile(std::string const& filePath)
 
 	return buffer;
 }
+
 }

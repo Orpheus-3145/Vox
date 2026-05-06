@@ -11,6 +11,10 @@
 #include <vector>
 #include <functional>
 
+#include "TypeAliases.hpp"
+
+
+namespace vox {
 
 class ThreadManager
 {
@@ -61,5 +65,7 @@ class ThreadManager
 		std::mutex	mutex;
 
 		bool	shouldRun;
-		int		activeWorkers;
+		i32		activeWorkers;
 };
+
+}	// namespace vox

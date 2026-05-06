@@ -2,6 +2,7 @@
 
 #include "Vec3.hpp"
 #include "Mat4.hpp"
+#include "Mat3.hpp"
 
 #include <algorithm>
 #include <ostream>
@@ -54,7 +55,7 @@ class quat
 	quat&	fastNormalize() noexcept;
 	quat	fastNormalized() const noexcept;
 
-	mat4	getMatrix() const;
+	mat4	getMatrix(bool columnMajor = true) const noexcept;
 
 	static vec3 rotated(const vec3& rotateAround, quat rotation) noexcept;
 	static quat product(const quat& a, const quat& b) noexcept;

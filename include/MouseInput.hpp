@@ -6,6 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
+#include "TypeAliases.hpp"
+
 
 namespace vox {
 
@@ -24,7 +26,7 @@ class MouseInput
 	void		setCursorPos(vec2 const& newPos) noexcept { this->cursorPos = newPos; };
 	vec2 const&	getCursorPos() const noexcept { return this->cursorPos; };
 
-	static constexpr int maxButtons = GLFW_MOUSE_BUTTON_LAST + 1;
+	static constexpr i32 maxButtons = GLFW_MOUSE_BUTTON_LAST + 1;
 
 	std::array<bool, maxButtons>	mouseStates;
 	std::array<bool, maxButtons>	buttonsPressed;

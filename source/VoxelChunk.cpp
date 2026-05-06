@@ -4,21 +4,23 @@
 
 #include <cassert>
 #include <cstring>
+#include <iostream>
+
 
 namespace vox {
-
-float	perlin(float x, float y, float z);
-float	randomNoise(float, float, ui32& seed);
 
 vec3i	VoxelChunk::chunkDimensions = vec3i::zero();
 vec3i	VoxelChunk::paddedDimensions = vec3i::zero();
 ui32	VoxelChunk::paddedSize = 0;
 ui32	VoxelChunk::chunkSize = 0;
 
-VoxelChunk::VoxelChunk(vec2i loc) : location(loc)
+VoxelChunk::VoxelChunk(vec2i loc) :
+	location(loc),
+	generator{Config::worldSeed, Config::minimumViewingDistance * 2}
 {
 	map.assign(static_cast<size_t>(paddedSize), VoxelType::Padding);
-	vertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	terrainVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	undergroundVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
 
 	worldPosition = vec3i(chunkDimensions.x * location.width, 0, chunkDimensions.z * location.depth);
 }
@@ -31,10 +33,10 @@ void	VoxelChunk::setLocation(vec2i loc)
 	worldPosition.z = chunkDimensions.z * loc.depth;
 }
 
-void	VoxelChunk::generateMap(float seed)
+void	VoxelChunk::generateMap(void)
 {
 	i32 y;
-	const i32 waterLevel = Config::seaLevel + 1;
+
 	const i32 dimX = paddedDimensions.x - 1;
 	const i32 dimY = paddedDimensions.y - 1;
 	const i32 dimZ = paddedDimensions.z - 1;
@@ -50,21 +52,33 @@ void	VoxelChunk::generateMap(float seed)
 
 			const float worldX = static_cast<float>(worldPosition.width + x - 1);
 			const float worldZ = static_cast<float>(worldPosition.depth + z - 1);
+			float perlinTerrain = this->generator.perlinValue2D(worldX, worldZ);
 
-			float noiseValue = perlin(worldX * Config::noiseScalar, worldZ * Config::noiseScalar, static_cast<float>(seed));
-			i32 heightValue = static_cast<i32>(noiseValue * static_cast<float>(height)) + 1;
+			i32 heightValue = static_cast<i32>(perlinTerrain * static_cast<float>(height)) - 3;
 
 			assert(heightValue <= chunkDimensions.height && "height value out of range");
-			assert(Config::seaLevel <= chunkDimensions.height && "sea level higher than height of world");
 
 			for (y = 1; y < heightValue; y++)
 			{
-				map[index] = VoxelType::Dirt;
-				index++;
-			}
-			for (; y < waterLevel; y++)
-			{
-				map[index] = VoxelType::Water;
+				float perlinCave = this->generator.perlinValue3D(worldX, static_cast<float>(y), worldZ);
+				float t = static_cast<float>(y) / static_cast<float>(height);
+				float factor = t * t * (3 - 2 * t);
+				float treshold = 0.65f + 0.2f * factor;
+				if (perlinCave > treshold)	// create cave
+				{
+					map[index] = VoxelType::Air;
+				}
+				else
+				{
+					if (y > heightValue - 4)
+					{
+						map[index] = VoxelType::Dirt;
+					}
+					else
+					{
+						map[index] = VoxelType::Stone;
+					}
+				}
 				index++;
 			}
 			for (; y < dimY; y++)
@@ -139,7 +153,8 @@ void	VoxelChunk::setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChu
 
 void	VoxelChunk::generateVertexes()
 {
-	vertexes.clear();
+	terrainVertexes.clear();
+	undergroundVertexes.clear();
 
 	const i32 widthMax = paddedDimensions.x - 1;
 	const i32 dimY = paddedDimensions.y - 1;
@@ -168,29 +183,75 @@ void	VoxelChunk::generateVertexes()
 
 				if (map[i + zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::FRONT));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::FRONT), i);
 				}
 				if (map[i - zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::BACK));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::BACK), i);
 				}
 				if (map[i - xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::LEFT));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::LEFT), i);
 				}
 				if (map[i + xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::RIGHT));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::RIGHT), i);
 				}
 				if (map[i + 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::TOP));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::TOP), i);
 				}
 				if (map[i - 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, vertexes, static_cast<size_t>(VertexFaces::BOTTOM));
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::BOTTOM), i);
 				}
 			}
+		}
+	}
+}
+
+void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
+{
+	size_t max = min + 4;
+
+	for (size_t i = min; i < max; i++)
+	{
+		switch (map[voxelIndex])
+		{
+			case VoxelType::Dirt:
+				terrainVertexes.emplace_back
+				(
+					ve::VulkanModel::Vertex
+					{
+						vec3
+						{
+							VOXEL_VERTEXES_ATLAS[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
+							VOXEL_VERTEXES_ATLAS[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
+							VOXEL_VERTEXES_ATLAS[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+						},
+					VOXEL_VERTEXES_ATLAS[i].normal,
+					VOXEL_VERTEXES_ATLAS[i].textureUv
+				});
+				break;
+
+			case VoxelType::Stone:
+				undergroundVertexes.emplace_back
+				(
+					ve::VulkanModel::Vertex
+					{
+						vec3
+						{
+							VOXEL_VERTEXES[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
+							VOXEL_VERTEXES[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
+							VOXEL_VERTEXES[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+						},
+					VOXEL_VERTEXES[i].normal,
+					VOXEL_VERTEXES[i].textureUv
+				});
+				break;
+
+			default:
+				break;
 		}
 	}
 }

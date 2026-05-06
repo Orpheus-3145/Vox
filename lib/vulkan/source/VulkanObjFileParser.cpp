@@ -23,13 +23,14 @@ static float getNextFloat(std::istringstream& stream)
 	return nextFloat;
 }
 
-static vec3	parseColor(std::istringstream& colorData)
+static vec4	parseColor(std::istringstream& colorData)
 {
-	vec3	color;
+	vec4	color;
 
-	color.r = getNextFloat(colorData);
-	color.g = getNextFloat(colorData);
-	color.b = getNextFloat(colorData);
+	color.x = getNextFloat(colorData);
+	color.y = getNextFloat(colorData);
+	color.z = getNextFloat(colorData);
+	color.w = 1.0f;
 	if (colorData.eof() == false)
 	{
 		throw std::runtime_error("Invalid color format");

@@ -6,153 +6,185 @@
 
 namespace vox {
 
-void	Camera::setOrthographicProjection(float left, float right, float top, float bottom, float near, float far)
+mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 {
-	projectionMatrix = mat4{
-		{2.0f / (right - left), 0.0f, 0.0f, 0.0f},
-		{0.0f, 2.0f / (bottom - top), 0.0f, 0.0f},
-		{0.0f, 0.0f, 1.0f / (far - near), 0.0f},
-		{-(right + left) / (right - left), -(bottom + top) / (bottom - top), -near / (far - near), 1.0f}
-	};
+	float fov = CameraSettings::projectionFov;
+	if ( fov > M_2_PI or fov < -M_2_PI )
+		fov = radians(fov);
+	float near = CameraSettings::projectionNear;
+	float far = CameraSettings::projectionFar;
+	const float tanHalfFovy = std::tan(fov / 2.f);
+
+	if (columnMajor == true)
+	{
+		return mat4{
+			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                          0.0f},
+			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                          0.0f},
+			{0.0f,                                0.0f,                far / (far - near),            1.0f},
+			{0.0f,                                0.0f,                -(far * near) / (far - near),  0.0f}
+		};
+	}
+	else
+	{
+		return mat4{
+			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                0.0f                        },
+			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                0.0f                        },
+			{0.0f,                                0.0f,                far / (far - near),  -(far * near) / (far - near)},
+			{0.0f,                                0.0f,                1.0f,                0.0f                        }
+		};
+	}
 }
 
-void	Camera::setPerspectiveProjection(float fovy, float aspect, float near, float far)
+mat4 Camera::getViewMatrix( bool columnMajor ) const noexcept
 {
-	assert(std::abs(aspect - epsilon()) > 0.0f);
-	const float tanHalfFovy = std::tan(fovy / 2.f);
+	float dotLeftPos = vec3::dot(this->cameraRight, this->position);
+	float dotUpPos = vec3::dot(this->cameraUp, this->position);
+	float dotForwardPos = vec3::dot(this->cameraForward, this->position);
 
-	projectionMatrix = mat4{
-		{1.f / (aspect * tanHalfFovy), 0.0f, 0.0f, 0.0f},
-		{0.0f, -1.f / tanHalfFovy, 0.0f, 0.0f},
-		{0.0f, 0.0f, far / (far - near), 1.0f},
-		{0.0f, 0.0f, -(far * near) / (far - near), 0.0f}
-	};
+	if (columnMajor == true)
+	{
+		return mat4{
+			{this->cameraRight.x,  this->cameraUp.x,  -this->cameraForward.x,  0.0f},
+			{this->cameraRight.y,  this->cameraUp.y,  -this->cameraForward.y,  0.0f},
+			{this->cameraRight.z,  this->cameraUp.z,  -this->cameraForward.z,  0.0f},
+			{-dotLeftPos,          -dotUpPos,         dotForwardPos,           1.0f}
+		};
+	}
+	else
+	{
+		return mat4{
+			{this->cameraRight.x,     this->cameraRight.y,     this->cameraRight.z,     -dotLeftPos},
+			{this->cameraUp.x,        this->cameraUp.y,        this->cameraUp.z,        -dotUpPos},
+			{-this->cameraForward.x,  -this->cameraForward.y,  -this->cameraForward.z,  dotForwardPos},
+			{0.0f,                    0.0f,                    0.0f,                    1.0f}
+		};
+	}
 }
 
-void	Camera::setViewMatrix( void ) noexcept {
-	vec3 cameraTarget = this->_position + this->_forward;
-	this->_cameraForward = (cameraTarget - this->_position).normalize();
-	this->_cameraLeft = vec3::cross(this->_cameraForward, this->__up).normalize();
-	this->_cameraUp = vec3::cross(this->_cameraLeft, this->_cameraForward);
-
-	this->viewMatrix = mat4{
-		{this->_cameraLeft.x,  this->_cameraUp.x,  this->_cameraForward.x,  0.0f},
-		{this->_cameraLeft.y,  this->_cameraUp.y,  this->_cameraForward.y,  0.0f},
-		{this->_cameraLeft.z,  this->_cameraUp.z,  this->_cameraForward.z,  0.0f},
-		{-vec3::dot(this->_cameraLeft, this->_position), -vec3::dot(this->_cameraUp, this->_position), -vec3::dot(this->_cameraForward, this->_position), 1.0f}
-	};
+mat4 Camera::getViewMatrixNoTranslation( bool columnMajor ) const noexcept
+{
+	if (columnMajor == true)
+	{
+		return mat4{
+			{this->cameraRight.x,  this->cameraUp.x,  -this->cameraForward.x,  0.0f},
+			{this->cameraRight.y,  this->cameraUp.y,  -this->cameraForward.y,  0.0f},
+			{this->cameraRight.z,  this->cameraUp.z,  -this->cameraForward.z,  0.0f},
+			{0.0f,                 0.0f,              0.0f,                    1.0f}
+		};
+	}
+	else
+	{
+		return mat4{
+			{this->cameraRight.x,     this->cameraRight.y,     this->cameraRight.z,     0.0f},
+			{this->cameraUp.x,        this->cameraUp.y,        this->cameraUp.z,        0.0f},
+			{-this->cameraForward.x,  -this->cameraForward.y,  -this->cameraForward.z,  0.0f},
+			{0.0f,                    0.0f,                    0.0f,                    1.0f}
+		};
+	}
 }
 
-const mat4&	Camera::getProjectionMatrix( void ) const noexcept {
-	return this->projectionMatrix;
+vec3 const& Camera::getCameraPos( void ) const noexcept
+{
+	return this->position;
 }
 
-const mat4&	Camera::getViewMatrix( void ) noexcept {
-	this->setViewMatrix();
-	return this->viewMatrix;
+void Camera::moveForward( float delta ) noexcept
+{
+	this->position -= this->cameraForward * delta;
+	this->updateCameraAxis();
 }
 
-vec3 const& Camera::getCameraPos( void ) noexcept {
-	return this->_position;
+void Camera::moveBackward( float delta ) noexcept
+{
+	this->position += this->cameraForward * delta;
+	this->updateCameraAxis();
 }
 
-void Camera::moveForward( float delta ) noexcept {
-	vec3 progression = this->_position + this->_cameraForward * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
+void Camera::moveRight( float delta ) noexcept
+{
+	this->position += this->cameraRight * delta;
+	this->updateCameraAxis();
 }
 
-void Camera::moveBackward( float delta ) noexcept {
-	vec3 progression = this->_position - this->_cameraForward * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
+void Camera::moveLeft( float delta ) noexcept
+{
+	this->position -= this->cameraRight * delta;
+	this->updateCameraAxis();
 }
 
-void Camera::moveRight( float delta ) noexcept {
-	vec3 progression = this->_position + this->_cameraLeft * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
+void Camera::moveUp( float delta ) noexcept
+{
+	this->position += this->cameraUp * delta;
+	this->updateCameraAxis();
 }
 
-void Camera::moveLeft( float delta ) noexcept {
-	vec3 progression = this->_position - this->_cameraLeft * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
+void Camera::moveDown( float delta ) noexcept
+{
+	this->position -= this->cameraUp * delta;
+	this->updateCameraAxis();
 }
 
-void Camera::moveUp( float delta ) noexcept {
-	vec3 progression = this->_position + this->_cameraUp * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
+void Camera::move( const vec3& direction ) noexcept
+{
+	vec3 right = this->cameraRight * direction.x;
+	vec3 up = this->cameraUp * direction.y;
+	vec3 forward = this->cameraForward * direction.z;
+
+	this->position += up + right + forward;
 }
 
-void Camera::moveDown( float delta ) noexcept {
-	vec3 progression = this->_position - this->_cameraUp * delta;
-	if (progression.x < this->_limits.x)
-		progression.x = this->_limits.x;
-	if (progression.y < this->_limits.y)
-		progression.y = this->_limits.y;
-	if (progression.z < this->_limits.z)
-		progression.z = this->_limits.z;
-	this->_position = progression;
-}
-
-void Camera::rotate( float pitch, float yaw, float roll ) noexcept {
-	if (this->_currentPitch + pitch > 89.0f) {
-		pitch = 89.0f - this->_currentPitch;
-		this->_currentPitch = 89.0f;
-	} else if (this->_currentPitch + pitch < -89.0f) {
-		pitch = -89.0f - this->_currentPitch;
-		this->_currentPitch = -89.0f;
+void Camera::rotate( float pitch, float yaw, float roll ) noexcept
+{
+	if (this->currentPitch + pitch > 89.0f)
+	{
+		pitch = 89.0f - this->currentPitch;
+		this->currentPitch = 89.0f;
+	}
+	else if (this->currentPitch + pitch < -89.0f)
+	{
+		pitch = -89.0f - this->currentPitch;
+		this->currentPitch = -89.0f;
 	} else
-		this->_currentPitch += pitch;
+	{
+		this->currentPitch += pitch;
+	}
 
 	yaw = radians(yaw / 2.0f);
 	pitch = radians(pitch / 2.0f);
 	roll = radians(roll / 2.0f);
 
-	quat qYaw(-yaw, this->__up);
-	quat qPitch(pitch, this->_cameraLeft);
-	quat qRoll(roll, this->_cameraForward);
+	quat qYaw(-yaw, this->_up);
+	quat qPitch(pitch, this->cameraRight);
+	quat qRoll(roll, this->cameraForward);
 
-	quat qForward{0.0f, this->_forward.x, this->_forward.y, this->_forward.z};
+	quat qForward{0.0f, this->forward.x, this->forward.y, this->forward.z};
 	// apply yaw rotation, forward rotates horizontally
 	quat qForwardRotated = quat::product(quat::product(qYaw, qForward), qYaw.conjugated());
 	// apply pitch rotation, forward rotates vertically
 	qForwardRotated = quat::product(quat::product(qPitch, qForwardRotated), qPitch.conjugated());
-	this->_forward = qForwardRotated.normalized().vector();
+	this->forward = qForwardRotated.normalized().vector();
 
-	if (roll != 0.0f) {
+	if (roll != 0.0f)
+	{
 		// apply roll rotation, (global) up rotates
-		quat qUp{0.0f, this->__up.x, this->__up.y, this->__up.z};
+		quat qUp{0.0f, this->_up.x, this->_up.y, this->_up.z};
 		quat qUpRotated = quat::product(quat::product(qRoll, qUp), qRoll.conjugated());
-		this->__up = qUpRotated.normalized().vector();
+		this->_up = qUpRotated.normalized().vector();
 	}
+	this->updateCameraAxis();
+}
+
+void Camera::updateAspect( float aspect ) noexcept
+{
+	assert(std::abs(this->aspect - epsilon()) > 0.0f);
+	this->aspect = aspect;
+}
+
+void Camera::updateCameraAxis( void ) noexcept
+{
+	this->cameraForward = this->forward.normalize();
+	this->cameraRight = vec3::cross(this->_up, this->cameraForward).normalize();
+	this->cameraUp = vec3::cross(this->cameraForward, this->cameraRight).normalize();
 }
 
 }	// namespace vox

@@ -29,12 +29,9 @@ class VulkanSwapChain
 	size_t			imageCount() const noexcept { return swapChainImages.size(); }
 	VkExtent2D		getSwapChainExtent() const noexcept { return swapChainExtent; }
 	VkFormat		getSwapChainImageFormat() const noexcept { return swapChainImageFormat; }
-	uint32_t		width() const noexcept { return swapChainExtent.width; }
-	uint32_t		height() const noexcept { return swapChainExtent.height; }
-	float			extentAspectRatio() { return static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height);}
 
 	VkFormat	findDepthFormat();
-	VkResult	acquireNextImage(uint32_t* imageIndex);
+	VkResult	acquireNextImage(uint32_t* imageIndex) noexcept;
 	VkResult	submitCommandBuffers(const VkCommandBuffer* buffers, uint32_t* imageIndex);
 
 	bool	compareSwapFormats(const VulkanSwapChain& otherSwapChain) const noexcept;
@@ -77,7 +74,7 @@ class VulkanSwapChain
 	std::vector<VkFence>		inFlightFences;
 	std::vector<VkFence>		imagesInFlight;
 	
-	size_t currentFrame = 0;
+	size_t currentFrame = 0UL;
 };
 
 }

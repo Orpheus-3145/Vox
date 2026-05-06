@@ -26,7 +26,7 @@ VulkanBuffer::VulkanBuffer(VulkanDevice& device, VkDeviceSize instanceSize,	uint
  *
  * @return VkResult of the buffer mapping call
  */
-VkDeviceSize	VulkanBuffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment)
+VkDeviceSize	VulkanBuffer::getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) noexcept
 {
 	if (minOffsetAlignment > 0)
 	{
@@ -70,7 +70,7 @@ VulkanBuffer::VulkanBuffer( VulkanBuffer&& other ) :
  *
  * @return VkResult of the buffer mapping call
  */
-VkResult	VulkanBuffer::map(VkDeviceSize size, VkDeviceSize offset)
+VkResult	VulkanBuffer::map(VkDeviceSize size, VkDeviceSize offset) noexcept
 {
 	assert(buffer != VK_NULL_HANDLE && memory != VK_NULL_HANDLE && "Called map on buffer before create");
 	return vkMapMemory(vulkanDevice.device(), memory, offset, size, 0, &mapped);
@@ -81,7 +81,7 @@ VkResult	VulkanBuffer::map(VkDeviceSize size, VkDeviceSize offset)
  *
  * @note Does not return a result as vkUnmapMemory can't fail
  */
-void VulkanBuffer::unmap()
+void VulkanBuffer::unmap() noexcept
 {
 	if (mapped != nullptr)
 	{
@@ -99,9 +99,9 @@ void VulkanBuffer::unmap()
  * @param offset (Optional) Byte offset from beginning of mapped region
  *
  */
-void	VulkanBuffer::writeToBuffer(const void *data, VkDeviceSize size, VkDeviceSize offset)
+void	VulkanBuffer::writeToBuffer(const void *data, VkDeviceSize size, VkDeviceSize offset) noexcept
 {
-	assert(mapped && "Cannot copy to unmapped buffer");
+	assert(mapped && data && "Cannot copy to unmapped buffer or data source null");
 
 	unsigned char* memOffset = static_cast<unsigned char*>(mapped);
 	memOffset += offset;
@@ -126,7 +126,7 @@ void	VulkanBuffer::writeToBuffer(const void *data, VkDeviceSize size, VkDeviceSi
  *
  * @return VkResult of the flush call
  */
-VkResult	VulkanBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
+VkResult	VulkanBuffer::flush(VkDeviceSize size, VkDeviceSize offset) noexcept
 {
 	VkMappedMemoryRange mappedRange = {};
 
@@ -148,7 +148,7 @@ VkResult	VulkanBuffer::flush(VkDeviceSize size, VkDeviceSize offset)
  *
  * @return VkResult of the invalidate call
  */
-VkResult	VulkanBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
+VkResult	VulkanBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) noexcept
 {
 	VkMappedMemoryRange mappedRange = {};
 
@@ -167,9 +167,9 @@ VkResult	VulkanBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset)
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-VkDescriptorBufferInfo	VulkanBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) const
+VkDescriptorBufferInfo	VulkanBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) const noexcept
 {
-	return VkDescriptorBufferInfo{ buffer, offset, size };
+	return VkDescriptorBufferInfo{buffer, offset, size};
 }
 
 /**
@@ -179,7 +179,7 @@ VkDescriptorBufferInfo	VulkanBuffer::descriptorInfo(VkDeviceSize size, VkDeviceS
  * @param index Used in offset calculation
  *
  */
-void	VulkanBuffer::writeToIndex(const void *data, int index)
+void	VulkanBuffer::writeToIndex(const void *data, int32_t index) noexcept
 {
 	writeToBuffer(data, instanceSize, index * alignmentSize);
 }
@@ -190,7 +190,7 @@ void	VulkanBuffer::writeToIndex(const void *data, int index)
  * @param index Used in offset calculation
  *
  */
-VkResult	VulkanBuffer::flushIndex(int index)
+VkResult	VulkanBuffer::flushIndex(int32_t index) noexcept
 {
 	return flush(alignmentSize, index * alignmentSize);
 }
@@ -202,7 +202,7 @@ VkResult	VulkanBuffer::flushIndex(int index)
  *
  * @return VkDescriptorBufferInfo for instance at index
  */
-VkDescriptorBufferInfo	VulkanBuffer::descriptorInfoForIndex(int index)
+VkDescriptorBufferInfo	VulkanBuffer::descriptorInfoForIndex(int32_t index) noexcept
 {
 	return descriptorInfo(alignmentSize, index * alignmentSize);
 }
@@ -216,7 +216,7 @@ VkDescriptorBufferInfo	VulkanBuffer::descriptorInfoForIndex(int index)
  *
  * @return VkResult of the invalidate call
  */
-VkResult	VulkanBuffer::invalidateIndex(int index)
+VkResult	VulkanBuffer::invalidateIndex(int32_t index) noexcept
 {
 	return invalidate(alignmentSize, index * alignmentSize);
 }

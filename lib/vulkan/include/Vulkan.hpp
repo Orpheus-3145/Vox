@@ -15,5 +15,4 @@
 #include "VulkanObject.hpp"
 #include "VulkanRenderer.hpp"
 #include "VulkanTexture.hpp"
-#include "VulkanFrameInfo.hpp"
 #include "VulkanUtils.hpp"

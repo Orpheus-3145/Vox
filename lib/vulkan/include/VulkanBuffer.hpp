@@ -23,33 +23,33 @@ class VulkanBuffer
 	VulkanBuffer(VulkanBuffer&&);
 	VulkanBuffer& operator=(const VulkanBuffer&) = delete;
 
-	VkResult	map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-	void		unmap();
+	VkResult	map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
+	void		unmap() noexcept;
 
-	void		writeToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
-	VkResult	flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+	void		writeToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
+	VkResult	flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
 	
-	VkDescriptorBufferInfo	descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const;
-	VkResult				invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+	VkDescriptorBufferInfo	descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const noexcept;
+	VkResult				invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
 
-	void		writeToIndex(const void* data, int index);
-	VkResult	flushIndex(int index);
-	VkDescriptorBufferInfo	descriptorInfoForIndex(int index);
-	VkResult	invalidateIndex(int index);
+	void		writeToIndex(const void* data, int index) noexcept;
+	VkResult	flushIndex(int index) noexcept;
+	VkDescriptorBufferInfo	descriptorInfoForIndex(int index) noexcept;
+	VkResult	invalidateIndex(int index) noexcept;
 
-	VkBuffer		getBuffer() const { return buffer; }
-	void*			getMappedMemory() const { return mapped; }
-	uint32_t		getInstanceCount() const { return instanceCount; }
-	VkDeviceSize	getInstanceSize() const { return instanceSize; }
-	VkDeviceSize	getAlignmentSize() const { return instanceSize; }
-	VkDeviceSize	getBufferSize() const { return bufferSize; }
+	VkBuffer		getBuffer() const noexcept { return buffer; }
+	void*			getMappedMemory() const noexcept { return mapped; }
+	uint32_t		getInstanceCount() const noexcept { return instanceCount; }
+	VkDeviceSize	getInstanceSize() const noexcept { return instanceSize; }
+	VkDeviceSize	getAlignmentSize() const noexcept { return instanceSize; }
+	VkDeviceSize	getBufferSize() const noexcept { return bufferSize; }
 
-	VkBufferUsageFlags	getUsageFlags() const { return usageFlags; }
-	VkMemoryPropertyFlags	getMemoryPropertyFlags() const { return memoryPropertyFlags; }
+	VkBufferUsageFlags		getUsageFlags() const noexcept { return usageFlags; }
+	VkMemoryPropertyFlags	getMemoryPropertyFlags() const noexcept { return memoryPropertyFlags; }
 
 	private:
 
-	static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment);
+	static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) noexcept;
 
 	VulkanDevice&	vulkanDevice;
 	void*			mapped = nullptr;

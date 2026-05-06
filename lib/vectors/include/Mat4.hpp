@@ -30,7 +30,7 @@ class mat4
 
 	mat4	operator*(const mat4& other) const;
 	mat4&	operator*=(const mat4& other);
-	vec3	operator*(vec3 const&) const;
+	vec4	operator*(vec4 const&) const;
 
 	mat4&	transpose() noexcept;
 	mat4	transposed() const noexcept;

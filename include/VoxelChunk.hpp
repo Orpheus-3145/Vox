@@ -2,16 +2,14 @@
 
 #include <array>
 #include <vector>
+
 #include "VulkanModel.hpp"
 #include "Vectors.hpp"
+#include "NoiseGenerator.hpp"
+#include "TypeAliases.hpp"
+
 
 namespace vox {
-
-using ui8 = uint8_t;
-using i32 = int32_t;
-using ui32 = uint32_t;
-using VertexVector = std::vector<ve::VulkanModel::Vertex>;
-using IndexVector = std::vector<ui32>;
 
 enum class VoxelType : ui8
 {
@@ -24,8 +22,6 @@ enum class VoxelType : ui8
 
 class VoxelChunk
 {
-	using VertexVector = std::vector<ve::VulkanModel::Vertex>;
-
 	public:
 
 		VoxelChunk() = delete;
@@ -35,35 +31,40 @@ class VoxelChunk
 		VoxelChunk(VoxelChunk&&) noexcept = default;
 		VoxelChunk& operator=(VoxelChunk&&) noexcept = default;
 		VoxelChunk& operator=(const VoxelChunk&) = delete;
-	
+
 		static vec3i	chunkDimensions;
 		static vec3i	paddedDimensions;
 		static ui32		paddedSize;
 		static ui32		chunkSize;
 
-		void	generateMap(float seed);
+		void	generateMap();
 		void	generateVertexes();
 
-		const VertexVector&	getVertexData() const noexcept { return vertexes; }
+		const VertexVector&	getVertexTerrainData() const noexcept { return terrainVertexes; }
+		const VertexVector&	getVertexUndergroundData() const noexcept { return undergroundVertexes; }
 
 		void	setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChunk* south, VoxelChunk* west) noexcept;
 		void	setLocation(vec2i loc);
 
-		size_t	getVertexSize() const noexcept { return vertexes.size(); }
+		size_t	getVertexTerrainSize() const noexcept { return terrainVertexes.size(); }
+		size_t	getVertexUndergroundSize() const noexcept { return undergroundVertexes.size(); }
 		i32		index(i32 x, i32 y, i32 z) const noexcept { return ((z * paddedDimensions.x) + x) * paddedDimensions.y + y; }
 		VoxelType	at(i32 x, i32 y, i32 z) const noexcept { return map[index(x, y, z)]; }
 		VoxelType	at(i32 index) const noexcept { return map[index]; }
 		const VoxelType*	dataAt(i32 index) const noexcept { return map.data() + index; }
 
 	private:
-		
-		vec2i	location;
-		vec3i	worldPosition;
-		std::vector<VoxelType>	map;
-		VertexVector			vertexes;
-		std::array<VoxelChunk*, 4>	adjacentChunks{};
-	
+		void	addVoxelFace(const vec3& voxelLocation, size_t faceIndex, i32 voxelIndex);
 		void	copyAdjacentData();
+
+		vec2i			location;
+		vec3i			worldPosition;
+		NoiseGenerator	generator;
+
+		std::vector<VoxelType>		map;
+		VertexVector				terrainVertexes;
+		VertexVector				undergroundVertexes;
+		std::array<VoxelChunk*, 4>	adjacentChunks{};
 };
 
 }	// namespace vox

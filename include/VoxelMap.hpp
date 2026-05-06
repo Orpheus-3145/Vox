@@ -4,12 +4,10 @@
 #include "Vectors.hpp"
 #include "VoxelChunk.hpp"
 #include "World.hpp"
+#include "TypeAliases.hpp"
+
 
 namespace vox {
-
-using ui8 = uint8_t;
-using i32 = int32_t;
-using ui32 = uint32_t;
 
 enum class Direction : ui8
 {
@@ -22,7 +20,6 @@ enum class Direction : ui8
 class VoxelMap
 {
 	public:
-
 		VoxelMap() = delete;
 		VoxelMap(ThreadManager& threadManager);
 		~VoxelMap() = default;
@@ -33,23 +30,22 @@ class VoxelMap
 
 		bool	update(const vec3& newPosition);
 		void	init();
-		vec3	getMapMiddle() const noexcept;
-		std::unique_ptr<ve::VulkanModel> createNewModel( ve::VulkanDevice& device );
 
-		private:
+		std::unique_ptr<ve::VulkanModel> createNewModelTerrain( ve::VulkanDevice& device, ui32 binding = 0U );
+		std::unique_ptr<ve::VulkanModel> createNewModelUnderground( ve::VulkanDevice& device, ui32 binding = 0U );
 
+	private:
 		std::vector<VoxelChunk>	map;
-		ui32	worldSeed;
 
 		i32 	squareSize;
 		vec2i	minPositions;
 		vec2i	maxPositions;
 		vec2i	playerOnChunk;
 		vec3	rawPosition;
-		
+
 		VertexVector	modelVector;
 		IndexVector		modelIndexes;
-		
+
 		ThreadManager&	threadManager;
 
 		void	north();

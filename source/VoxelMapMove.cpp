@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+
 namespace vox {
 
 /*	From -x (left/west) to +x (right/east) horizontally, y (up/north) to -y (down/south) vertically. */
@@ -76,7 +77,7 @@ void	VoxelMap::generateRow(i32 index)
 	for (i32 i = 0; i < squareSize; i++)
 	{
 		map[index].setLocation({minPositions.x + i, Ycoord});
-		map[index].generateMap(worldSeed);
+		map[index].generateMap();
 		index++;
 	}
 }
@@ -88,7 +89,7 @@ void	VoxelMap::generateColumn(i32 index)
 	for (i32 i = 0; i < squareSize; i++)
 	{
 		map[index].setLocation({Xcoord, minPositions.y + i});
-		map[index].generateMap(worldSeed);
+		map[index].generateMap();
 		index += squareSize;
 	}
 }

@@ -1,8 +1,9 @@
 #include "Stopwatch.hpp"
+#include "TypeAliases.hpp"
+
 #include <iostream>
 
-using i64 = int64_t;
-using ui64 = uint64_t;
+namespace vox {
 
 double	Stopwatch::elapsed(Unit type) const noexcept
 {
@@ -52,3 +53,5 @@ std::ostream&	operator<<(std::ostream& os, const Stopwatch& stopwatch)
 	os << std::endl;
 	return os;
 }
+
+}	// namespace vox

@@ -15,10 +15,12 @@ void	hashCombine(std::size_t& seed, const T& v, const Rest&... rest)
 	(hashCombine(seed, rest), ...);
 };
 
-float	randomFloat();
-vec3	generateRandomColor();
-vec3	generateRandomGreyscale();
-vec3	generateSoftGreyscale();
+float		randomFloat(float min = 0.0f, float max = 1.0f);
+int32_t		randomInt(int32_t min = -500, int32_t max = 500);
+uint32_t	randomUint(uint32_t min = 0U, uint32_t max = 1000U);
+vec3		generateRandomColor();
+vec3		generateRandomGreyscale();
+vec3		generateSoftGreyscale();
 
 std::vector<char>	readFile(std::string const& filePath);
 

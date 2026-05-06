@@ -19,7 +19,7 @@ VulkanBindingSet&	VulkanBindingSet::addBinding( uint32_t binding, VkDescriptorTy
 }
 
 
-VulkanDescriptorSetFactory::~VulkanDescriptorSetFactory()
+VulkanDescriptorSetFactory::~VulkanDescriptorSetFactory( void )
 {
 	if (this->descriptorPool != VK_NULL_HANDLE)
 		vkDestroyDescriptorPool(this->vulkanDevice.device(), this->descriptorPool, nullptr);
@@ -53,7 +53,7 @@ VulkanDescriptorSetFactory&	VulkanDescriptorSetFactory::setFramesInFlight( uint3
 	return *this;
 }
 
-VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::createPool()
+VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::createPool( void )
 {
 	for ( VkDescriptorPoolSize& poolConfig : this->poolSizes )
 		poolConfig.descriptorCount *= this->framesInFlight;
@@ -72,7 +72,7 @@ VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::createPool()
 	return *this;
 }
 
-VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::resetPool() noexcept
+VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::resetPool( void ) noexcept
 {
 	if (this->descriptorPool != VK_NULL_HANDLE)
 		vkResetDescriptorPool(this->vulkanDevice.device(), this->descriptorPool, 0);
@@ -143,7 +143,7 @@ VulkanDescriptorSet::VulkanDescriptorSet(
 	}
 }
 
-VulkanDescriptorSet::~VulkanDescriptorSet()
+VulkanDescriptorSet::~VulkanDescriptorSet( void )
 {
 	if (this->descriptorSetLayout != VK_NULL_HANDLE)
 		vkDestroyDescriptorSetLayout(this->vulkanDevice.device(), this->descriptorSetLayout, nullptr);
@@ -167,14 +167,20 @@ void VulkanDescriptorSet::setCurrentFrame(uint32_t frame) noexcept
 	this->currentFrame = frame;
 }
 
-void VulkanDescriptorSet::updateUbo(int32_t binding, void const* data)
+void VulkanDescriptorSet::updateUbo(int32_t binding, void const* data) noexcept
+{
+	assert(this->buffers.count(binding) != 0U && "Buffer binding not found in descriptor set");
+	this->buffers[binding][this->currentFrame]->writeToBuffer(data);
+}
+
+void VulkanDescriptorSet::updateUboAll(int32_t binding, void const* data) noexcept
 {
 	assert(this->buffers.count(binding) != 0U && "Buffer binding not found in descriptor set");
 	for (uint32_t frame = 0; frame < this->framesInFlight; frame++)
 		this->buffers[binding][frame]->writeToBuffer(data);
 }
 
-void VulkanDescriptorSet::bind(VkCommandBuffer commandBuffer, VulkanPipeline const& pipeline, uint32_t setIndex)
+void VulkanDescriptorSet::bindSet(VkCommandBuffer commandBuffer, VulkanPipeline const& pipeline, uint32_t setIndex) noexcept
 {
 	vkCmdBindDescriptorSets(
 		commandBuffer,
@@ -182,13 +188,13 @@ void VulkanDescriptorSet::bind(VkCommandBuffer commandBuffer, VulkanPipeline con
 		pipeline.getPipelineLayout(),
 		setIndex,
 		1,
-		&this->descriptorSets[currentFrame],
+		&this->descriptorSets[this->currentFrame],
 		0,
 		nullptr
 	);
 }
 
-void VulkanDescriptorSet::addBufferToDescriptor(uint32_t binding, uint32_t bufferSize, void const* data)
+void VulkanDescriptorSet::addBufferDescriptor(uint32_t binding, uint32_t bufferSize) noexcept
 {
 	assert(this->buffers.count(binding) != 0U && "Buffer binding not found in descriptor set");
 
@@ -202,7 +208,7 @@ void VulkanDescriptorSet::addBufferToDescriptor(uint32_t binding, uint32_t buffe
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		);
 		this->buffers[binding][frame]->map();
-		this->buffers[binding][frame]->writeToBuffer(data);
+		// this->buffers[binding][frame]->writeToBuffer(data);
 
 		VkDescriptorBufferInfo bufferInfo = this->buffers[binding][frame]->descriptorInfo();
 
@@ -217,7 +223,7 @@ void VulkanDescriptorSet::addBufferToDescriptor(uint32_t binding, uint32_t buffe
 	}
 }
 
-void VulkanDescriptorSet::addSamplerToDescriptor(uint32_t binding, const std::string& texturePath, TextureType type)
+void VulkanDescriptorSet::addSamplerDescriptor(uint32_t binding, const std::string& texturePath, TextureType type) noexcept
 {
 	assert(this->textures.count(binding) != 0U && "Sampler binding not found in descriptor set");
 

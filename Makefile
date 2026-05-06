@@ -1,48 +1,53 @@
 TARGET			:=	ft_vox
+
 CC				:=	c++
-BASE_CPPFLAGS	:=	-std=c++2b -Wall -Wextra -Werror -g
-RELEASE_FLAGS	:=	-DNDEBUG -flto -O3 -march=native -fno-math-errno
-DEBUG_FLAGS		:=	-g -fsanitize=address
-CPPFLAGS		:=	$(BASE_CPPFLAGS)
+CPP_FLAGS		:=	-std=c++2b -Wall -Wextra -Werror
+DEBUG_FLAGS		:=	-O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+RELEASE_FLAGS	:=	-O3 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -fno-rtti -ffast-math -funroll-loops
+# -flto				--> apply optimizations between different .o files
+# -fno-math-errno	--> do not update errno variable if cmath functions fail
+# -fno-plt 			--> optimize calls to linked libs functions
+# -fno-rtti			-->	use this only if dynamic_casts are not used
+# -ffast-math		-->	approximation math for floating points
+# -funroll-loops	-->	unpack loops
+DEPS_FLAGS		:=	-MMD -MP -MF
+GLSLC			:=	$(shell which glslc)
 
-INCLUDE 		:=	-I./include \
-					-I/opt/homebrew/include \
-					-I./lib/vulkan/include \
-					-I./lib/vectors/include \
-					-I/usr/local/include
-
-SRC_DIR		:= source
-BUILD_DIR	:= build
-OBJ_DIR		:= $(BUILD_DIR)/obj
-DEPS_DIR	:= $(BUILD_DIR)/deps
-
-LIB_DIR		:= lib
-VECTOR_DIR	:= $(LIB_DIR)/vectors
-VULKAN_DIR	:= $(LIB_DIR)/vulkan
-
-LIBS		:= $(VULKAN_DIR)/build/libvk.a $(VECTOR_DIR)/build/libvectors.a
+SRC_DIR		:=	source
+BUILD_DIR	:=	build
+OBJ_DIR		:=	$(BUILD_DIR)/obj
+DEPS_DIR	:=	$(BUILD_DIR)/deps
+SHADERS_DIR	:=	shaders
+VECTOR_DIR	:=	lib/vectors
+VULKAN_DIR	:=	lib/vulkan
 
 SOURCES		:=	$(shell find $(SRC_DIR) -type f -name '*.cpp')
 OBJECTS		:=	$(addprefix $(OBJ_DIR)/,$(notdir $(SOURCES:%.cpp=%.o)))
-DEPS		:= $(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d))
+DEPS		:=	$(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d))
 
-UNAME_S		:=	$(shell uname -s)
-
-SHADERS_DIR	:=	shaders
 SHADERS_SRC	:=	$(shell ls $(SHADERS_DIR))
+SHADERS_OBJ	:=	$(addprefix $(BUILD_DIR)/,$(addsuffix .spv,$(SHADERS_SRC)))
 
-GLSLC				:= $(shell which glslc)
-SHADERS_COMPILED	:= $(addprefix $(BUILD_DIR)/,$(addsuffix .spv,$(SHADERS_SRC)))
+INCLUDE 	:=	-Iinclude \
+				-I$(VECTOR_DIR)/include \
+				-I$(VULKAN_DIR)/include
 
-RPATH_DIR	:=	/usr/local/lib
-LFLAGS		:=	-L/opt/homebrew/lib -lglfw -framework Cocoa -framework IOKit -framework OpenGL
-LDFLAGS		:=	-lvulkan -Wl,-rpath,$(RPATH_DIR)
+LIBS		:=	$(VECTOR_DIR)/build/libvectors.a $(VULKAN_DIR)/build/libvk.a
+SYS_LIBS	:=	-lvulkan
+
+PLATFORM	:=	$(shell uname -s)
+
+ifeq ($(PLATFORM), Linux)
+	SYS_LIBS	+= -lGL -lX11 -lpthread -lXrandr -lXi $(shell pkg-config --static --libs glfw3)
+
+else ifeq ($(PLATFORM), Darwin)
+	INCLUDE		+= -isystem /opt/homebrew/include -isystem /usr/local/include
+	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,$(/usr/local/lib) -framework Cocoa -framework IOKit -framework OpenGL
+
+endif
 
 # source /opt/vulkan/current/setup-env.sh
-ifeq ($(UNAME_S), Linux)
-	INCLUDES += -isystem $(USER)/.capt/root/usr/include
-	LFLAGS = -lGL -lX11 -lpthread -lXrandr -lXi $(shell pkg-config --static --libs glfw3)
-endif
+
 
 all: libs $(TARGET)
 
@@ -53,9 +58,9 @@ libs:
 run: all
 	./$(TARGET)
 
-rerun: fclean run
+rerun: re run
 
-release: CPPFLAGS = $(BASE_CPPFLAGS) $(RELEASE_FLAGS)
+release: CPP_FLAGS += $(RELEASE_FLAGS)
 release: libs-release $(TARGET)
 
 libs-release: 
@@ -65,9 +70,9 @@ libs-release:
 run-release: release
 	./$(TARGET)
 
-rerun-release: fclean run-release
+rerun-release: re run-release
 
-debug: CPPFLAGS = $(BASE_CPPFLAGS) $(DEBUG_FLAGS)
+debug: CPP_FLAGS += $(DEBUG_FLAGS)
 debug: libs-debug $(TARGET)
 
 libs-debug: 
@@ -77,16 +82,16 @@ libs-debug:
 run-debug: debug
 	./$(TARGET)
 
-rerun-debug: fclean run-debug
+rerun-debug: re run-debug
 
 $(BUILD_DIR) $(OBJ_DIR) $(DEPS_DIR):
 	mkdir -p $@
 
-$(TARGET): $(LIBS) $(OBJ_DIR) $(DEPS_DIR) $(SHADERS_COMPILED) $(OBJECTS)
-	$(CC) $(CPPFLAGS) $(OBJECTS) $(INCLUDE) -o $(TARGET) $(LIBS) $(LDFLAGS) $(LFLAGS)
+$(TARGET): $(LIBS) $(OBJ_DIR) $(DEPS_DIR) $(SHADERS_OBJ) $(OBJECTS)
+	$(CC) $(CPP_FLAGS) $(SYS_LIBS) $(INCLUDE) $(OBJECTS) $(LIBS) $(LIBS) -o $(TARGET)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	$(CC) $(CPPFLAGS) $(INCLUDE) -MMD -MP -MF $(DEPS_DIR)/$*.d -c $< -o $@
+	$(CC) $(CPP_FLAGS) $(INCLUDE) $(DEPS_FLAGS) $(DEPS_DIR)/$*.d -c $< -o $@
 
 $(BUILD_DIR)/%.spv: $(SHADERS_DIR)/%
 	$(GLSLC) $< -o $@
@@ -106,4 +111,8 @@ fclean:
 
 re: fclean all
 
-.PHONY: all libs run rerun release libs-release run-release rerun-release debug libs-debug run-debug rerun-debug clean fclean re
+re-release: fclean release
+
+re-debug: fclean debug
+
+.PHONY: all libs run rerun release libs-release run-release rerun-release debug libs-debug run-debug rerun-debug clean fclean re re-release re-debug

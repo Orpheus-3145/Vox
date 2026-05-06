@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+namespace vox {
+
 using Clock = std::chrono::steady_clock;
 using Time = Clock::time_point;
 using Duration = Clock::duration;
@@ -17,7 +19,7 @@ enum class Unit
 class Stopwatch
 {
 	public:
-		Stopwatch() noexcept : startTime(now()) {};
+		Stopwatch() noexcept : startTime(Clock::now()) {};
 		~Stopwatch() noexcept = default;
 		Stopwatch(const Stopwatch& other) = delete;
 		Stopwatch(Stopwatch&& other) = delete;
@@ -32,9 +34,9 @@ class Stopwatch
 		double		elapsed(Unit type) const noexcept;
 		
 	private:
-		Time	startTime;
-		Time	endTime;
-		Duration	elapsedTime;
+		Time		startTime{};
+		Time		endTime{};
+		Duration	elapsedTime{};
 		
 		Time	now() const noexcept { return Clock::now(); }
 		double	ns() const noexcept { return std::chrono::duration<double, std::nano>(elapsedTime).count(); }
@@ -44,3 +46,5 @@ class Stopwatch
 };
 
 std::ostream&	operator<<(std::ostream& os, const Stopwatch& stopwatch);
+
+}	// namespace vox

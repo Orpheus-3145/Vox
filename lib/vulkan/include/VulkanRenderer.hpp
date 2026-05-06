@@ -26,16 +26,16 @@ class VulkanRenderer
 	VulkanRenderer& operator=(const VulkanRenderer&) = delete;
 
 	VkRenderPass	getSwapChainRenderPass() const noexcept { return vulkanSwapChain->getRenderPass();}
-	float			getAspectRatio() const noexcept { return vulkanSwapChain->extentAspectRatio(); }
 	bool			isFrameInProgress() const noexcept { return isFrameStarted; }
+	void			recreateSwapChain();
 
-	VkCommandBuffer	getCurrentCommandBuffer() const
+	VkCommandBuffer	getCurrentCommandBuffer() const noexcept
 	{
 		assert(isFrameStarted && "Cannot get command buffer when frame not in progress");
 		return commandBuffers[currentFrameIndex];
 	}
 
-	int	getCurrentFrameIndex() const
+	int32_t	getCurrentFrameIndex() const noexcept
 	{
 		assert(isFrameStarted && "Cannot get frame index when frame not in progress");
 		return currentFrameIndex;
@@ -44,12 +44,11 @@ class VulkanRenderer
 	VkCommandBuffer	beginFrame();
 	void			endFrame();
 	void			beginSwapChainRenderPass(VkCommandBuffer commandBuffer);
-	void			endSwapChainRenderPass(VkCommandBuffer commandBuffer);
+	void			endSwapChainRenderPass(VkCommandBuffer commandBuffer) noexcept;
 
 	private:
 
 	void	createCommandBuffers();
-	void	recreateSwapChain();
 
 	VulkanWindow&	vulkanWindow;
 	VulkanDevice&	vulkanDevice;
@@ -62,4 +61,4 @@ class VulkanRenderer
 	bool		isFrameStarted;
 };
 
-}
+} // namespace ve

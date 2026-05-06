@@ -7,7 +7,8 @@
 #include <cstring>
 
 
-mat4	mat4::idMat( void ) {
+mat4	mat4::idMat( void )
+{
 	mat4	id(0.0f);
 
 	id.data[0][0] = 1.0f;
@@ -17,7 +18,8 @@ mat4	mat4::idMat( void ) {
 	return id;
 }
 
-mat4	mat4::transMat( vec3 const& transVect ) {
+mat4	mat4::transMat( vec3 const& transVect )
+{
 	mat4	trans = idMat();
 
 	trans.data[0][3] = transVect.x;
@@ -26,7 +28,8 @@ mat4	mat4::transMat( vec3 const& transVect ) {
 	return trans;
 }
 
-mat4	mat4::scaleMat( vec3 const& scaleVect ) {
+mat4	mat4::scaleMat( vec3 const& scaleVect )
+{
 	mat4	scale = idMat();
 
 	scale.data[0][0] = scaleVect.x;
@@ -36,7 +39,8 @@ mat4	mat4::scaleMat( vec3 const& scaleVect ) {
 	return scale;
 }
 
-mat4	mat4::rotationMat( float angleRadians, vec3 const& axis ) {
+mat4	mat4::rotationMat( float angleRadians, vec3 const& axis )
+{
 
 	mat4		rotation(0.0f);
 	const float	cosAngle = std::cos(angleRadians);
@@ -178,11 +182,12 @@ mat4&	mat4::operator*=(const mat4& other)
 	return *this;
 }
 
-vec3	mat4::operator*( vec3 const& v ) const {
-	return vec3{
-		(*this)[0][0] * v.x + (*this)[0][1] * v.y + (*this)[0][2] * v.z + (*this)[0][3],
-		(*this)[1][0] * v.x + (*this)[1][1] * v.y + (*this)[1][2] * v.z + (*this)[1][3],
-		(*this)[2][0] * v.x + (*this)[2][1] * v.y + (*this)[2][2] * v.z + (*this)[2][3]
+vec4	mat4::operator*( vec4 const& v ) const {
+	return vec4{
+		(*this)[0][0] * v.x + (*this)[0][1] * v.y + (*this)[0][2] * v.z + (*this)[0][3] * v.w,
+		(*this)[1][0] * v.x + (*this)[1][1] * v.y + (*this)[1][2] * v.z + (*this)[1][3] * v.w,
+		(*this)[2][0] * v.x + (*this)[2][1] * v.y + (*this)[2][2] * v.z + (*this)[2][3] * v.w,
+		(*this)[3][0] * v.x + (*this)[3][1] * v.y + (*this)[3][2] * v.z + (*this)[3][3] * v.w,
 	};
 }
 

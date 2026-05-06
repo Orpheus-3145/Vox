@@ -73,7 +73,7 @@ VulkanSwapChain::~VulkanSwapChain()
 	}
 }
 
-VkResult	VulkanSwapChain::acquireNextImage(uint32_t *imageIndex)
+VkResult	VulkanSwapChain::acquireNextImage(uint32_t *imageIndex) noexcept
 {
 	vkWaitForFences(
 		device.device(),

@@ -57,6 +57,7 @@ class VulkanDevice
 	
 	SwapChainSupportDetails	getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
 	QueueFamilyIndices		findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
+	uint32_t				getMaxPushConstantsSize() { return properties.limits.maxPushConstantsSize; };
 
 	uint32_t	findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	VkFormat	findSupportedFormat(
