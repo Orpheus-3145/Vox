@@ -208,7 +208,6 @@ void VulkanDescriptorSet::addBufferDescriptor(uint32_t binding, uint32_t bufferS
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 		);
 		this->buffers[binding][frame]->map();
-		// this->buffers[binding][frame]->writeToBuffer(data);
 
 		VkDescriptorBufferInfo bufferInfo = this->buffers[binding][frame]->descriptorInfo();
 

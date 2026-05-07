@@ -44,6 +44,20 @@ struct Config
 	static constexpr char textureWaterPath[] = "textures/texture_water_mono.jpeg";
 	static constexpr char textureDirtPath[] = "textures/texture_dirt_atlas.jpeg";
 	static constexpr char textureSkyboxPath[] = "textures/skybox1.png";
+
+	static constexpr ve::MaterialData dirtMaterial{
+		vec4(0.15f, 0.15f, 0.15f, 1.0f),	// ambientColor
+		vec4(0.2f, 0.2f, 0.2f, 1.0f),		// diffuseColor
+		vec4(0.2f, 0.2f, 0.2f, 1.0f),		// specularColor
+		8.0f,								// shininess
+		1.0f								// opacity
+	};
+	static constexpr ve::LightData lightMaterial{
+		vec4{0.2f, 0.2f, 0.2f, 1.0f},			// lightAmbientColor
+		vec4{0.6f, 0.6f, 0.6f, 1.0f},			// lightColor
+		vec4{0.1f, 0.1f, 0.1f, 1.0f},			// lightSpecularColor
+		vec4{0.0f, -300.0f, 0.0f, 0.0f}			// lightDirection
+	};
 };
 
 } // namespace vox

@@ -146,7 +146,6 @@ mat4 VulkanObject::getNormalViewMatrix(const mat4& viewNoTranslation, bool colum
 	// ViewMatrix: if it has no translation it has only rotation features, so is again orthogonal
 	//		so  View⁻¹ = Viewᵀ --> (View⁻¹)ᵀ = (Viewᵀ)ᵀ = View
 	// therefore: normalMatrix = ViewNoTrans * R * [S⁻¹]
-
 	if (this->transformationApplied == false)
 	{
 		return viewNoTranslation;
@@ -163,7 +162,7 @@ mat4 VulkanObject::getNormalViewMatrix(const mat4& viewNoTranslation, bool colum
 	}
 }
 
-MeshlayoutDescription VulkanObject::getVboLayout() const noexcept
+MeshLayoutDescription VulkanObject::getVboLayout() const noexcept
 {
 	assert(this->model != nullptr && "Model not set");
 	return this->model->getVboLayout();

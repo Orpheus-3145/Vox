@@ -9,34 +9,6 @@
 
 namespace vox {
 
-// Phong lighting model, a combination of the following:
-// Ambient lighting: even when it is dark there is usually still some light somewhere in the world
-// 		(the moon, a distant light) so objects are almost never completely dark. To simulate this
-// 		we use an ambient lighting constant that always gives the object some color.
-// Diffuse lighting: simulates the directional impact a light object has on an object. This is the
-// 		most visually significant component of the lighting model. The more a part of an object
-// 		faces the light source, the brighter it becomes.
-// Specular lighting: simulates the bright spot of a light that appears on shiny objects. Specular
-// 		highlights are more inclined to the color of the light than the color of the object.
-constexpr ve::MeshMaterial dirtMaterial{
-	vec4(0.15f),						// ambientColor
-	vec4(0.2f, 0.2f, 0.2f, 1.0f),		// diffuseColor
-	vec4(0.2f),							// specularColor
-	8.0f,								// shininess
-	1.0f								// opacity
-};
-
-
-void LightUBO::updateLightDir( vec3 const& lightDir, mat4 const& viewMatrix ) noexcept
-{
-	// light dir goes from fragment to light source, but shaders assume the opposite, so it has to be negated
-	// also, viewMatrix has to be in row major
-	vec4 lightDir4 = vec4{lightDir * -1, 0.0f};
-	lightDir4 = viewMatrix * lightDir4;
-	lightDir4.normalize();
-	this->lightDir = lightDir4;
-}
-
 /**
  * Create the engine of the game
  */
@@ -55,17 +27,34 @@ Vox::Vox( void ) :
 {
 	this->voxelMap.init();
 	this->inputHandler.setCallbacks(this->vulkanWindow.getGLFWwindow());
-}
-
-void Vox::setupVulkan( void )
-{
-	ui32	maxSetsToCreate = 5;
-	ui32	nUniformDescriptors = 2;
-	ui32	nSamplerDescriptors = 3;
 
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
 	this->undergroundObject = std::make_unique<ve::VulkanObject>();
 	this->skyboxObject = std::make_unique<ve::VulkanObject>();
+}
+
+void Vox::setupVulkan( void )
+{
+	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
+	this->skyboxObject->setModel(this->createVoxelMesh());
+
+	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(this->camera.getViewMatrix(), this->camera.getProjectionMatrix());
+
+	this->materialsUbo = std::make_unique<ve::MaterialUniform>();
+	this->materialsUbo->updateMaterial(0U, Config::dirtMaterial);
+	this->materialsUbo->updateLight(0U, Config::lightMaterial, this->camera.getViewMatrix(false));
+
+	this->pipelineConstants = this->materialsUbo->getConstants();
+
+	this->pushConstData = std::make_unique<ve::PushConstantsData>(
+		this->terrainObject->getModelMatrix(),
+		this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation())
+	);
+
+	ui32	maxSetsToCreate = 5;		// NB add those limits inside class VulkanDescriptorSet
+	ui32	nUniformDescriptors = 2;
+	ui32	nSamplerDescriptors = 3;
 
 	this->vulkanSetFactory
 		.setMaxSets(maxSetsToCreate)
@@ -79,8 +68,8 @@ void Vox::setupVulkan( void )
 	uboSetBindings.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	this->uboDescriptorSet = this->vulkanSetFactory.createDescriptorSet(uboSetBindings);
-	this->uboDescriptorSet->addBufferDescriptor(0, sizeof(ViewProjectUBO));
-	this->uboDescriptorSet->addBufferDescriptor(1, sizeof(LightUBO));
+	this->uboDescriptorSet->addBufferDescriptor(0, sizeof(ve::ViewProjectUniform));
+	this->uboDescriptorSet->addBufferDescriptor(1, sizeof(ve::MaterialUniform));
 
 	ve::VulkanBindingSet textureTerrainSetBindings;
 	textureTerrainSetBindings.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -129,7 +118,8 @@ void Vox::setupVulkan( void )
 		fragmentShader,
 		this->terrainObject->getVboLayout(),
 		false,
-		sizeof(MeshData)
+		sizeof(ve::PushConstantsData),
+		&this->pipelineConstants
 	);
 
 	this->skyboxPipeline = ve::VulkanPipeline::createPipeline(
@@ -141,6 +131,8 @@ void Vox::setupVulkan( void )
 		this->skyboxObject->getVboLayout(),
 		true
 	);
+
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
 /**
@@ -148,29 +140,16 @@ void Vox::setupVulkan( void )
  */
 void Vox::run( void )
 {
-	ViewProjectUBO matrixUbo(
-		this->camera.getViewMatrix(),
-		this->camera.getProjectionMatrix()
-	);
-	LightUBO lightUbo(
-		Config::lightDirection,
-		this->camera.getViewMatrix(false),
-		Config::lightAmbientColor,
-		Config::lightColor,
-		Config::lightSpecularColor
-	);
-	MeshData terrainData(
-		this->terrainObject->getModelMatrix(),
-		this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()),
-		dirtMaterial
-	);
-	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-
- 	float deltaTime = 0.0f;
+	vec3 playerPos;
 	Stopwatch timer;
+ 	float deltaTime = 0.0f;
+	ui32 currentFrame = 0U;
+	VkCommandBuffer commandBuffer = nullptr;
 	std::future<bool>	mapUpdateResult;
 
-	std::cout << "\n\n\n\n";
+	this->pushConstData->setMaterialIndex(0U);
+	this->pushConstData->setLightIndex(0U);
+
 	while (vulkanWindow.shouldClose() == false)
 	{
 		timer.start();
@@ -182,16 +161,11 @@ void Vox::run( void )
 		vec3 playerPos = this->camera.getCameraPos();
 		this->inputHandler.reset();
 
-		// if (voxelMap.update(playerPos) == true)
-		// {
-		// 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-		// 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
-		// }
 		if (mapUpdateResult.valid() == false)
 		{
-			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-				return voxelMap.update(playerPos);
-			});
+				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+					return voxelMap.update(playerPos);
+				});
 		}
 		else
 		{
@@ -212,12 +186,12 @@ void Vox::run( void )
 			}
 		}
 
-		VkCommandBuffer commandBuffer = this->vulkanRenderer.beginFrame();
+		commandBuffer = this->vulkanRenderer.beginFrame();
 		if (commandBuffer != nullptr)
 		{
 			this->vulkanRenderer.beginSwapChainRenderPass(commandBuffer);
 
-			ui32 currentFrame = this->vulkanRenderer.getCurrentFrameIndex();
+			currentFrame = this->vulkanRenderer.getCurrentFrameIndex();
 			this->uboDescriptorSet->setCurrentFrame(currentFrame);
 			this->textTerrainDescriptorSet->setCurrentFrame(currentFrame);
 			this->textUndergroundDescriptorSet->setCurrentFrame(currentFrame);
@@ -225,18 +199,20 @@ void Vox::run( void )
 
 			if (this->countFramesToUpdate > 0)
 			{
-				matrixUbo.updateView(this->camera.getViewMatrix());
-				matrixUbo.updateProjection(this->camera.getProjectionMatrix());
-				this->uboDescriptorSet->updateUbo(0, matrixUbo.getData());
-				lightUbo.updateLightDir(Config::lightDirection, this->camera.getViewMatrix(false));
-				this->uboDescriptorSet->updateUbo(1, lightUbo.getData());
+				this->matrixUbo->updateView(this->camera.getViewMatrix());
+				this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
+				this->uboDescriptorSet->updateUbo(0, this->matrixUbo->getData());
+
+				this->materialsUbo->updateLightDir(0, Config::lightDirection, this->camera.getViewMatrix(false));
+				this->uboDescriptorSet->updateUbo(1, this->materialsUbo->getData());
+
 				this->countFramesToUpdate--;
 			}
 
 			this->terrainPipeline->bindPipeline(commandBuffer);
 			this->uboDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 0U);
 			this->textTerrainDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
-			this->terrainPipeline->updatePushConstants(commandBuffer, terrainData.getData());
+			this->terrainPipeline->updatePushConstants(commandBuffer, pushConstData->getData());
 
 			this->terrainObject->bindBuffer(commandBuffer);
 			this->terrainObject->draw(commandBuffer);
@@ -322,6 +298,8 @@ void	Vox::rotateCameraFromCursorPos( vec2 const& currPos )
 	float yaw = (currPos.x - oldPos.x) * CameraSettings::cameraSensitivity;
 	float pitch = (oldPos.y - currPos.y) * CameraSettings::cameraSensitivity;  // reversed since y-coordinates range from bottom to top
 	this->camera.rotate(pitch, yaw, 0.0f);
+	this->pushConstData->setNormalMatrix(this->camera.getViewMatrixNoTranslation());
+
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
@@ -338,6 +316,8 @@ void Vox::resizeWindow( ui32 width, ui32 height )
 	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
 	this->vulkanRenderer.recreateSwapChain();
 	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+	this->pushConstData->setNormalMatrix(this->camera.getViewMatrixNoTranslation());
+
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
@@ -346,6 +326,8 @@ void Vox::toggleFullscreen( void )
 	this->vulkanWindow.toggleFullscreen();
 	this->vulkanRenderer.recreateSwapChain();
 	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+	this->pushConstData->setNormalMatrix(this->camera.getViewMatrixNoTranslation());
+
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 /**

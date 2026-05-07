@@ -38,7 +38,7 @@ constexpr bool operator&(MeshLayout a, MeshLayout b) {
 constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::NORMAL | MeshLayout::TEXTURE;
 
 
-struct MeshlayoutDescription
+struct MeshLayoutDescription
 {
 	std::vector<VkVertexInputBindingDescription>	bindingConfig;
 	std::vector<VkVertexInputAttributeDescription>	attributeConfig;
@@ -102,7 +102,7 @@ class VulkanModel
 	void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
 	void	draw(VkCommandBuffer commandBuffer) const noexcept;
 	
-	MeshlayoutDescription	getVboLayout() const noexcept;
+	MeshLayoutDescription	getVboLayout() const noexcept;
 	void					setName(const std::string& name) { this->name = name; }
 	const vec3&				getVertexCenter() const noexcept { return this->vertexCenter; }
 	const vec3&				getBoundingCenter() const noexcept { return this->boundingCenter; }

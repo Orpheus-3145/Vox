@@ -100,9 +100,9 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	}
 }
 
-MeshlayoutDescription	VulkanModel::getVboLayout() const noexcept
+MeshLayoutDescription	VulkanModel::getVboLayout() const noexcept
 {
-	MeshlayoutDescription data{};
+	MeshLayoutDescription data{};
 	data.bindingConfig.resize(1);
 
 	data.bindingConfig[0].binding = this->binding;
