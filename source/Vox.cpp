@@ -99,8 +99,8 @@ void Vox::setupVulkan( void )
 	this->textSkyboxDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSkyboxSetBindings);
 	this->textSkyboxDescriptorSet->addSamplerDescriptor(0, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 
-	this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice));
+	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	this->skyboxObject->setModel(this->createVoxelMesh());
 
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
@@ -170,35 +170,35 @@ void Vox::run( void )
 		vec3 playerPos = this->camera.getCameraPos();
 		this->inputHandler.reset();
 
-		if (voxelMap.update(playerPos) == true)
+		// if (voxelMap.update(playerPos) == true)
+		// {
+		// 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+		// 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
+		// }
+		if (mapUpdateResult.valid() == false)
 		{
-			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				return voxelMap.update(playerPos);
+			});
 		}
-		// if (mapUpdateResult.valid() == false)
-		// {
-		// 	mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-		// 		return voxelMap.update(playerPos);
-		// 	});
-		// }
-		// else
-		// {
-		// 	const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+		else
+		{
+			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
 
-		// 	if (status == std::future_status::ready)
-		// 	{
-		// 		const bool changed = mapUpdateResult.get(); // consumes future; now invalid
+			if (status == std::future_status::ready)
+			{
+				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
 
-		// 		if (changed == true)
-		// 		{
-		// 			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-		// 			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice)); // main thread
-		// 		}
-		// 		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-		// 			return voxelMap.update(playerPos);
-		// 		});
-		// 	}
-		// }
+				if (changed == true)
+				{
+					this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+					this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
+				}
+				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+					return voxelMap.update(playerPos);
+				});
+			}
+		}
 
 		VkCommandBuffer commandBuffer = this->vulkanRenderer.beginFrame();
 		if (commandBuffer != nullptr)

@@ -92,26 +92,45 @@ bool	VoxelMap::update(const vec3& newPosition)
 
 	std::cout << "moving by: " << delta << std::endl;
 
-	if (delta.depth > 0)
-	{
-		north(delta.depth);
-	}
-	if (delta.width > 0)
-	{
-		east(delta.width);
-	}
-	if (delta.depth < 0)
-	{
-		south(delta.depth);
-	}
-	if (delta.width < 0)
-	{
-		west(delta.width);
-	}
-
+	moveMap(delta);
 	setAdjacentPointers();
-	// enqueueMeshing(delta);
+	enqueueChanges(delta);
 
+	vec2i	pos = minPositions;
+	ui32	index = 0;
+	for (i32 z = 0; z < squareSize; z++)
+	{
+		pos.x = minPositions.x;
+		for (i32 x = 0; x < squareSize; x++)
+		{
+			if (scheduledChanges[index] == true)
+			{
+				VoxelChunk* c = &map[index];
+				map[index].setLocation(pos);
+				threadManager.enqueue([c] {
+					c->generateMap();
+				});
+			}
+			pos.x++;
+			index++;
+		}
+		pos.y++;
+	}
+	threadManager.waitIdle();
+	for (size_t i = 0; i < scheduledChanges.size(); i++)
+	{
+		if (scheduledChanges[i] == true)
+		{
+			VoxelChunk* c = &map[i];
+			threadManager.enqueue([c] {
+				c->generateVertexes();
+			});
+		}
+	}
+	threadManager.waitIdle();
+	threadManager.enqueue([this] { regenerateTerrainBuffer(); });
+	threadManager.enqueue([this] { regenerateUndergroundBuffer(); });
+	threadManager.waitIdle();
 	timer.stop();
 	std::cout << "regeneration took: " << timer << std::endl;
 	assert(minPositions.x + squareSize - 1 == maxPositions.x && "Error: min/max X don't line up");
@@ -119,199 +138,99 @@ bool	VoxelMap::update(const vec3& newPosition)
 	return true;
 }
 
-// void	VoxelMap::enqueueRowMeshes(i32 row, std::vector<bool>& scheduled)
-// {
-// 	i32 index = row * squareSize;
-
-// 	for (i32 col = 0; col < squareSize; col++)
-// 	{
-// 		scheduled[index] = true;
-// 		index++;
-// 	}
-// }
-
-// void	VoxelMap::enqueueColumnMeshes(i32 col, std::vector<bool>& scheduled)
-// {
-// 	i32 index = col;
-
-// 	for (i32 row = 0; row < squareSize; row++)
-// 	{
-// 		scheduled[index] = true;
-// 		index += squareSize;
-// 	}
-// }
-
-// void	VoxelMap::enqueueMeshing(const vec2i& delta)
-// {
-// 	static std::vector<bool> scheduled(static_cast<size_t>(squareSize * squareSize));
-
-// 	std::fill(scheduled.begin(), scheduled.end(), false);
-
-// 	/*	Add all north moves	*/
-// 	for (i32 step = 0; step < delta.depth; step++)
-// 	{
-// 		const i32 bottomRow = squareSize - 1 - step;
-// 		enqueueRowMeshes(bottomRow, scheduled);
-// 		enqueueRowMeshes(bottomRow - 1, scheduled);
-// 	}
-
-// 	/*	Add all south moves	*/
-// 	for (i32 step = 0; step < -delta.depth; step++)
-// 	{
-// 		const i32 topRow = step;
-// 		enqueueRowMeshes(topRow, scheduled);
-// 		enqueueRowMeshes(topRow + 1, scheduled);
-// 	}
-
-// 	/*	Add all east moves	*/
-// 	for (i32 step = 0; step < delta.width; step++)
-// 	{
-// 		const i32 rightCol = squareSize - 1 - step;
-// 		enqueueColumnMeshes(rightCol, scheduled);
-// 		enqueueColumnMeshes(rightCol - 1, scheduled);
-// 	}
-
-// 	/*	Add all west moves	*/
-// 	for (i32 step = 0; step < -delta.width; step++)
-// 	{
-// 		const i32 leftCol = step;
-// 		enqueueColumnMeshes(leftCol, scheduled);
-// 		enqueueColumnMeshes(leftCol + 1, scheduled);
-// 	}
-
-// 	for (size_t i = 0; i < scheduled.size(); i++)
-// 	{
-// 		if (scheduled[i] == true)
-// 		{
-// 			VoxelChunk* c = &map[i];
-// 			threadManager.enqueue([c] {
-// 				c->generateVertexes();
-// 			});
-// 		}
-// 	}
-// 	threadManager.waitIdle();
-// }
-
-void	VoxelMap::generateRow(i32 index)
+void	VoxelMap::enqueueRowChanges(i32 row, std::vector<bool>& scheduled)
 {
-	const i32 Ycoord = minPositions.y + index / squareSize;
+	i32 index = row * squareSize;
 
-	for (i32 i = 0; i < squareSize; i++)
+	for (i32 col = 0; col < squareSize; col++)
 	{
-		map[index].setLocation({minPositions.x + i, Ycoord});
-		map[index].generateMap();
+		scheduled[index] = true;
 		index++;
 	}
 }
 
-void	VoxelMap::generateColumn(i32 index)
+void	VoxelMap::enqueueColumnChanges(i32 col, std::vector<bool>& scheduled)
 {
-	const i32 Xcoord = minPositions.x + index % squareSize;
+	i32 index = col;
 
-	for (i32 i = 0; i < squareSize; i++)
+	for (i32 row = 0; row < squareSize; row++)
 	{
-		map[index].setLocation({Xcoord, minPositions.y + i});
-		map[index].generateMap();
+		scheduled[index] = true;
 		index += squareSize;
 	}
 }
 
-void	VoxelMap::meshRow(i32 index)
+void	VoxelMap::enqueueChanges(const vec2i& delta)
 {
-	for (i32 i = 0; i < squareSize; i++)
+	const i32 moveEastWest = delta.x;
+	const i32 moveNorthSouth = delta.y;
+
+	std::fill(scheduledChanges.begin(), scheduledChanges.end(), false);
+	/*	Add all north moves	*/
+	for (i32 step = 0; step < moveNorthSouth; step++)
 	{
-		map[index].generateVertexes();
-		index++;
+		const i32 bottomRow = squareSize - 1 - step;
+		enqueueRowChanges(bottomRow, scheduledChanges);
+		enqueueRowChanges(bottomRow - 1, scheduledChanges);
+	}
+	/*	Add all south moves	*/
+	for (i32 step = 0; step < -moveNorthSouth; step++)
+	{
+		const i32 topRow = step;
+		enqueueRowChanges(topRow, scheduledChanges);
+		enqueueRowChanges(topRow + 1, scheduledChanges);
+	}
+	/*	Add all east moves	*/
+	for (i32 step = 0; step < moveEastWest; step++)
+	{
+		const i32 rightCol = squareSize - 1 - step;
+		enqueueColumnChanges(rightCol, scheduledChanges);
+		enqueueColumnChanges(rightCol - 1, scheduledChanges);
+	}
+	/*	Add all west moves	*/
+	for (i32 step = 0; step < -moveEastWest; step++)
+	{
+		const i32 leftCol = step;
+		enqueueColumnChanges(leftCol, scheduledChanges);
+		enqueueColumnChanges(leftCol + 1, scheduledChanges);
 	}
 }
 
-void	VoxelMap::meshColumn(i32 index)
+void	VoxelMap::moveMap(const vec2i& delta)
 {
-	for (i32 i = 0; i < squareSize; i++)
-	{
-		map[index].generateVertexes();
-		index += squareSize;
-	}
-}
+	i32 moveEastWest = delta.x;
+	i32 moveNorthSouth = delta.y;
 
-void	VoxelMap::north(i32 moves)
-{
-	i32 i;
-	puts("North");
-	std::rotate(map.begin(), map.begin() + squareSize * moves, map.end());
-	setAdjacentPointers();
-	for (i = 1; i <= moves; i++)
+	/*	rotate west	*/
+	if (moveEastWest < 0)
 	{
-		generateRow(squareSize * (squareSize - i));
+		moveEastWest *= -1;
+		for (i32 row = 0; row < squareSize; row++)
+		{
+			auto begin = map.begin() + row * squareSize;
+			std::rotate(begin, begin + (squareSize - moveEastWest), begin + squareSize);
+		}
 	}
-	for (i = 1; i <= moves; i++)
+	/*	rotate east	*/
+	else if (moveEastWest > 0)
 	{
-		meshRow(squareSize * (squareSize - i));
+		for (i32 row = 0; row < squareSize; row++)
+		{
+			auto begin = map.begin() + row * squareSize;
+			std::rotate(begin, begin + moveEastWest, begin + squareSize);
+		}
 	}
-	meshRow(squareSize * (squareSize - moves - 1));
-}
-
-void	VoxelMap::south(i32 moves)
-{
-	i32 i;
-	const i32 steps = moves * -1;
-
-	puts("South");
-	std::rotate(map.begin(), map.end() - squareSize * steps, map.end());
-	setAdjacentPointers();
-	for (i = 0; i < steps; i++)
+	/*	rotate south	*/
+	if (moveNorthSouth < 0)
 	{
-		generateRow(i * squareSize);
+		moveNorthSouth *= -1;
+		std::rotate(map.begin(), map.end() - squareSize * moveNorthSouth, map.end());
 	}
-	for (i = 0; i < steps; i++)
+	/*	rotate north	*/
+	else if (moveNorthSouth > 0)
 	{
-		meshRow(i * squareSize);
+		std::rotate(map.begin(), map.begin() + squareSize * moveNorthSouth, map.end());
 	}
-	meshRow(steps * squareSize);
-}
-
-void	VoxelMap::west(i32 moves)
-{
-	i32 i;
-	const int steps = moves * -1;
-
-	puts("West");
-	for (i32 row = 0; row < squareSize; row++)
-	{
-		auto begin = map.begin() + row * squareSize;
-		std::rotate(begin, begin + (squareSize - steps), begin + squareSize);
-	}
-	setAdjacentPointers();
-	for (i = 0; i < steps; i++)
-	{
-		generateColumn(i);
-	}
-	for (i = 0; i < steps; i++)
-	{
-		meshColumn(i);
-	}
-	meshColumn(steps);
-}
-
-void	VoxelMap::east(i32 moves)
-{
-	i32 i;
-	puts("East");
-	for (i32 row = 0; row < squareSize; row++)
-	{
-		auto begin = map.begin() + row * squareSize;
-		std::rotate(begin, begin + moves, begin + squareSize);
-	}
-	setAdjacentPointers();
-	for (i = 1; i <= moves; i++)
-	{
-		generateColumn(squareSize - i);
-	}
-	for (i = 1; i <= moves; i++)
-	{
-		meshColumn(squareSize - i);
-	}
-	meshColumn(squareSize - moves - 1);
 }
 
 }	//namespace vox

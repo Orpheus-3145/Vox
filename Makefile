@@ -42,12 +42,11 @@ ifeq ($(PLATFORM), Linux)
 
 else ifeq ($(PLATFORM), Darwin)
 	INCLUDE		+= -isystem /opt/homebrew/include -isystem /usr/local/include
-	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,$(/usr/local/lib) -framework Cocoa -framework IOKit -framework OpenGL
+	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,/usr/local/lib -framework Cocoa -framework IOKit -framework OpenGL -lglfw3
 
 endif
 
 # source /opt/vulkan/current/setup-env.sh
-
 
 all: libs $(TARGET)
 
