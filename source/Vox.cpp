@@ -52,50 +52,38 @@ void Vox::setupVulkan( void )
 		this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation())
 	);
 
-	ui32	maxSetsToCreate = 5;		// NB add those limits inside class VulkanDescriptorSet
-	ui32	nUniformDescriptors = 2;
-	ui32	nSamplerDescriptors = 3;
+	ui32	maxSetsToCreate = 5U;
+	ui32	nUniformDescriptors = 2U;
+	ui32	nSamplerDescriptors = 3U;
 
 	this->vulkanSetFactory
 		.setMaxSets(maxSetsToCreate)
 		.setFramesInFlight(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nUniformDescriptors)
-		.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, nSamplerDescriptors)
+		.addBufferPoolSize(nUniformDescriptors)
+		.addSamplerPoolSize(nSamplerDescriptors)
 		.createPool();
 
 	ve::VulkanBindingSet uboSetBindings;
-	uboSetBindings.addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-	uboSetBindings.addBinding(1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	this->uboDescriptorSet = this->vulkanSetFactory.createDescriptorSet(uboSetBindings);
-	this->uboDescriptorSet->addBufferDescriptor(0, sizeof(ve::ViewProjectUniform));
-	this->uboDescriptorSet->addBufferDescriptor(1, sizeof(ve::MaterialUniform));
+	uboSetBindings.addUniformBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
+	uboSetBindings.addUniformBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MaterialUniform));
 
 	ve::VulkanBindingSet textureTerrainSetBindings;
-	textureTerrainSetBindings.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-	this->textTerrainDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureTerrainSetBindings);
-	this->textTerrainDescriptorSet->addSamplerDescriptor(0, Config::textureDirtPath, ve::TextureType::TEXTURE_PLAIN);
+	textureTerrainSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureDirtPath, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureUndergroundSetBindings;
-	textureUndergroundSetBindings.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-	this->textUndergroundDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureUndergroundSetBindings);
-	this->textUndergroundDescriptorSet->addSamplerDescriptor(0, Config::textureStonePath, ve::TextureType::TEXTURE_PLAIN);
+	textureUndergroundSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureStonePath, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureSkyboxSetBindings;
-	textureSkyboxSetBindings.addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-	this->textSkyboxDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSkyboxSetBindings);
-	this->textSkyboxDescriptorSet->addSamplerDescriptor(0, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
+	textureSkyboxSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	this->skyboxObject->setModel(this->createVoxelMesh());
 
-	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
-		this->uboDescriptorSet->getDescriptorSetLayout(),
-		this->textTerrainDescriptorSet->getDescriptorSetLayout(),
-		this->textUndergroundDescriptorSet->getDescriptorSetLayout(),
-		this->textSkyboxDescriptorSet->getDescriptorSetLayout()
-	};
+	this->uboDescriptorSet = this->vulkanSetFactory.createDescriptorSet(uboSetBindings);
+	this->textTerrainDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureTerrainSetBindings);
+	this->textUndergroundDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureUndergroundSetBindings);
+	this->textSkyboxDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSkyboxSetBindings);
 
 	std::string vertexShader;
 	std::string fragmentShader;
@@ -112,7 +100,7 @@ void Vox::setupVulkan( void )
 
 	this->terrainPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
-		descriptorSetLayouts,
+		this->vulkanSetFactory.getDescriptorSetLayout(),
 		this->vulkanRenderer.getSwapChainRenderPass(),
 		vertexShader,
 		fragmentShader,
@@ -124,7 +112,7 @@ void Vox::setupVulkan( void )
 
 	this->skyboxPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
-		descriptorSetLayouts,
+		this->vulkanSetFactory.getDescriptorSetLayout(),
 		this->vulkanRenderer.getSwapChainRenderPass(),
 		Config::skyboxVertShaderPath,
 		Config::skyboxFragShaderPath,
@@ -201,10 +189,10 @@ void Vox::run( void )
 			{
 				this->matrixUbo->updateView(this->camera.getViewMatrix());
 				this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
-				this->uboDescriptorSet->updateUbo(0, this->matrixUbo->getData());
+				this->uboDescriptorSet->updateUniform(0, this->matrixUbo->getData());
 
 				this->materialsUbo->updateLightDir(0, Config::lightDirection, this->camera.getViewMatrix(false));
-				this->uboDescriptorSet->updateUbo(1, this->materialsUbo->getData());
+				this->uboDescriptorSet->updateUniform(1, this->materialsUbo->getData());
 
 				this->countFramesToUpdate--;
 			}

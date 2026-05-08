@@ -60,7 +60,7 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 	{
 		throw std::runtime_error("no descritptor layour provided");
 	}
-	else if (sizePushConstants > device.getMaxPushConstantsSize())
+	else if (sizePushConstants > device.getMaxSizePushConstants())
 	{
 		throw std::runtime_error("vulkan push_constant input size exceeds device limit");
 	}
