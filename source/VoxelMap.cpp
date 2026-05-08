@@ -22,11 +22,9 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 	VoxelChunk::chunkDimensions = vec3i{Config::chunkLength, Config::chunkHeight, Config::chunkLength};
 	VoxelChunk::chunkSize = Config::chunkLength * Config::chunkHeight * Config::chunkLength;
 	VoxelChunk::paddedSize = (Config::chunkLength + 2) * (Config::chunkHeight + 2) * (Config::chunkLength + 2);
-	
-	this->rawPosition = Config::startingPosition;
 
 	map.reserve(visibleChunks);
-	playerOnChunk = voxelToChunkPosition(this->rawPosition);
+	playerOnChunk = voxelToChunkPosition(Config::startingPosition);
 	minPositions = vec2i{playerOnChunk.x - (squareSize - 1) / 2, playerOnChunk.y - (squareSize - 1) / 2};
 	maxPositions = vec2i{minPositions.x + squareSize - 1, minPositions.y + squareSize - 1};
 

@@ -43,7 +43,7 @@ class VoxelChunk
 		const VertexVector&	getVertexTerrainData() const noexcept { return terrainVertexes; }
 		const VertexVector&	getVertexUndergroundData() const noexcept { return undergroundVertexes; }
 
-		const vec3i getWorldPos() { return this->worldPosition; }
+		const vec3i& getWorldPos() const noexcept { return this->worldPosition; }
 		
 		void	setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChunk* south, VoxelChunk* west) noexcept;
 		void	setLocation(vec2i loc);

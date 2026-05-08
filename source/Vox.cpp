@@ -47,7 +47,7 @@ Vox::Vox( void ) :
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
-	camera{Config::cameraStartPos, Config::cameraForward, this->vulkanWindow.getAspectRatio()},
+	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getAspectRatio()},
 	voxelMap{threadManager},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
@@ -285,12 +285,12 @@ void Vox::moveCamera( float deltaTime )
 	if (moveDirection != vec3::zero())
 	{
 		// test for movement
-		this->camera.move(moveDirection);
-		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-		// vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
+		vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
+		vec3 location = this->camera.getCameraPos();
 
-		// this->voxelMap.detectCollision(relativeMoveDirection);
-		// this->camera.move(relativeMoveDirection);
+		vec3 movement = this->voxelMap.detectCollision(location, relativeMoveDirection);
+		this->camera.move(movement);
+		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
 }
 

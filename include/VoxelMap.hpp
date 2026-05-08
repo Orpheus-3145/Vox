@@ -34,9 +34,9 @@ class VoxelMap
 		std::unique_ptr<ve::VulkanModel> createNewTerrainModel(ve::VulkanDevice& device, ui32 binding = 0U);
 		std::unique_ptr<ve::VulkanModel> createNewUndergroundModel(ve::VulkanDevice& device, ui32 binding = 0U);
 		vec3	getMapMiddle() const noexcept;
-		void	detectCollision(vec3& movement);
+		vec3	detectCollision(const vec3& origin, const vec3& movement);
 		
-		VoxelType	getVoxelAt(const vec3& location);
+		VoxelType	getVoxelAt(const vec3i& location);
 		
 	private:
 		std::vector<VoxelChunk>	map;
@@ -45,7 +45,6 @@ class VoxelMap
 		vec2i	minPositions;
 		vec2i	maxPositions;
 		vec2i	playerOnChunk;
-		vec3	rawPosition;
 		
 		VertexVector	terrainVertexes;
 		IndexVector		terrainIndexes;

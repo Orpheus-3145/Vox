@@ -7,71 +7,98 @@ namespace vox {
 
 /*	From -x (left/west) to +x (right/east) horizontally, y (up/north) to -y (down/south) vertically. */
 
-VoxelType	VoxelMap::getVoxelAt(const vec3& location)
+static i32	floorDivision(i32 a, i32 b)
 {
-	vec2i chunk = voxelToChunkPosition(location);
+	i32 q = a / b;
+	i32 r = a % b;
+	if (r != 0 && a < 0)
+	{
+		q -= 1;
+	}
+	return q;
+}
 
-	// std::cout << "location: " << location << std::endl;
-	std::cout << "chunk: " << chunk << std::endl;
-	// std::cout << "min positions: " << minPositions << std::endl;
-	i32 index = (chunk.x - minPositions.x) * squareSize + chunk.y - minPositions.y;
-
-	// std::cout << "index in voxelchunk array: " << index << " (size: " << map.size() << ")" << std::endl;
-	vec3i	voxelLoc = {
-		static_cast<i32>(location.x),
-		static_cast<i32>(location.y),
-		static_cast<i32>(location.z)
+static vec2i	voxelToChunk(const vec3i& voxel)
+{
+	return vec2i {
+		floorDivision(voxel.x, VoxelChunk::chunkDimensions.x),
+		floorDivision(voxel.z, VoxelChunk::chunkDimensions.z)
 	};
-	if (voxelLoc.y > 255 || voxelLoc.y <= 0)
+}
+
+VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel)
+{
+	if (worldVoxel.y <= 0 || worldVoxel.y >= VoxelChunk::chunkDimensions.y)
 	{
 		return VoxelType::Air;
 	}
-	std::cout << "voxel location: " << location << std::endl;
+	vec2i chunk = voxelToChunk(worldVoxel);
 
-	std::cout << "world position of chunk: " << map[index].getWorldPos() << std::endl;
-	vec3i	chunkLoc = voxelLoc - map[index].getWorldPos();
+	i32 index = (chunk.x - minPositions.x) * squareSize + (chunk.y - minPositions.y);
+	if (index < 0 || static_cast<size_t>(index) >= map.size())
+	{
+		return VoxelType::Air;
+	}
 
-	std::cout << "chunk location: " << chunkLoc << std::endl;
+	vec3i chunkWorld = map[index].getWorldPos();
 
-	return map[index].at(chunkLoc.x, chunkLoc.y, chunkLoc.z);
+	/*	Add one to account for padding	*/
+	i32 localX = (worldVoxel.x - chunkWorld.x) + 1;
+	i32 localY = (worldVoxel.y - chunkWorld.y) + 1;
+	i32 localZ = (worldVoxel.z - chunkWorld.z) + 1;
+
+	assert(localX > 0 && localX < VoxelChunk::paddedDimensions.x);
+	assert(localY > 0 && localY < VoxelChunk::paddedDimensions.y);
+	assert(localZ > 0 && localZ < VoxelChunk::paddedDimensions.z);
+	return map[index].at(localX, localY, localZ);
 }
 
-void	VoxelMap::detectCollision(vec3& movement)
+vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 {
-	static vec3 previous = vec3::zero();
-	const vec3	moveTo = rawPosition + movement;
-	const vec3	movementNorm = movement.normalized();
-	vec3	position = rawPosition;
-	float	steps = movement.length();
+	constexpr float stepSize = 0.01f;
+	const vec3	moveTo = origin + movement;
+	const vec3	movementStep = movement.normalized() * stepSize;
+	vec3	nonBlockedMovement;
+	vec3	position = origin;
+	const float	steps = movement.length();
 
-	std::cout << "\nwe are at: " << rawPosition << std::endl;
-	std::cout << "movement: " << movement << " length: " << steps << std::endl;
+	std::cout << "\nwe are at: " << origin << std::endl;
 	std::cout << "move to: " << moveTo << std::endl;
-	std::cout << "single step: " << movementNorm << std::endl;
 
-	for (ui32 i = 0; i < static_cast<ui32>(steps); i++)
+	vec3i rounded = {
+		static_cast<i32>(std::floor(origin.x)),
+		static_cast<i32>(std::floor(origin.y)),
+		static_cast<i32>(std::floor(origin.z))
+	};
+	for (float i = 0.0f; i < steps; i += stepSize)
 	{
-		position += movementNorm;
-		if (getVoxelAt(position) != VoxelType::Air)
+		const vec3 nextPosition = position + movementStep;
+		const vec3i roundedNext = {
+			static_cast<i32>(std::floor(nextPosition.x)),
+			static_cast<i32>(std::floor(nextPosition.y)),
+			static_cast<i32>(std::floor(nextPosition.z))
+		};
+		if (roundedNext != rounded)
 		{
-			if (i == 0)
+			VoxelType voxel = getVoxelAt(roundedNext);
+			if (voxel != VoxelType::Air)
 			{
-				movement = vec3::zero();
+				std::cout << "BONK! at: " << nextPosition << " (" << roundedNext << ")" << std::endl;
+				std::cout << "voxel type: " << static_cast<i32>(voxel) << std::endl;
+				break ;
 			}
-			else
-			{
-				movement = position - movementNorm;
-			}
-			break ;
+			rounded = roundedNext;
 		}
+		position = nextPosition;
 	}
-	if (previous != vec3::zero() && vec3{moveTo - previous}.length() > 50.0f)
+	nonBlockedMovement = position - origin;
+	if (nonBlockedMovement.length() > steps)
 	{
-		std::cerr << "moved from: " << previous << " to " << moveTo << " for a length of " << vec3{moveTo - previous}.length() << std::endl;
-		throw std::runtime_error("JUMPED");
+		nonBlockedMovement = movement;
 	}
-	std::cout << "movement: " << movement << std::endl;
-	previous = moveTo;
+	std::cout << "attempted movement: " << movement << std::endl;
+	std::cout << "non blocked movement: " << nonBlockedMovement << std::endl;
+	return nonBlockedMovement;
 }
 
 bool	VoxelMap::update(const vec3& newPosition)
@@ -87,7 +114,6 @@ bool	VoxelMap::update(const vec3& newPosition)
 	playerOnChunk = playerOnChunk + delta;
 	minPositions = minPositions + delta;
 	maxPositions = maxPositions + delta;
-	rawPosition = newPosition;
 	assert(squareSize >= 2 && "squaresize too small");
 
 	std::cout << "moving by: " << delta << std::endl;
