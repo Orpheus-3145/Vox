@@ -26,7 +26,17 @@ static vec2i	voxelToChunk(const vec3i& voxel)
 	};
 }
 
-VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel)
+static vec3i roundyRound(const vec3& voxel)
+{
+	return
+	{
+		static_cast<i32>(std::floor(voxel.x)),
+		static_cast<i32>(std::floor(voxel.y)),
+		static_cast<i32>(std::floor(voxel.z))
+	};
+}
+
+VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel) const noexcept
 {
 	if (worldVoxel.y <= 0 || worldVoxel.y >= VoxelChunk::chunkDimensions.y)
 	{
@@ -47,10 +57,44 @@ VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel)
 	i32 localY = (worldVoxel.y - chunkWorld.y) + 1;
 	i32 localZ = (worldVoxel.z - chunkWorld.z) + 1;
 
-	assert(localX > 0 && localX < VoxelChunk::paddedDimensions.x);
-	assert(localY > 0 && localY < VoxelChunk::paddedDimensions.y);
-	assert(localZ > 0 && localZ < VoxelChunk::paddedDimensions.z);
+	if (localX < 1 || localX > VoxelChunk::chunkDimensions.x ||
+		localY < 1 || localY > VoxelChunk::chunkDimensions.y ||
+		localZ < 1 || localZ > VoxelChunk::chunkDimensions.z)
+	{
+		return VoxelType::Air;
+	}
 	return map[index].at(localX, localY, localZ);
+}
+
+vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
+{
+	const i32 x = origin.x;
+	const i32 y = origin.y;
+	const i32 z = origin.z;
+	const i32 maxRadius = 255;
+
+	for (i32 r = 1; r <= maxRadius; ++r)
+	{
+		for (i32 dz = -r; dz <= r; ++dz)
+		for (i32 dy = -r; dy <= r; ++dy)
+		for (i32 dx = -r; dx <= r; ++dx)
+		{
+			const bool onSurface =
+				(dx == -r || dx == r) ||
+				(dy == -r || dy == r) ||
+				(dz == -r || dz == r);
+
+			if (!onSurface)
+				continue;
+
+			vec3i v{ x + dx, y + dy, z + dz };
+			if (getVoxelAt(v) == VoxelType::Air)
+			{
+				return vec3{ v.x + 0.5f, v.y + 0.5f, v.z + 0.5f };
+			}
+		}
+	}
+	return vec3{origin.x + 0.5f, origin.y + 0.5f, origin.z + 0.5f};
 }
 
 vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
@@ -61,41 +105,39 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 	vec3	nonBlockedMovement;
 	vec3	position = origin;
 	const float	steps = movement.length();
+	float moved;
 
-	std::cout << "\nwe are at: " << origin << std::endl;
+	std::cout << "\nmovement length: " << steps << std::endl;
+	std::cout << "we are at: " << origin << std::endl;
 	std::cout << "move to: " << moveTo << std::endl;
 
-	vec3i rounded = {
-		static_cast<i32>(std::floor(origin.x)),
-		static_cast<i32>(std::floor(origin.y)),
-		static_cast<i32>(std::floor(origin.z))
-	};
-	for (float i = 0.0f; i < steps; i += stepSize)
+	vec3i currentVoxel = roundyRound(origin);
+	if (getVoxelAt(currentVoxel) != VoxelType::Air)
+	{
+		return nearestAirVoxel(currentVoxel) - origin;
+	}
+	for (moved = 0.0f; moved < steps; moved += stepSize)
 	{
 		const vec3 nextPosition = position + movementStep;
-		const vec3i roundedNext = {
-			static_cast<i32>(std::floor(nextPosition.x)),
-			static_cast<i32>(std::floor(nextPosition.y)),
-			static_cast<i32>(std::floor(nextPosition.z))
-		};
-		if (roundedNext != rounded)
+		const vec3i roundedNext = roundyRound(nextPosition);
+		if (roundedNext != currentVoxel)
 		{
 			VoxelType voxel = getVoxelAt(roundedNext);
 			if (voxel != VoxelType::Air)
 			{
 				std::cout << "BONK! at: " << nextPosition << " (" << roundedNext << ")" << std::endl;
 				std::cout << "voxel type: " << static_cast<i32>(voxel) << std::endl;
-				break ;
+				return nearestAirVoxel(currentVoxel) - origin;
 			}
-			rounded = roundedNext;
+			currentVoxel = roundedNext;
 		}
 		position = nextPosition;
 	}
-	nonBlockedMovement = position - origin;
-	if (nonBlockedMovement.length() > steps)
+	if (moved >= steps)
 	{
-		nonBlockedMovement = movement;
+		return movement;
 	}
+	nonBlockedMovement = position - origin;
 	std::cout << "attempted movement: " << movement << std::endl;
 	std::cout << "non blocked movement: " << nonBlockedMovement << std::endl;
 	return nonBlockedMovement;

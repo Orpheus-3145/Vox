@@ -36,7 +36,7 @@ class VoxelMap
 		vec3	getMapMiddle() const noexcept;
 		vec3	detectCollision(const vec3& origin, const vec3& movement);
 		
-		VoxelType	getVoxelAt(const vec3i& location);
+		VoxelType	getVoxelAt(const vec3i& location) const noexcept;
 		
 	private:
 		std::vector<VoxelChunk>	map;
@@ -68,6 +68,8 @@ class VoxelMap
 		void	enqueueRowChanges(i32 row, std::vector<bool>& scheduled);
 		void	enqueueColumnChanges(i32 col, std::vector<bool>& scheduled);
 		void	setAdjacentPointers();
+
+		vec3	nearestAirVoxel(const vec3i& origin);
 };
 
 }	// namespace vox

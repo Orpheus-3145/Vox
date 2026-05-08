@@ -225,9 +225,9 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 					{
 						vec3
 						{
-							VOXEL_VERTEXES_ATLAS[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
-							VOXEL_VERTEXES_ATLAS[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
-							VOXEL_VERTEXES_ATLAS[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+							VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
+							VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
+							VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES_ATLAS[i].normal,
 					VOXEL_VERTEXES_ATLAS[i].textureUv
@@ -241,9 +241,9 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 					{
 						vec3
 						{
-							VOXEL_VERTEXES[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
-							VOXEL_VERTEXES[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
-							VOXEL_VERTEXES[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+							VOXEL_VERTEXES[i].pos.x + location.x,
+							VOXEL_VERTEXES[i].pos.y + location.y,
+							VOXEL_VERTEXES[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES[i].normal,
 					VOXEL_VERTEXES[i].textureUv

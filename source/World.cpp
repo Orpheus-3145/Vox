@@ -15,9 +15,9 @@ std::vector<vec3> getVertexRelative( vec3 const& relativeOrigin ) {
 	std::vector<vec3> voxelVertexes(VERTEX_PER_VOXEL);
 	for (ui32 i=0; i<VERTEX_PER_VOXEL; i++) {
 		// add 0.5 (half size of a voxel) of every coor so that the position is in the exact center
-		voxelVertexes[i].x = VOXEL_VERTEXES_ATLAS[i].pos.x + VOXEL_SIZE * 0.5f + relativeOrigin.x;
-		voxelVertexes[i].y = VOXEL_VERTEXES_ATLAS[i].pos.y + VOXEL_SIZE * 0.5f + relativeOrigin.y;
-		voxelVertexes[i].z = VOXEL_VERTEXES_ATLAS[i].pos.z + VOXEL_SIZE * 0.5f + relativeOrigin.z;
+		voxelVertexes[i].x = VOXEL_VERTEXES_ATLAS[i].pos.x + relativeOrigin.x;
+		voxelVertexes[i].y = VOXEL_VERTEXES_ATLAS[i].pos.y + relativeOrigin.y;
+		voxelVertexes[i].z = VOXEL_VERTEXES_ATLAS[i].pos.z + relativeOrigin.z;
 	}
 	return voxelVertexes;
 }
@@ -39,9 +39,9 @@ std::vector<ve::VulkanModel::Vertex> getVertexAtlasRelative( vec3 const& relativ
 	std::vector<ve::VulkanModel::Vertex> voxelVertexes(VERTEX_PER_VOXEL);
 	for (ui32 i=0; i<VERTEX_PER_VOXEL; i++) {
 		// add 0.5 (half size of a voxel) of every coor so that the position is in the exact center
-		voxelVertexes[i].pos.x = VOXEL_VERTEXES_ATLAS[i].pos.x + VOXEL_SIZE * 0.5f + relativeOrigin.x;
-		voxelVertexes[i].pos.y = VOXEL_VERTEXES_ATLAS[i].pos.y + VOXEL_SIZE * 0.5f + relativeOrigin.y;
-		voxelVertexes[i].pos.z = VOXEL_VERTEXES_ATLAS[i].pos.z + VOXEL_SIZE * 0.5f + relativeOrigin.z;
+		voxelVertexes[i].pos.x = VOXEL_VERTEXES_ATLAS[i].pos.x + relativeOrigin.x;
+		voxelVertexes[i].pos.y = VOXEL_VERTEXES_ATLAS[i].pos.y + relativeOrigin.y;
+		voxelVertexes[i].pos.z = VOXEL_VERTEXES_ATLAS[i].pos.z + relativeOrigin.z;
 		voxelVertexes[i].normal = VOXEL_VERTEXES_ATLAS[i].normal;
 		voxelVertexes[i].textureUv = VOXEL_VERTEXES_ATLAS[i].textureUv;
 	}
