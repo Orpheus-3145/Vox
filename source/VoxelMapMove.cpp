@@ -99,7 +99,7 @@ vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 
 void	VoxelMap::insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept
 {
-	constexpr float playerRadius = 0.3f;
+	constexpr float playerRadius = 0.48f;
 	
 	locations.clear();
 	locations.push_back(roundyRound(position));
