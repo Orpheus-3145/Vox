@@ -90,46 +90,102 @@ vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 			vec3i v{ x + dx, y + dy, z + dz };
 			if (getVoxelAt(v) == VoxelType::Air)
 			{
-				return vec3{ v.x + 0.5f, v.y + 0.5f, v.z + 0.5f };
+				return vec3{ v.x , v.y , v.z  };
 			}
 		}
 	}
-	return vec3{origin.x + 0.5f, origin.y + 0.5f, origin.z + 0.5f};
+	return vec3{origin.x , origin.y , origin.z };
+}
+
+void	VoxelMap::insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept
+{
+	constexpr float playerRadius = 0.3f;
+	
+	locations.clear();
+	locations.push_back(roundyRound(position));
+	locations.push_back(roundyRound(position + vec3(playerRadius, 0.0f, 0.0f)));
+	locations.push_back(roundyRound(position + vec3(-playerRadius, 0.0f, 0.0f)));
+	locations.push_back(roundyRound(position + vec3(0.0f, playerRadius, 0.0f)));
+	locations.push_back(roundyRound(position + vec3(0.0f, -playerRadius, 0.0f)));
+	locations.push_back(roundyRound(position + vec3(0.0f, 0.0f, playerRadius)));
+	locations.push_back(roundyRound(position + vec3(0.0f, 0.0f, -playerRadius)));
+}
+
+bool	VoxelMap::testVoxels(const vec3& location)
+{
+	static std::vector<vec3i> voxelsToTest{};
+
+	if (location.y <= 0 || location.y >= VoxelChunk::chunkDimensions.y)
+	{
+		return false;
+	}
+	vec2i	chunk = voxelToChunk(roundyRound(location));
+	i32		index = (chunk.x - minPositions.x) * squareSize + (chunk.y - minPositions.y);
+
+	if (index < 0 || static_cast<size_t>(index) >= map.size())
+	{
+		return false;
+	}
+	vec3i	chunkWorld = map[index].getWorldPos();
+	vec3	chunkWorldF = vec3(chunkWorld.x, chunkWorld.y, chunkWorld.z);
+	vec3	locationOnChunk = location - chunkWorldF;
+
+	insideVoxels(locationOnChunk, voxelsToTest);
+	const bool result = map[index].testForCollision(voxelsToTest);
+
+	if (result == true)
+	{
+		std::cout << "collision at: " << location << std::endl;
+		std::cout << "chunk world pos: " << chunkWorldF << std::endl;
+		std::cout << "location on chunk: " << locationOnChunk << std::endl;
+		std::cout << "voxels tested: ";
+		for (const vec3i& v : voxelsToTest)
+		{
+			std::cout << v << " ";
+		}
+		std::cout << std::endl;
+	}
+	return result;
 }
 
 vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 {
 	constexpr float stepSize = 0.01f;
+
 	const vec3	moveTo = origin + movement;
 	const vec3	movementStep = movement.normalized() * stepSize;
+	const float	steps = movement.length();
+
 	vec3	nonBlockedMovement;
 	vec3	position = origin;
-	const float	steps = movement.length();
-	float moved;
+	float	moved;
 
 	std::cout << "\nmovement length: " << steps << std::endl;
 	std::cout << "we are at: " << origin << std::endl;
 	std::cout << "move to: " << moveTo << std::endl;
 
-	vec3i currentVoxel = roundyRound(origin);
-	if (getVoxelAt(currentVoxel) != VoxelType::Air)
+	if (getVoxelAt(roundyRound(origin)) != VoxelType::Air)
 	{
-		return nearestAirVoxel(currentVoxel) - origin;
+		std::cout << "starting inside a block, searching for nearest air voxel..." << std::endl;
+		vec3 nearestAir = nearestAirVoxel(roundyRound(origin));
+		std::cout << "nearest air voxel found at: " << nearestAir << std::endl;
+		vec3 escapeVector = nearestAir - origin;
+
+		escapeVector.x = std::floor(escapeVector.x) + 0.5f;
+		escapeVector.y = std::floor(escapeVector.y) + 0.5f;
+		escapeVector.z = std::floor(escapeVector.z) + 0.5f;
+		return escapeVector;
 	}
 	for (moved = 0.0f; moved < steps; moved += stepSize)
 	{
 		const vec3 nextPosition = position + movementStep;
-		const vec3i roundedNext = roundyRound(nextPosition);
-		if (roundedNext != currentVoxel)
+		const bool isColliding = testVoxels(nextPosition);
+		if (isColliding == true)
 		{
-			VoxelType voxel = getVoxelAt(roundedNext);
-			if (voxel != VoxelType::Air)
-			{
-				std::cout << "BONK! at: " << nextPosition << " (" << roundedNext << ")" << std::endl;
-				std::cout << "voxel type: " << static_cast<i32>(voxel) << std::endl;
-				return nearestAirVoxel(currentVoxel) - origin;
-			}
-			currentVoxel = roundedNext;
+			position.x = std::floor(position.x) + 0.5f;
+			position.y = std::floor(position.y) + 0.5f;
+			position.z = std::floor(position.z) + 0.5f;
+			break;
 		}
 		position = nextPosition;
 	}

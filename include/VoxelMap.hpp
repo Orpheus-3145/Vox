@@ -70,6 +70,8 @@ class VoxelMap
 		void	setAdjacentPointers();
 
 		vec3	nearestAirVoxel(const vec3i& origin);
+		void	insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept;
+		bool	testVoxels(const vec3& location);
 };
 
 }	// namespace vox
