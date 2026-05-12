@@ -64,17 +64,17 @@ void Vox::setupVulkan( void )
 		.createPool();
 
 	ve::VulkanBindingSet uboSetBindings;
-	uboSetBindings.addUniformBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
-	uboSetBindings.addUniformBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MaterialUniform));
+	uboSetBindings.addBufferBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
+	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MaterialUniform));
 
 	ve::VulkanBindingSet textureTerrainSetBindings;
-	textureTerrainSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureDirtPath, ve::TextureType::TEXTURE_PLAIN);
+	textureTerrainSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureDirtPath);
 
 	ve::VulkanBindingSet textureUndergroundSetBindings;
-	textureUndergroundSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureStonePath, ve::TextureType::TEXTURE_PLAIN);
+	textureUndergroundSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureStonePath);
 
 	ve::VulkanBindingSet textureSkyboxSetBindings;
-	textureSkyboxSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
+	textureSkyboxSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, 1, ve::TextureType::TEXTURE_CUBEMAP);
 
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));

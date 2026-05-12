@@ -99,8 +99,8 @@ void	VulkanTexture::createTextureImage()
 		device,
 		VulkanTexture::sizeOfPixel,
 		nPixels,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 	stagingBuffer.map();
 

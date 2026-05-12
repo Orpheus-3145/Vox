@@ -160,8 +160,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -172,8 +172,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
 }
@@ -190,8 +190,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<vec3>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -202,8 +202,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<vec3>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
 }
@@ -221,8 +221,8 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -233,8 +233,8 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->indexBuffer->getBuffer(), bufferSize);
 }
@@ -249,8 +249,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
 	);
 	stagingBufferVertex.map();
 
@@ -259,8 +259,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
 	);
 	stagingBufferIndex.map();
 	// the face index data doesn't 'exist' yet because the indexes depend
@@ -293,8 +293,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBufferVertex.getBuffer(), this->vertexBuffer->getBuffer(), this->vertexCount * vertexSize);
 
@@ -302,8 +302,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBufferIndex.getBuffer(), this->indexBuffer->getBuffer(), this->indexCount * indexSize);
 }

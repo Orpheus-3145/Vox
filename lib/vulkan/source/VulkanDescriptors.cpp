@@ -8,19 +8,23 @@ namespace ve {
 
 ui32 VulkanBindingSet::ID_INSTANCE = 0U;
 
-VulkanBindingSet&	VulkanBindingSet::addUniformBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, uint32_t count )
+VulkanBindingSet&	VulkanBindingSet::addBufferBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, uint32_t count, BufferType bufferType )
 {
-	this->addBinding(binding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, stage, count);
+	assert((bufferType == BUFFER_UNIFORM or bufferType == BUFFER_STORAGE) and "buffer type can be only uniform or storage");
+
+	VkDescriptorType type = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	this->addBinding(binding, type, stage, count);
 
 	UniformBinding newBinding{};
 	newBinding.binding = binding;
 	newBinding.bufferSize = bufferSize;
+	newBinding.bufferType = bufferType;
 	this->uniformBindings.push_back(newBinding);
 
 	return *this;
 }
 
-VulkanBindingSet&	VulkanBindingSet::addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, TextureType textureType, uint32_t count )
+VulkanBindingSet&	VulkanBindingSet::addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, uint32_t count, TextureType textureType )
 {
 	this->addBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, stage, count);
 
@@ -90,6 +94,12 @@ VulkanDescriptorSetFactory&	VulkanDescriptorSetFactory::addBufferPoolSize(uint32
 	return *this;
 }
 
+VulkanDescriptorSetFactory&	VulkanDescriptorSetFactory::addSsboPoolSize(uint32_t count)
+{
+	this->countTypes[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] += count;
+	return *this;
+}
+
 VulkanDescriptorSetFactory&	VulkanDescriptorSetFactory::addSamplerPoolSize(uint32_t count)
 {
 	this->countTypes[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] += count;
@@ -124,6 +134,13 @@ VulkanDescriptorSetFactory& VulkanDescriptorSetFactory::createPool( void )
 		poolSizes.push_back(VkDescriptorPoolSize{
 			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] * this->framesInFlight
+		});
+	}
+	if (this->countTypes[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] > 0)
+	{
+		poolSizes.push_back(VkDescriptorPoolSize{
+			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+			this->countTypes[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] * this->framesInFlight
 		});
 	}
 	if (this->countTypes[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] > 0)
@@ -181,18 +198,46 @@ std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorSetFactory::createDescripto
 	}
 	this->maxSets--;
 
-	std::vector<UniformBinding> const& uniforms = bindings.getUniformBindings();
+	std::vector<UniformBinding> const& uniforms = bindings.getBufferBindings();
 	std::vector<SamplerBinding> const& samplers = bindings.getSamplerBindings();
-	if ((uniforms.size() + samplers.size()) == 0U)
+
+	ui32 countUBOs = 0U, countSSBOs = 0U;
+	for(UniformBinding const& uniBind : uniforms)
+	{
+		if (uniBind.bufferType == BUFFER_UNIFORM)
+		{
+			countUBOs++;
+			if (uniBind.bufferSize > this->vulkanDevice.getMaxSizeUniformBuffer())
+			{
+				throw std::runtime_error("uniform buffer size exceeds device limit");
+			}
+		}
+		else if (uniBind.bufferType == BUFFER_STORAGE)
+		{
+			countSSBOs++;
+			if (uniBind.bufferSize > this->vulkanDevice.getMaxSizeSsbo())
+			{
+				throw std::runtime_error("storage buffer size exceeds device limit");
+			}
+		}
+	}
+
+	if ((countUBOs + countSSBOs + samplers.size()) == 0U)
 	{
 		throw std::runtime_error("no binding set");
 	}
 
-	if(this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] < uniforms.size())
+	if(this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] < countUBOs)
 	{
-		throw std::runtime_error("not enough uniform descriptors, create a new pool");
+		throw std::runtime_error("not enough uniform buffer descriptors, create a new pool");
 	}
-	this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] -= uniforms.size();
+	this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] -= countUBOs;
+
+	if(this->countTypes[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] < countSSBOs)
+	{
+		throw std::runtime_error("not enough storage buffer descriptors, create a new pool");
+	}
+	this->countTypes[VK_DESCRIPTOR_TYPE_STORAGE_BUFFER] -= countSSBOs;
 
 	if(this->countTypes[VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER] < samplers.size())
 	{
@@ -262,7 +307,7 @@ VulkanDescriptorSet::VulkanDescriptorSet(
 		throw std::runtime_error("failed to create descriptor set");
 	}
 
-	for (UniformBinding const& binding : bindings.getUniformBindings())
+	for (UniformBinding const& binding : bindings.getBufferBindings())
 	{
 		this->buffers[binding.binding].resize(this->framesInFlight);
 		this->addBufferDescriptor(binding);
@@ -322,6 +367,7 @@ void VulkanDescriptorSet::addBufferDescriptor(UniformBinding const& bindData) no
 {
 	ui32 binding = bindData.binding;
 	ui32 bufferSize = bindData.bufferSize;
+	VkDescriptorType type = (bindData.bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
 	for (uint32_t frame = 0; frame < this->framesInFlight; frame++)
 	{
@@ -329,8 +375,8 @@ void VulkanDescriptorSet::addBufferDescriptor(UniformBinding const& bindData) no
 			this->vulkanDevice,
 			bufferSize,
 			1,
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			bindData.bufferType
 		);
 		this->buffers[binding][frame]->map();
 
@@ -339,7 +385,7 @@ void VulkanDescriptorSet::addBufferDescriptor(UniformBinding const& bindData) no
 		VkWriteDescriptorSet write{};
 		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		write.dstBinding = binding;
-		write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		write.descriptorType = type;
 		write.descriptorCount = 1;
 		write.dstSet = this->descriptorSets[frame];
 		write.pBufferInfo = &bufferInfo;

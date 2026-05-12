@@ -2,6 +2,7 @@
 
 #include "VulkanDevice.hpp"
 #include "VulkanPipeline.hpp"
+#include "VulkanBuffer.hpp"
 
 #include <memory>
 #include <vector>
@@ -14,6 +15,7 @@ struct UniformBinding
 {
 	uint32_t		binding{0U};
 	ui32			bufferSize{0U};
+	BufferType		bufferType{BUFFER_UNIFORM};
 };
 
 struct SamplerBinding
@@ -32,11 +34,11 @@ class VulkanBindingSet
 		VulkanBindingSet& operator=( VulkanBindingSet const& other ) = delete;
 		VulkanBindingSet& operator=( VulkanBindingSet&& other ) = delete;
 
-		VulkanBindingSet&	addUniformBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, uint32_t count = 1U );
-		VulkanBindingSet&	addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, TextureType textureInfo, uint32_t count = 1U );
+		VulkanBindingSet&	addBufferBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, uint32_t count = 1U, BufferType bufferType = BUFFER_UNIFORM );
+		VulkanBindingSet&	addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, uint32_t count = 1U, TextureType textureInfo = TEXTURE_PLAIN );
 
 		ui32								getId( void ) const noexcept { return this->id; }
-		std::vector<UniformBinding>	const&	getUniformBindings( void ) const noexcept { return this->uniformBindings; }
+		std::vector<UniformBinding>	const&	getBufferBindings( void ) const noexcept { return this->uniformBindings; }
 		std::vector<SamplerBinding>	const&	getSamplerBindings( void ) const noexcept { return this->samplerBindings; }
 
 		VkDescriptorSetLayoutBinding const*	getBindingData( void ) const noexcept;
@@ -66,6 +68,7 @@ class VulkanDescriptorSetFactory
 
 		VulkanDescriptorSetFactory&	addPoolSize( VkDescriptorType type, uint32_t count = 1U );
 		VulkanDescriptorSetFactory&	addBufferPoolSize( uint32_t count = 1U );
+		VulkanDescriptorSetFactory&	addSsboPoolSize( uint32_t count = 1U );
 		VulkanDescriptorSetFactory&	addSamplerPoolSize( uint32_t count = 1U );
 
 		VulkanDescriptorSetFactory&	setPoolFlags( VkDescriptorPoolCreateFlags flags ) noexcept;
@@ -89,6 +92,7 @@ class VulkanDescriptorSetFactory
 
 		std::map<VkDescriptorType,ui32>		countTypes{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0U},
+			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0U},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0U},
 		};
 		VkDescriptorPool						descriptorPool{VK_NULL_HANDLE};

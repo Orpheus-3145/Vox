@@ -5,6 +5,15 @@
 
 namespace ve {
 
+enum BufferType
+{
+	BUFFER_UNIFORM,
+	BUFFER_STORAGE,
+	BUFFER_VERTEX,
+	BUFFER_INDEX,
+	BUFFER_RAW
+};
+
 class VulkanBuffer
 {
 	public:
@@ -13,8 +22,8 @@ class VulkanBuffer
 		VulkanDevice& device,
 		VkDeviceSize instanceSize,
 		uint32_t instanceCount,
-		VkBufferUsageFlags usageFlags,
 		VkMemoryPropertyFlags memoryPropertyFlags,
+		BufferType bufferType,
 		VkDeviceSize minOffsetAlignment = 1);
 	~VulkanBuffer();
 

@@ -59,6 +59,7 @@ class VulkanDevice
 	QueueFamilyIndices		findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
 	uint32_t				getMaxSizePushConstants() { return properties.limits.maxPushConstantsSize; };
 	uint32_t				getMaxSizeUniformBuffer() { return properties.limits.maxUniformBufferRange; };
+	uint32_t				getMaxSizeSsbo() { return properties.limits.maxStorageBufferRange; }
 
 	uint32_t	findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 	VkFormat	findSupportedFormat(

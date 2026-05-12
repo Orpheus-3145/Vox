@@ -6,14 +6,43 @@
 
 namespace ve {
 
-VulkanBuffer::VulkanBuffer(VulkanDevice& device, VkDeviceSize instanceSize,	uint32_t instanceCount,
-	VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize minOffsetAlignment)
-	:
-	vulkanDevice{device}, instanceSize{instanceSize}, instanceCount{instanceCount},	usageFlags{usageFlags},
+VulkanBuffer::VulkanBuffer(
+	VulkanDevice& device,
+	VkDeviceSize instanceSize,
+	uint32_t instanceCount,
+	VkMemoryPropertyFlags memoryPropertyFlags,
+	BufferType bufferType,
+	VkDeviceSize minOffsetAlignment)
+:
+	vulkanDevice{device},
+	instanceSize{instanceSize},
+	instanceCount{instanceCount},
 	memoryPropertyFlags{memoryPropertyFlags}
 {
 	alignmentSize = getAlignment(instanceSize, minOffsetAlignment);
 	bufferSize = alignmentSize * instanceCount;
+
+	switch (bufferType)
+	{
+		case BUFFER_UNIFORM:
+			usageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+			break;
+		case BUFFER_STORAGE:
+			usageFlags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+			break;
+		case BUFFER_VERTEX:
+			usageFlags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+			break;
+		case BUFFER_INDEX:
+			usageFlags = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+			break;
+		case BUFFER_RAW:
+			usageFlags = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+			break;
+		default:
+			usageFlags = VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM;
+			break;
+	}
 	device.createBuffer(bufferSize, usageFlags, memoryPropertyFlags, buffer, memory);
 }
 
