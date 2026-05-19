@@ -52,13 +52,12 @@ void Vox::setupVulkan( void )
 		this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation())
 	);
 
-	ui32	maxSetsToCreate = 5U;
-	ui32	nUniformDescriptors = 2U;
-	ui32	nSamplerDescriptors = 3U;
+	ui32	maxSetsToCreate = 5U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+	ui32	nSamplerDescriptors = 3U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 
 	this->vulkanSetFactory
 		.setMaxSets(maxSetsToCreate)
-		.setFramesInFlight(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT)
 		.addBufferPoolSize(nUniformDescriptors)
 		.addSamplerPoolSize(nSamplerDescriptors)
 		.createPool();
@@ -74,13 +73,17 @@ void Vox::setupVulkan( void )
 	textureUndergroundSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureStonePath);
 
 	ve::VulkanBindingSet textureSkyboxSetBindings;
-	textureSkyboxSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, 1, ve::TextureType::TEXTURE_CUBEMAP);
+	textureSkyboxSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	this->skyboxObject->setModel(this->createVoxelMesh());
 
-	this->uboDescriptorSet = this->vulkanSetFactory.createDescriptorSet(uboSetBindings);
+	this->uboDescriptorSet.resize(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT);
+	for (uint32_t i = 0U; i < ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		this->uboDescriptorSet[i] = this->vulkanSetFactory.createDescriptorSet(uboSetBindings);
+	}
 	this->textTerrainDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureTerrainSetBindings);
 	this->textUndergroundDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureUndergroundSetBindings);
 	this->textSkyboxDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSkyboxSetBindings);
@@ -180,25 +183,21 @@ void Vox::run( void )
 			this->vulkanRenderer.beginSwapChainRenderPass(commandBuffer);
 
 			currentFrame = this->vulkanRenderer.getCurrentFrameIndex();
-			this->uboDescriptorSet->setCurrentFrame(currentFrame);
-			this->textTerrainDescriptorSet->setCurrentFrame(currentFrame);
-			this->textUndergroundDescriptorSet->setCurrentFrame(currentFrame);
-			this->textSkyboxDescriptorSet->setCurrentFrame(currentFrame);
 
 			if (this->countFramesToUpdate > 0)
 			{
 				this->matrixUbo->updateView(this->camera.getViewMatrix());
 				this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
-				this->uboDescriptorSet->updateUniform(0, this->matrixUbo->getData());
+				this->uboDescriptorSet[currentFrame]->updateDescriptor(0, this->matrixUbo->getData());
 
 				this->materialsUbo->updateLightDir(0, Config::lightDirection, this->camera.getViewMatrix(false));
-				this->uboDescriptorSet->updateUniform(1, this->materialsUbo->getData());
+				this->uboDescriptorSet[currentFrame]->updateDescriptor(1, this->materialsUbo->getData());
 
 				this->countFramesToUpdate--;
 			}
 
 			this->terrainPipeline->bindPipeline(commandBuffer);
-			this->uboDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 0U);
+			this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->terrainPipeline, 0U);
 			this->textTerrainDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
 			this->terrainPipeline->updatePushConstants(commandBuffer, pushConstData->getData());
 
@@ -210,7 +209,7 @@ void Vox::run( void )
 			this->undergroundObject->draw(commandBuffer);
 
 			this->skyboxPipeline->bindPipeline(commandBuffer);
-			this->uboDescriptorSet->bindSet(commandBuffer, *this->skyboxPipeline, 0U);
+			this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->skyboxPipeline, 0U);
 			this->textSkyboxDescriptorSet->bindSet(commandBuffer, *this->skyboxPipeline, 1U);
 
 			this->skyboxObject->bindBuffer(commandBuffer);

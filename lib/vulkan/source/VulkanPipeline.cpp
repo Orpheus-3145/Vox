@@ -7,22 +7,30 @@
 namespace ve {
 
 VulkanShader::VulkanShader( VulkanDevice& device, VkShaderStageFlagBits	shaderStageFlag, std::string const& shaderPath) : 
-	vulkanDevice{device}, shaderStageFlag{shaderStageFlag}, shaderPath{shaderPath}, shaderModule{VK_NULL_HANDLE}
+	vulkanDevice{device}, shaderStageFlag{shaderStageFlag}, shaderModule{VK_NULL_HANDLE}
 {
 	std::vector<char> content = readFile(shaderPath);
 	this->createModule(content);
 }
 
-VulkanShader::VulkanShader( VulkanShader&& other ) :
-	vulkanDevice{other.vulkanDevice}, shaderStageFlag{other.shaderStageFlag}, shaderPath{other.shaderPath}, shaderModule{other.shaderModule}
+VulkanShader::VulkanShader( VulkanShader&& other ) noexcept :
+	vulkanDevice{other.vulkanDevice}
 {
-	other.shaderModule = VK_NULL_HANDLE;
+	if (this != &other)
+	{
+		this->shaderStageFlag = other.shaderStageFlag;
+		this->shaderModule = other.shaderModule;
+
+		other.shaderModule = VK_NULL_HANDLE;
+	}
 }
 
-VulkanShader::~VulkanShader( void )
+VulkanShader::~VulkanShader( void ) noexcept
 {
 	if (this->shaderModule != VK_NULL_HANDLE)
+	{
 		vkDestroyShaderModule(this->vulkanDevice.device(), this->shaderModule, nullptr);
+	}
 }
 
 void VulkanShader::createModule(std::vector<char> const& fileContent)
@@ -103,11 +111,18 @@ VulkanPipeline::~VulkanPipeline()
 		vkDestroyPipelineLayout(this->vulkanDevice.device(), this->pipelineLayout, nullptr);
 }
 
-VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) :
-	vulkanDevice{other.vulkanDevice}, pipelineLayout{other.pipelineLayout}, pipeline{other.pipeline}
+VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) noexcept :
+	vulkanDevice{other.vulkanDevice}
 {
-	other.pipelineLayout = VK_NULL_HANDLE;
-	other.pipeline = VK_NULL_HANDLE;
+	if (this != &other)
+	{
+		this->pipelineLayout = other.pipelineLayout;
+		this->pipeline = other.pipeline;
+		this->sizePushConstants = other.sizePushConstants;
+
+		other.pipelineLayout = VK_NULL_HANDLE;
+		other.pipeline = VK_NULL_HANDLE;
+	}
 }
 
 void VulkanPipeline::bindPipeline(VkCommandBuffer commandBuffer) const noexcept

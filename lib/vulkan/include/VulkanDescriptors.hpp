@@ -11,48 +11,81 @@
 
 namespace ve {
 
-struct UniformBinding
+class BindInfo
 {
-	uint32_t		binding{0U};
-	ui32			bufferSize{0U};
-	BufferType		bufferType{BUFFER_UNIFORM};
+	public:
+		BindInfo( void ) = delete;
+		BindInfo( VkDescriptorSetLayoutBinding const& vkInfo ) noexcept : vkInfo{vkInfo} {};
+		virtual ~BindInfo( void ) = 0;
+		BindInfo( BindInfo const& other ) = default;
+		BindInfo( BindInfo&& other ) = default;
+		BindInfo& operator=( BindInfo const& other ) = default;
+		BindInfo& operator=( BindInfo& other ) = default;
+		
+		uint32_t	getBinding( void ) const noexcept { return this->vkInfo.binding; }
+		uint32_t	getNitems( void ) const noexcept { return this->vkInfo.descriptorCount; }
+
+	protected:
+		VkDescriptorSetLayoutBinding	vkInfo;
 };
 
-struct SamplerBinding
+class UniformBindInfo : public BindInfo
 {
-	uint32_t		binding{0U};
-	std::string		texturePath;
-	TextureType		textureType{TEXTURE_PLAIN};
+	public:
+		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<uint32_t> const& bufferSizes, BufferType bufferType) noexcept :
+			BindInfo(vkInfo), bufferSizes{bufferSizes}, bufferType{bufferType} {}
+
+		std::vector<uint32_t> const&	getBufferSizes( void ) const noexcept { return bufferSizes; }
+		BufferType						getBufferType( void ) const noexcept { return bufferType; }
+
+	private:
+		std::vector<uint32_t>		bufferSizes;
+		BufferType					bufferType;
+};
+
+class SamplerBindInfo : public BindInfo
+{
+	public:
+		SamplerBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<std::string> const& texturePaths, std::vector<TextureType> const& textureTypes) noexcept :
+			BindInfo(vkInfo), texturePaths{texturePaths}, textureTypes{textureTypes} {}
+
+		std::vector<std::string> const&	getTexturePaths( void ) const noexcept { return texturePaths; }
+		std::vector<TextureType> const&	getTextureTypes( void ) const noexcept { return textureTypes; }
+
+	private:
+		std::vector<std::string>	texturePaths;
+		std::vector<TextureType>	textureTypes;
 };
 
 class VulkanBindingSet
 {
 	public:
-		VulkanBindingSet( void ) : id{VulkanBindingSet::ID_INSTANCE++} {}
+		VulkanBindingSet( void ) noexcept : id{VulkanBindingSet::ID_INSTANCE++} {}
 		VulkanBindingSet( VulkanBindingSet const& other ) = delete;
-		VulkanBindingSet( VulkanBindingSet&& other ) = delete;
+		VulkanBindingSet( VulkanBindingSet&& other ) = default;
 		VulkanBindingSet& operator=( VulkanBindingSet const& other ) = delete;
 		VulkanBindingSet& operator=( VulkanBindingSet&& other ) = delete;
 
-		VulkanBindingSet&	addBufferBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, uint32_t count = 1U, BufferType bufferType = BUFFER_UNIFORM );
-		VulkanBindingSet&	addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, uint32_t count = 1U, TextureType textureInfo = TEXTURE_PLAIN );
+		VulkanBindingSet&	addBufferBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, BufferType bufferType = BUFFER_UNIFORM );
+		VulkanBindingSet&	addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, TextureType textureInfo = TEXTURE_PLAIN );
 
-		ui32								getId( void ) const noexcept { return this->id; }
-		std::vector<UniformBinding>	const&	getBufferBindings( void ) const noexcept { return this->uniformBindings; }
-		std::vector<SamplerBinding>	const&	getSamplerBindings( void ) const noexcept { return this->samplerBindings; }
+		VulkanBindingSet&	addBufferArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<uint32_t> const& sizes, BufferType bufferType = BUFFER_UNIFORM );
+		VulkanBindingSet&	addSamplerArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<std::string> const& texturePaths, std::vector<TextureType> types );
 
-		VkDescriptorSetLayoutBinding const*	getBindingData( void ) const noexcept;
-		ui32								getBindingDataSize( void ) const noexcept;
+		uint32_t										getId( void ) const noexcept { return this->id; }
+		std::vector<std::unique_ptr<BindInfo>>	const&	getBindingData( void ) const noexcept { return this->bindings; }
+
+		VkDescriptorSetLayoutBinding const*	getVkBindingData( void ) const noexcept { return this->vkBindings.data(); }
+		uint32_t							getVkBindingDataSize( void ) const noexcept { return this->vkBindings.size(); }
 
 	private:
 		void	addBinding(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stage, uint32_t count);
 
-		static ui32 ID_INSTANCE;
+		static uint32_t ID_INSTANCE;
 
-		std::vector<VkDescriptorSetLayoutBinding>	bindings;
-		std::vector<UniformBinding>					uniformBindings;
-		std::vector<SamplerBinding>					samplerBindings;
-		ui32										id;
+		std::vector<VkDescriptorSetLayoutBinding>	vkBindings;
+		std::vector<std::unique_ptr<BindInfo>>		bindings;
+		const uint32_t								id;
 };
 
 class VulkanDescriptorSet;
@@ -61,10 +94,12 @@ class VulkanDescriptorSetFactory
 {
 	public:
 		VulkanDescriptorSetFactory( void ) = delete;
-		VulkanDescriptorSetFactory( VulkanDevice& vulkanDevice) : vulkanDevice{vulkanDevice} {}
-		~VulkanDescriptorSetFactory( void );
+		VulkanDescriptorSetFactory( VulkanDevice& vulkanDevice) noexcept : vulkanDevice{vulkanDevice} {}
+		~VulkanDescriptorSetFactory( void ) noexcept;
 		VulkanDescriptorSetFactory( VulkanDescriptorSetFactory const& other) = delete;
+		VulkanDescriptorSetFactory( VulkanDescriptorSetFactory& other) noexcept;
 		VulkanDescriptorSetFactory& operator=( VulkanDescriptorSetFactory const& other ) = delete;
+		VulkanDescriptorSetFactory& operator=( VulkanDescriptorSetFactory& other ) = delete;
 
 		VulkanDescriptorSetFactory&	addPoolSize( VkDescriptorType type, uint32_t count = 1U );
 		VulkanDescriptorSetFactory&	addBufferPoolSize( uint32_t count = 1U );
@@ -73,7 +108,6 @@ class VulkanDescriptorSetFactory
 
 		VulkanDescriptorSetFactory&	setPoolFlags( VkDescriptorPoolCreateFlags flags ) noexcept;
 		VulkanDescriptorSetFactory&	setMaxSets( uint32_t count ) noexcept;
-		VulkanDescriptorSetFactory&	setFramesInFlight( uint32_t framesInFlight ) noexcept;
 
 		VulkanDescriptorSetFactory& createPool( void );
 		VulkanDescriptorSetFactory&	resetPool( void ) noexcept;
@@ -83,14 +117,13 @@ class VulkanDescriptorSetFactory
 		std::vector<VkDescriptorSetLayout>	getDescriptorSetLayout( void ) const noexcept { return this->descriptorSetlayouts; }
 
 	private:
-		void	addNewLayout( VkDescriptorSetLayoutBinding const* bindingData, ui32 size, ui32 idBinding );
+		void	addNewLayout( VkDescriptorSetLayoutBinding const* bindingData, uint32_t size, uint32_t idBinding );
 
 		VulkanDevice&				vulkanDevice;
-		uint32_t					framesInFlight{1U};
 		VkDescriptorPoolCreateFlags	poolFlags{0U};
 		uint32_t					maxSets{0U};
 
-		std::map<VkDescriptorType,ui32>		countTypes{
+		std::map<VkDescriptorType,uint32_t>		countTypes{
 			{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0U},
 			{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0U},
 			{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0U},
@@ -98,9 +131,12 @@ class VulkanDescriptorSetFactory
 		VkDescriptorPool						descriptorPool{VK_NULL_HANDLE};
 		// descriptor set layouts are linked to a specific binding, the map is used for fast lookup
 		// the vector is instead returned to be given to pipelines creation
-		std::map<ui32,VkDescriptorSetLayout>	existingLayouts;
-		std::vector<VkDescriptorSetLayout>		descriptorSetlayouts;
+		std::map<uint32_t,VkDescriptorSetLayout>	existingLayouts;
+		std::vector<VkDescriptorSetLayout>			descriptorSetlayouts;
 };
+
+
+class VulkanDescriptor;
 
 class VulkanDescriptorSet
 {
@@ -108,34 +144,63 @@ class VulkanDescriptorSet
 		VulkanDescriptorSet( void ) = delete;
 		VulkanDescriptorSet(
 			VulkanDevice& 			vulkanDevice,
-			uint32_t				framesInFlight,
 			VkDescriptorSetLayout	descriptorSetLayout,
 			VkDescriptorPool		descriptorPool,
 			VulkanBindingSet const&	bindings
 		);
 		VulkanDescriptorSet( VulkanDescriptorSet const& other ) = delete;
-		VulkanDescriptorSet( VulkanDescriptorSet&& other );
+		VulkanDescriptorSet( VulkanDescriptorSet&& other ) = delete;
 		VulkanDescriptorSet& operator=( VulkanDescriptorSet const& other ) = delete;
 		VulkanDescriptorSet& operator=( VulkanDescriptorSet&& other ) = delete;
 
-		void	setCurrentFrame( uint32_t frame ) noexcept;
-		void	updateUniform( int32_t binding, void const* data ) noexcept;
-		void	updateUniformAll( int32_t binding, void const* data ) noexcept;
+		void	updateDescriptor( int32_t binding, void const* data, uint32_t index = 0U ) noexcept;
 		void	bindSet( VkCommandBuffer commandBuffer, VulkanPipeline const& pipeline, uint32_t setIndex ) noexcept;
 
 	private:
-		void	addBufferDescriptor( UniformBinding const& bindData ) noexcept;
-		void	addSamplerDescriptor( SamplerBinding const& bindData ) noexcept;
+		VkDescriptorSet			descriptorSet{VK_NULL_HANDLE};
 
-		VulkanDevice&			vulkanDevice;
-		uint32_t				framesInFlight;
-		uint32_t				currentFrame{0U};
-
-		std::vector<VkDescriptorSet>									descriptorSets{};
-		std::map<int32_t,std::vector<std::unique_ptr<VulkanBuffer>>>	buffers{};
-		std::map<int32_t,std::unique_ptr<VulkanTexture>>				textures{};
+		std::map<uint32_t,std::unique_ptr<VulkanDescriptor>>	descriptors{};
 
 		friend class VulkanDescriptorSetFactory;
+};
+
+class VulkanDescriptor
+{
+	public:
+		VulkanDescriptor( BindInfo const& binding ) : binding{binding.getBinding()} {}
+		VulkanDescriptor( void ) = delete;
+		virtual ~VulkanDescriptor( void ) = 0;
+		VulkanDescriptor( VulkanDescriptor const& other ) = delete;
+		VulkanDescriptor( VulkanDescriptor&& other ) = default;
+		VulkanDescriptor& operator=( VulkanDescriptor const& other ) = delete;
+		VulkanDescriptor& operator=( VulkanDescriptor&& other ) = delete;
+
+		virtual void	update( void const* data, uint32_t index = 0U ) noexcept = 0;
+
+	protected:
+		uint32_t	binding;
+};
+
+class VulkanBufferDescriptor : public VulkanDescriptor
+{
+	public:
+		VulkanBufferDescriptor( UniformBindInfo const& binding, VulkanDevice& vulkanDevice, VkDescriptorSet descriptorSet );
+
+		void	update( void const* data, uint32_t index = 0U ) noexcept override;
+
+	private:
+		std::vector<std::unique_ptr<VulkanBuffer>>	buffers{};
+};
+
+class VulkanSamplerDescriptor : public VulkanDescriptor
+{
+	public:
+		VulkanSamplerDescriptor( SamplerBindInfo const& binding, VulkanDevice& vulkanDevice, VkDescriptorSet descriptorSet );
+
+		void	update( void const* data, uint32_t index = 0U ) noexcept override;
+
+	private:
+		std::vector<std::unique_ptr<VulkanTexture>>	textures{};
 };
 
 }  // namespace ve

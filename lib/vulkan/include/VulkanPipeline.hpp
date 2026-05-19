@@ -36,9 +36,9 @@ class VulkanShader
 	public:
 		VulkanShader( void ) = delete;
 		VulkanShader( VulkanDevice& device, VkShaderStageFlagBits shaderStageFlag, std::string const& shaderPath );
-		~VulkanShader( void );
+		~VulkanShader( void ) noexcept;
 		VulkanShader( VulkanShader const& other ) = delete;
-		VulkanShader( VulkanShader&& other );
+		VulkanShader( VulkanShader&& other ) noexcept;
 		VulkanShader& operator=( VulkanShader const& other ) = delete;
 		VulkanShader& operator=( VulkanShader&& other ) = delete;
 
@@ -50,7 +50,6 @@ class VulkanShader
 
 		VulkanDevice&			vulkanDevice;
 		VkShaderStageFlagBits	shaderStageFlag;
-		std::string				shaderPath;
 		VkShaderModule			shaderModule;
 };
 
@@ -71,7 +70,7 @@ class VulkanPipeline
 		);
 		~VulkanPipeline( void );
 		VulkanPipeline( VulkanPipeline const& ) = delete;
-		VulkanPipeline( VulkanPipeline&& );
+		VulkanPipeline( VulkanPipeline&& ) noexcept;
 		VulkanPipeline& operator=( VulkanPipeline const& ) = delete;
 
 		VkPipelineLayout	getPipelineLayout( void ) const noexcept { return pipelineLayout; };

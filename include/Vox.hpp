@@ -55,16 +55,15 @@ class Vox
 		std::unique_ptr<ve::MaterialUniform>			materialsUbo;
 		std::unique_ptr<ve::PushConstantsData>		pushConstData;
 
-		std::unique_ptr<ve::VulkanDescriptorSet> uboDescriptorSet;
+		// vector because every frame in flight requires a copy of buffer data
+		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>> uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> textTerrainDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> textUndergroundDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> textSkyboxDescriptorSet;
 		
 		std::unique_ptr<ve::VulkanPipeline> terrainPipeline;
 		std::unique_ptr<ve::VulkanPipeline> skyboxPipeline;
-		
-		// since there's a copy of every descriptor for every frame in flight,
-		// this flag is to update each ubo in a set, for every frame
+	
 		i32	countFramesToUpdate{0};
 
 		ve::VkConstants	pipelineConstants{};

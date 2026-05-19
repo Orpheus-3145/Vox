@@ -196,7 +196,7 @@ VkResult	VulkanBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) noexce
  *
  * @return VkDescriptorBufferInfo of specified offset and range
  */
-VkDescriptorBufferInfo	VulkanBuffer::descriptorInfo(VkDeviceSize size, VkDeviceSize offset) const noexcept
+VkDescriptorBufferInfo	VulkanBuffer::descriptorBufferInfo(VkDeviceSize size, VkDeviceSize offset) const noexcept
 {
 	return VkDescriptorBufferInfo{buffer, offset, size};
 }
@@ -233,7 +233,7 @@ VkResult	VulkanBuffer::flushIndex(int32_t index) noexcept
  */
 VkDescriptorBufferInfo	VulkanBuffer::descriptorInfoForIndex(int32_t index) noexcept
 {
-	return descriptorInfo(alignmentSize, index * alignmentSize);
+	return descriptorBufferInfo(alignmentSize, index * alignmentSize);
 }
 
 /**
