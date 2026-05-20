@@ -40,12 +40,14 @@ struct Config
 	static constexpr char terrainNoLightVertShaderPath[] = "build/terrainNoLight.vert.spv";
 	static constexpr char terrainNoLightFragShaderPath[] = "build/terrainNoLight.frag.spv";
 
-	static constexpr char textureStonePath[] = "textures/texture_stone_mono.jpeg";
-	static constexpr char textureWaterPath[] = "textures/texture_water_mono.jpeg";
-	static constexpr char textureDirtPath[] = "textures/texture_dirt_atlas.jpeg";
-	static constexpr char textureSkyboxPath[] = "textures/skybox1.png";
+	static constexpr char textureStone1[] = "textures/texture_stone_mono_1.jpeg";
+	static constexpr char textureStone2[] = "textures/texture_stone_mono_2.jpeg";
+	static constexpr char textureDirt1[] = "textures/texture_dirt_atlas.jpeg";
+	static constexpr char textureDirt2[] = "textures/texture_dirt_mono.jpeg";
+	static constexpr char textureWater[] = "textures/texture_water_mono.jpeg";
+	static constexpr char textureSkybox[] = "textures/skybox1.png";
 
-	static constexpr ve::MaterialData dirtMaterial{
+	static constexpr ve::MaterialData dirtMaterial{		// NB add stone material
 		vec4(0.15f, 0.15f, 0.15f, 1.0f),	// ambientColor
 		vec4(0.2f, 0.2f, 0.2f, 1.0f),		// diffuseColor
 		vec4(0.2f, 0.2f, 0.2f, 1.0f),		// specularColor

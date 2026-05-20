@@ -6,6 +6,8 @@
 
 
 namespace ve {
+// NB move header + cpp outside of library
+
 
 static_assert(sizeof(mat4) == 64 && "mat4 type size has to be 64B");
 static_assert(sizeof(vec4) == 16 && "vec4 type size has to be 16B");
@@ -25,9 +27,11 @@ class ViewProjectUniform
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
 
 	private:
-		mat4 view;
-		mat4 projection;
+		mat4	view;
+		mat4	projection;
 };
+// check this: https://chatgpt.com/s/t_6a0c79f4930881919ea36656e039782a
+static_assert((sizeof(ViewProjectUniform) % 16 == 0) && "type not ...");
 
 // Phong lighting model, a combination of the following:
 // Ambient lighting: even when it is dark there is usually still some light somewhere in the world
@@ -61,52 +65,34 @@ struct LightData
 
 struct VkConstants
 {
-	uint32_t	nMaterials;
-	uint32_t	nLights;
+	uint32_t	models{0U};
+	uint32_t	materials{0U};
+	uint32_t	lights{0U};
+	uint32_t	textures{0U};
 };
+
+inline constexpr VkConstants drawingDataLimits{8U, 8U, 1U, 4U};
 
 // [has to comply with std140]
-class MaterialUniform
+class MeshUniform
 {
 	public:
-		void		updateMaterial( uint32_t index, MaterialData const& newMaterial ) noexcept;
-		void		updateLight( uint32_t index, LightData const& newLight, mat4 const& viewMatrix ) noexcept;
-		void		updateLightDir( uint32_t index, vec3 const& lightDir, mat4 const& viewMatrix ) noexcept;
-
-		VkConstants	getConstants( void ) const noexcept { return VkConstants{MAX_MATERIALS, MAX_LIGHTS}; }
-		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
-
-		static constexpr uint32_t MAX_MATERIALS = 8;
-		static constexpr uint32_t MAX_LIGHTS = 8;
-
-	private:
-		std::array<MaterialData, MAX_MATERIALS> materials;
-		std::array<LightData, MAX_LIGHTS>		lights;
-};
-
-// NB [has to comply with std140]
-class PushConstantsData
-{
-	public:
-		PushConstantsData( void ) = delete;
-		PushConstantsData( mat4 const& modelMatrix, mat4 const& normalMatrix ) :
-			modelMatrix{modelMatrix},
-			normalMatrix{normalMatrix} {};
-
-		void	setModelMatrix( mat4 const& modelMatrix ) noexcept { this->modelMatrix = modelMatrix; }
-		void	setNormalMatrix( mat4 const& normalMatrix ) noexcept { this->normalMatrix = normalMatrix; }
-		void	setMaterialIndex( uint32_t index ) noexcept;
-		void	setLightIndex( uint32_t index ) noexcept;
-		void	setTextureIndex( uint32_t index ) noexcept { this->textureIndex = index; }
+		void	updateModelMatrix( uint32_t index, mat4 const& modelMatrix ) noexcept;
+		void	updateNormalMatrix( uint32_t index, mat4 const& normalMatrix ) noexcept;
+		void	updateMaterial( uint32_t index, MaterialData const& newMaterial ) noexcept;
+		void	updateLight( uint32_t index, LightData const& newLight, mat4 const& viewMatrix ) noexcept;
+		void	updateLightDir( uint32_t index, vec3 const& newDir, mat4 const& viewMatrix ) noexcept;
 
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
 
 	private:
-		mat4		modelMatrix;
-		mat4		normalMatrix;
-		uint32_t	materialIndex{0U};
-		uint32_t	lightIndex{0U};
-		uint32_t	textureIndex{0U};
+		mat4 			models[drawingDataLimits.models];
+		mat4 			normals[drawingDataLimits.models];
+		MaterialData 	materials[drawingDataLimits.materials];
+		LightData 		lights[drawingDataLimits.lights];
 };
+
+
+class PushConstantsData {};
 
 }	// namespace ve

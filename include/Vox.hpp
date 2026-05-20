@@ -51,22 +51,16 @@ class Vox
 		std::unique_ptr<ve::VulkanObject> undergroundObject;
 		std::unique_ptr<ve::VulkanObject> skyboxObject;
 
-		std::unique_ptr<ve::ViewProjectUniform> 	matrixUbo;
-		std::unique_ptr<ve::MaterialUniform>			materialsUbo;
-		std::unique_ptr<ve::PushConstantsData>		pushConstData;
+		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;
+		std::unique_ptr<ve::MeshUniform>		materialsUbo;
 
-		// vector because every frame in flight requires a copy of buffer data
-		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>> uboDescriptorSet;
-		std::unique_ptr<ve::VulkanDescriptorSet> textTerrainDescriptorSet;
-		std::unique_ptr<ve::VulkanDescriptorSet> textUndergroundDescriptorSet;
-		std::unique_ptr<ve::VulkanDescriptorSet> textSkyboxDescriptorSet;
-		
+		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
+		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;
+
 		std::unique_ptr<ve::VulkanPipeline> terrainPipeline;
 		std::unique_ptr<ve::VulkanPipeline> skyboxPipeline;
 	
 		i32	countFramesToUpdate{0};
-
-		ve::VkConstants	pipelineConstants{};
 };
 
 }	// namespace vox

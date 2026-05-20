@@ -4,44 +4,44 @@
 
 namespace ve {
 
-void	MaterialUniform::updateMaterial( uint32_t index, MaterialData const& newMaterial ) noexcept
+void	MeshUniform::updateModelMatrix( uint32_t index, mat4 const& modelMatrix ) noexcept
 {
-	assert(index < MaterialUniform::MAX_MATERIALS && "material index out of bounds");
+	assert(index < drawingDataLimits.models && "model matrix index out of bounds");
+
+	this->models[index] = modelMatrix;
+}
+
+void	MeshUniform::updateNormalMatrix( uint32_t index, mat4 const& normalMatrix ) noexcept
+{
+	assert(index < drawingDataLimits.models && "normal matrix index out of bounds");
+
+	this->normals[index] = normalMatrix;
+}
+
+void	MeshUniform::updateMaterial( uint32_t index, MaterialData const& newMaterial ) noexcept
+{
+	assert(index < drawingDataLimits.materials && "material index out of bounds");
 
 	this->materials[index] = newMaterial;
 }
 
-void	MaterialUniform::updateLight( uint32_t index, LightData const& newLight, mat4 const& viewMatrix ) noexcept
+void	MeshUniform::updateLight( uint32_t index, LightData const& newLight, mat4 const& viewMatrix ) noexcept
 {
-	assert(index < MaterialUniform::MAX_LIGHTS && "light source index out of bounds");
+	assert(index < drawingDataLimits.lights && "light source index out of bounds");
 
 	this->lights[index] = newLight;
-	this->updateLightDir(index, vec3(newLight.lightDir), viewMatrix);
+	this->updateLightDir(index, vec3{newLight.lightDir}, viewMatrix);
 }
 
-void	MaterialUniform::updateLightDir( uint32_t index, vec3 const& lightDir, mat4 const& viewMatrix ) noexcept
+void	MeshUniform::updateLightDir( uint32_t index, vec3 const& newDir, mat4 const& viewMatrix ) noexcept
 {
-	assert(index < MaterialUniform::MAX_LIGHTS && "light source index out of bounds");
+	assert(index < drawingDataLimits.lights && "light source index out of bounds");
 
-	vec4 lightDir4 = vec4{lightDir * -1, 0.0f};
-	lightDir4 = viewMatrix * lightDir4;
-	lightDir4.normalize();
-	this->lights[index].lightDir = lightDir4;
-}
+	// light direction is in view space to avoid passing camera position to shaders
+	vec4 reverseLightDir = vec4{newDir * -1, 0.0f};
+	vec4 viewLightDir = (viewMatrix * reverseLightDir).normalize();
 
-
-void	PushConstantsData::setMaterialIndex( uint32_t index ) noexcept
-{
-	assert(index < MaterialUniform::MAX_MATERIALS && "material index out of bounds");
-
-	this->materialIndex = index;
-}
-
-void	PushConstantsData::setLightIndex( uint32_t index ) noexcept
-{
-	assert(index < MaterialUniform::MAX_LIGHTS && "light source index out of bounds");
-
-	this->lightIndex = index;
+	this->lights[index].lightDir = viewLightDir;
 }
 
 }	// namespace ve

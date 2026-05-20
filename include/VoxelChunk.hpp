@@ -58,7 +58,7 @@ class VoxelChunk
 		bool	testForCollision(const std::vector<vec3i>& locations) const noexcept;
 
 	private:
-		void	addVoxelFace(const vec3& voxelLocation, size_t faceIndex, i32 voxelIndex);
+		void	addVoxelFace(const vec3& voxelLocation, size_t faceIndex, i32 voxelIndex, uint32_t textureIndex);
 		void	copyAdjacentData();
 
 		vec2i			location;

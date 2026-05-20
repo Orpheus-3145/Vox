@@ -11,6 +11,8 @@
 
 namespace ve {
 
+class VulkanBindingSet;
+
 class BindInfo
 {
 	public:
@@ -27,13 +29,22 @@ class BindInfo
 
 	protected:
 		VkDescriptorSetLayoutBinding	vkInfo;
+
+	friend class VulkanBindingSet;
 };
 
 class UniformBindInfo : public BindInfo
 {
 	public:
-		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<uint32_t> const& bufferSizes, BufferType bufferType) noexcept :
-			BindInfo(vkInfo), bufferSizes{bufferSizes}, bufferType{bufferType} {}
+		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, uint32_t bufferSize, BufferType bufferType)
+			:	BindInfo(vkInfo),
+				bufferType{bufferType}
+		{
+			this->bufferSizes.push_back(bufferSize);
+		}
+
+		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<uint32_t> const& bufferSizes, BufferType bufferType) noexcept
+			:	BindInfo(vkInfo), bufferSizes{bufferSizes}, bufferType{bufferType} {}
 
 		std::vector<uint32_t> const&	getBufferSizes( void ) const noexcept { return bufferSizes; }
 		BufferType						getBufferType( void ) const noexcept { return bufferType; }
@@ -46,8 +57,15 @@ class UniformBindInfo : public BindInfo
 class SamplerBindInfo : public BindInfo
 {
 	public:
-		SamplerBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<std::string> const& texturePaths, std::vector<TextureType> const& textureTypes) noexcept :
-			BindInfo(vkInfo), texturePaths{texturePaths}, textureTypes{textureTypes} {}
+		SamplerBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::string const& texturePath, TextureType textureType)
+			:	BindInfo(vkInfo)
+		{
+			this->texturePaths.push_back(texturePath);
+			this->textureTypes.push_back(textureType);
+		}
+
+		SamplerBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<std::string> const& texturePaths, std::vector<TextureType> const& textureTypes) noexcept
+			:	BindInfo(vkInfo), texturePaths{texturePaths}, textureTypes{textureTypes} {}
 
 		std::vector<std::string> const&	getTexturePaths( void ) const noexcept { return texturePaths; }
 		std::vector<TextureType> const&	getTextureTypes( void ) const noexcept { return textureTypes; }
@@ -73,19 +91,14 @@ class VulkanBindingSet
 		VulkanBindingSet&	addSamplerArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<std::string> const& texturePaths, std::vector<TextureType> types );
 
 		uint32_t										getId( void ) const noexcept { return this->id; }
-		std::vector<std::unique_ptr<BindInfo>>	const&	getBindingData( void ) const noexcept { return this->bindings; }
-
-		VkDescriptorSetLayoutBinding const*	getVkBindingData( void ) const noexcept { return this->vkBindings.data(); }
-		uint32_t							getVkBindingDataSize( void ) const noexcept { return this->vkBindings.size(); }
+		std::vector<std::unique_ptr<BindInfo>> const&	getBindingData( void ) const noexcept { return this->bindings; }
+		std::vector<VkDescriptorSetLayoutBinding>		getVkBindingData( void ) const noexcept;
 
 	private:
-		void	addBinding(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stage, uint32_t count);
-
 		static uint32_t ID_INSTANCE;
 
-		std::vector<VkDescriptorSetLayoutBinding>	vkBindings;
-		std::vector<std::unique_ptr<BindInfo>>		bindings;
-		const uint32_t								id;
+		std::vector<std::unique_ptr<BindInfo>>	bindings;
+		const uint32_t							id;
 };
 
 class VulkanDescriptorSet;
@@ -117,7 +130,7 @@ class VulkanDescriptorSetFactory
 		std::vector<VkDescriptorSetLayout>	getDescriptorSetLayout( void ) const noexcept { return this->descriptorSetlayouts; }
 
 	private:
-		void	addNewLayout( VkDescriptorSetLayoutBinding const* bindingData, uint32_t size, uint32_t idBinding );
+		void	addNewLayout( VulkanBindingSet const& bindings );
 
 		VulkanDevice&				vulkanDevice;
 		VkDescriptorPoolCreateFlags	poolFlags{0U};
@@ -157,7 +170,7 @@ class VulkanDescriptorSet
 		void	bindSet( VkCommandBuffer commandBuffer, VulkanPipeline const& pipeline, uint32_t setIndex ) noexcept;
 
 	private:
-		VkDescriptorSet			descriptorSet{VK_NULL_HANDLE};
+		VkDescriptorSet		descriptorSet{VK_NULL_HANDLE};
 
 		std::map<uint32_t,std::unique_ptr<VulkanDescriptor>>	descriptors{};
 

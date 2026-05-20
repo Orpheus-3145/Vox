@@ -232,17 +232,25 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 
 	if (constants != nullptr)
 	{
-		configInfo.constantEntries = std::make_unique<VkSpecializationMapEntry[]>(2);
+		configInfo.constantEntries = std::make_unique<VkSpecializationMapEntry[]>(4);
 		configInfo.constantEntries[0].constantID = 0;
-		configInfo.constantEntries[0].offset = offsetof(VkConstants, nMaterials);
+		configInfo.constantEntries[0].offset = offsetof(VkConstants, models);
 		configInfo.constantEntries[0].size = sizeof(uint32_t);
 
 		configInfo.constantEntries[1].constantID = 1;
-		configInfo.constantEntries[1].offset = offsetof(VkConstants, nLights);
+		configInfo.constantEntries[1].offset = offsetof(VkConstants, materials);
 		configInfo.constantEntries[1].size = sizeof(uint32_t);
 
+		configInfo.constantEntries[2].constantID = 2;
+		configInfo.constantEntries[2].offset = offsetof(VkConstants, lights);
+		configInfo.constantEntries[2].size = sizeof(uint32_t);
+
+		configInfo.constantEntries[3].constantID = 3;
+		configInfo.constantEntries[3].offset = offsetof(VkConstants, textures);
+		configInfo.constantEntries[3].size = sizeof(uint32_t);
+
 		configInfo.constantsInfo = std::make_unique<VkSpecializationInfo>();
-		configInfo.constantsInfo->mapEntryCount = 2;
+		configInfo.constantsInfo->mapEntryCount = 4;
 		configInfo.constantsInfo->pMapEntries = configInfo.constantEntries.get();
 		configInfo.constantsInfo->dataSize = sizeof(VkConstants);
 		configInfo.constantsInfo->pData = constants;

@@ -22,7 +22,8 @@ struct	BoundingBox
 enum class MeshLayout : uint32_t {
 	VERTEX = 1 << 0,
 	NORMAL = 1 << 1,
-	TEXTURE = 1 << 2
+	TEXTURE = 1 << 2,
+	RANDOM_INDEX_TEXT = 1 << 3
 };
 
 constexpr MeshLayout operator|(MeshLayout a, MeshLayout b) {
@@ -35,7 +36,7 @@ constexpr bool operator&(MeshLayout a, MeshLayout b) {
 	return static_cast<uint32_t>(a) & static_cast<uint32_t>(b);
 }
 
-constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::NORMAL | MeshLayout::TEXTURE;
+constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::NORMAL | MeshLayout::TEXTURE | MeshLayout::RANDOM_INDEX_TEXT;
 
 
 struct MeshLayoutDescription
@@ -44,15 +45,17 @@ struct MeshLayoutDescription
 	std::vector<VkVertexInputAttributeDescription>	attributeConfig;
 };
 
+
 class VulkanModel
 {
 	public:
 
 	struct Vertex
 	{
-		vec3	pos;
-		vec3	normal;
-		vec2	textureUv;
+		vec3		pos;
+		vec3		normal;
+		vec2		textureUv;
+		uint32_t	textureIndex;
 
 		static std::vector<VkVertexInputBindingDescription>		getBindingDescriptions();
 		static std::vector<VkVertexInputAttributeDescription>	getAttributeDescriptions();
@@ -61,7 +64,8 @@ class VulkanModel
 		{
 			return	pos == other.pos &&
 					normal == other.normal &&
-					textureUv == other.textureUv;
+					textureUv == other.textureUv &&
+					textureIndex == other.textureIndex;
 		}
 		bool operator!=(const Vertex& other) const noexcept
 		{

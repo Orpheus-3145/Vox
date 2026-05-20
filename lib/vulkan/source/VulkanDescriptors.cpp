@@ -18,19 +18,25 @@ VulkanBindingSet&	VulkanBindingSet::addBufferBinding( uint32_t binding, VkShader
 		throw std::runtime_error("buffer type can be only uniform or storage");
 	}
 
-	VkDescriptorType vkType = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	this->addBinding(binding, vkType, stage, 1);
+	VkDescriptorSetLayoutBinding newBinding{};
+	newBinding.binding = binding;
+	newBinding.descriptorType = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	newBinding.descriptorCount = 1;
+	newBinding.stageFlags = stage;
 
-	this->bindings.emplace_back(new UniformBindInfo(this->vkBindings.back(), std::vector<uint32_t>{bufferSize}, bufferType));
-
+	this->bindings.emplace_back(std::make_unique<UniformBindInfo>(newBinding, bufferSize, bufferType));
 	return *this;
 }
 
 VulkanBindingSet&	VulkanBindingSet::addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, TextureType textureType )
 {
-	this->addBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, stage, 1);
-	this->bindings.emplace_back(new SamplerBindInfo(this->vkBindings.back(), std::vector<std::string>{texturePath}, std::vector<TextureType>{textureType}));
+	VkDescriptorSetLayoutBinding newBinding{};
+	newBinding.binding = binding;
+	newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	newBinding.descriptorCount = 1;
+	newBinding.stageFlags = stage;
 
+	this->bindings.emplace_back(std::make_unique<SamplerBindInfo>(newBinding, texturePath, textureType));
 	return *this;
 }
 
@@ -44,11 +50,13 @@ VulkanBindingSet&	VulkanBindingSet::addBufferArrayBinding( uint32_t binding, VkS
 	uint32_t nBuffers = sizes.size();
 	assert(nBuffers > 0U and "no buffer size provided");
 
-	VkDescriptorType vkType = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	this->addBinding(binding, vkType, stage, nBuffers);
+	VkDescriptorSetLayoutBinding newBinding{};
+	newBinding.binding = binding;
+	newBinding.descriptorType = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	newBinding.descriptorCount = nBuffers;
+	newBinding.stageFlags = stage;
 
-	this->bindings.emplace_back(new UniformBindInfo(this->vkBindings.back(), sizes, bufferType));
-
+	this->bindings.emplace_back(std::make_unique<UniformBindInfo>(newBinding, sizes, bufferType));
 	return *this;
 }
 
@@ -62,28 +70,25 @@ VulkanBindingSet&	VulkanBindingSet::addSamplerArrayBinding( uint32_t binding, Vk
 	uint32_t nSamplers = texturePaths.size();
 	assert(nSamplers > 0U and "no texture info provided");
 
-	this->addBinding(binding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, stage, nSamplers);
-	this->bindings.emplace_back(new SamplerBindInfo(this->vkBindings.back(), texturePaths, types));
+	VkDescriptorSetLayoutBinding newBinding{};
+	newBinding.binding = binding;
+	newBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	newBinding.descriptorCount = nSamplers;
+	newBinding.stageFlags = stage;
 
+	this->bindings.emplace_back(std::make_unique<SamplerBindInfo>(newBinding, texturePaths, types));
 	return *this;
 }
 
-void VulkanBindingSet::addBinding(uint32_t binding, VkDescriptorType type, VkShaderStageFlags stage, uint32_t count)
+std::vector<VkDescriptorSetLayoutBinding> VulkanBindingSet::getVkBindingData( void ) const noexcept
 {
-	for (VkDescriptorSetLayoutBinding const& bindingInfo : this->vkBindings)
-	{
-		if (bindingInfo.binding == binding)
-		{
-			throw std::runtime_error("binding for descriptor already set");
-		}
-	}
-	VkDescriptorSetLayoutBinding newBinding{};
-	newBinding.binding = binding;
-	newBinding.descriptorType = type;
-	newBinding.descriptorCount = count;
-	newBinding.stageFlags = stage;
+	std::vector<VkDescriptorSetLayoutBinding> vkBindings(this->bindings.size());
 
-	this->vkBindings.emplace_back(newBinding);
+	for (uint32_t i = 0U; i < this->bindings.size(); i++)
+	{
+		vkBindings[i] = this->bindings[i]->vkInfo;
+	}
+	return vkBindings;
 }
 
 
@@ -239,7 +244,7 @@ std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorSetFactory::createDescripto
 		{
 			UniformBindInfo* uniformBinding	= dynamic_cast<UniformBindInfo*>(bindData.get());
 			(uniformBinding->getBufferType() == BUFFER_UNIFORM) ? countUBOs += uniformBinding->getNitems() : countSSBOs += uniformBinding->getNitems();
-	
+
 			for (uint32_t size : uniformBinding->getBufferSizes())
 			{
 				if (size > this->vulkanDevice.getMaxSizeUniformBuffer())
@@ -280,7 +285,7 @@ std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorSetFactory::createDescripto
 	// create a new descLayout if none is found linked to this binding
 	if (this->existingLayouts.count(bindings.getId()) == 0U)
 	{
-		this->addNewLayout(bindings.getVkBindingData(), bindings.getVkBindingDataSize(), bindings.getId());
+		this->addNewLayout(bindings);
 	}
 
 	return std::make_unique<VulkanDescriptorSet>(
@@ -291,25 +296,27 @@ std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorSetFactory::createDescripto
 	);
 }
 
-void VulkanDescriptorSetFactory::addNewLayout( VkDescriptorSetLayoutBinding const* bindingData, uint32_t size, uint32_t idBinding )
+void VulkanDescriptorSetFactory::addNewLayout( VulkanBindingSet const& bindings )
 {
-	VkDescriptorSetLayout			newLayout;
-	VkDescriptorSetLayoutCreateInfo	descriptorSetLayoutInfo{};
+	std::vector<VkDescriptorSetLayoutBinding>	vkBindings = bindings.getVkBindingData();
+	VkDescriptorSetLayout						newLayout;
 
+	VkDescriptorSetLayoutCreateInfo	descriptorSetLayoutInfo{};
 	descriptorSetLayoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	descriptorSetLayoutInfo.bindingCount = size;
-	descriptorSetLayoutInfo.pBindings = bindingData;
+	descriptorSetLayoutInfo.bindingCount = vkBindings.size();
+	descriptorSetLayoutInfo.pBindings = vkBindings.data();
 
 	if (vkCreateDescriptorSetLayout(
-		this->vulkanDevice.device(),
-		&descriptorSetLayoutInfo,
-		nullptr,
-		&newLayout) != VK_SUCCESS)
+			this->vulkanDevice.device(),
+			&descriptorSetLayoutInfo,
+			nullptr,
+			&newLayout
+		) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create descriptor set layout");
 	}
 	this->descriptorSetlayouts.push_back(newLayout);
-	this->existingLayouts[idBinding] = this->descriptorSetlayouts.back();
+	this->existingLayouts[bindings.getId()] = this->descriptorSetlayouts.back();
 }
 
 

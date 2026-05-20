@@ -108,25 +108,34 @@ MeshLayoutDescription	VulkanModel::getVboLayout() const noexcept
 	data.bindingConfig[0].binding = this->binding;
 	data.bindingConfig[0].stride = 0;
 	data.bindingConfig[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	uint32_t locationIndex = 0U;
 	if (this->type & MeshLayout::VERTEX)
 	{
 		data.bindingConfig[0].stride += sizeof(vec3);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{0, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
 		);
 	}
 	if (this->type & MeshLayout::NORMAL)
 	{
 		data.bindingConfig[0].stride += sizeof(vec3);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{1, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
 		);
 	}
 	if (this->type & MeshLayout::TEXTURE)
 	{
 		data.bindingConfig[0].stride += sizeof(vec2);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{2, this->binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+		);
+	}
+	if (this->type & MeshLayout::RANDOM_INDEX_TEXT)
+	{
+		data.bindingConfig[0].stride += sizeof(uint32_t);
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32_UINT, offsetof(Vertex, textureIndex)}
 		);
 	}
 	return data;
@@ -341,19 +350,23 @@ std::vector<VkVertexInputAttributeDescription>	VulkanModel::Vertex::getAttribute
 {
 	std::vector<VkVertexInputAttributeDescription>	attributeDescriptions;
 
-	attributeDescriptions.reserve(3);
+	attributeDescriptions.reserve(4);
 
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
+		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, pos)}
 	);
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
+		VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, normal)}
 	);
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+		VkVertexInputAttributeDescription{2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ve::VulkanModel::Vertex, textureUv)}
+	);
+	attributeDescriptions.push_back(
+		VkVertexInputAttributeDescription{3, 0, VK_FORMAT_R32_UINT, offsetof(ve::VulkanModel::Vertex, textureIndex)}
 	);
 	return attributeDescriptions;
 }
+
 
 void	VulkanModel::Builder::emptyData( void ) noexcept {
 	this->vertices.clear();

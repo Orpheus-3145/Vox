@@ -181,36 +181,37 @@ void	VoxelChunk::generateVertexes()
 
 				vec3 world{worldX + static_cast<float>(x - 1), static_cast<float>(y - 1), worldZ + static_cast<float>(z - 1)};
 
+				uint32_t textureIndex = ve::randomUint(0U, 1U);
 				if (map[i + zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::FRONT), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::FRONT), i, textureIndex);
 				}
 				if (map[i - zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::BACK), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::BACK), i, textureIndex);
 				}
 				if (map[i - xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::LEFT), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::LEFT), i, textureIndex);
 				}
 				if (map[i + xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::RIGHT), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::RIGHT), i, textureIndex);
 				}
 				if (map[i + 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::TOP), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::TOP), i, textureIndex);
 				}
 				if (map[i - 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::BOTTOM), i);
+					addVoxelFace(world, static_cast<size_t>(VertexFaces::BOTTOM), i, textureIndex);
 				}
 			}
 		}
 	}
 }
 
-void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
+void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, uint32_t textureIndex)
 {
 	size_t max = min + 4;
 
@@ -230,7 +231,8 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 							VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES_ATLAS[i].normal,
-					VOXEL_VERTEXES_ATLAS[i].textureUv
+					VOXEL_VERTEXES_ATLAS[i].textureUv,
+					textureIndex
 				});
 				break;
 
@@ -246,7 +248,8 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 							VOXEL_VERTEXES[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES[i].normal,
-					VOXEL_VERTEXES[i].textureUv
+					VOXEL_VERTEXES[i].textureUv,
+					textureIndex
 				});
 				break;
 
