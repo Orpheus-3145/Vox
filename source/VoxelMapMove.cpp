@@ -100,7 +100,7 @@ vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 
 void	VoxelMap::insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept
 {
-	static constexpr float playerRadius = 0.5f * VOXEL_SIZE - epsilon();
+	static constexpr float playerRadius = 0.3f * VOXEL_SIZE;
 	static const std::array<vec3, 8>	directions {
 		vec3{playerRadius, playerRadius, playerRadius},	// right-up-forward
 		vec3{playerRadius, playerRadius, -playerRadius},	// right-up-back
@@ -135,11 +135,10 @@ bool	VoxelMap::testVoxels(const vec3& location)
 	}
 	vec3	locationOnChunk = vec3{
 		std::fmod(location.x, (float)VoxelChunk::chunkDimensions.x),
-		std::fmod(location.y, (float)VoxelChunk::chunkDimensions.y),
+		location.y,
 		std::fmod(location.z, (float)VoxelChunk::chunkDimensions.z)
 	};
 	if (location.x < 0.0f) { locationOnChunk.x += (float)VoxelChunk::chunkDimensions.x; }
-	if (location.y < 0.0f) { locationOnChunk.y += (float)VoxelChunk::chunkDimensions.y; }
 	if (location.z < 0.0f) { locationOnChunk.z += (float)VoxelChunk::chunkDimensions.z; }
 
 	std::cout << "location: " << location << std::endl;
