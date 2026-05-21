@@ -68,52 +68,59 @@ VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel) const noexcept
 
 vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 {
-	const i32 x = origin.x;
-	const i32 y = origin.y;
-	const i32 z = origin.z;
-	const i32 maxRadius = 255;
+	return vec3{origin.x, 255, origin.z};
+	// const i32 x = origin.x;
+	// const i32 y = origin.y;
+	// const i32 z = origin.z;
+	// const i32 maxRadius = 255;
 
-	for (i32 r = 1; r <= maxRadius; ++r)
-	{
-		for (i32 dz = -r; dz <= r; ++dz)
-		for (i32 dy = -r; dy <= r; ++dy)
-		for (i32 dx = -r; dx <= r; ++dx)
-		{
-			const bool onSurface =
-				(dx == -r || dx == r) ||
-				(dy == -r || dy == r) ||
-				(dz == -r || dz == r);
+	// for (i32 r = 1; r <= maxRadius; ++r)
+	// {
+	// 	for (i32 dz = -r; dz <= r; ++dz)
+	// 	for (i32 dy = -r; dy <= r; ++dy)
+	// 	for (i32 dx = -r; dx <= r; ++dx)
+	// 	{
+	// 		const bool onSurface =
+	// 			(dx == -r || dx == r) ||
+	// 			(dy == -r || dy == r) ||
+	// 			(dz == -r || dz == r);
 
-			if (!onSurface)
-				continue;
+	// 		if (!onSurface)
+	// 			continue;
 
-			vec3i v{ x + dx, y + dy, z + dz };
-			if (getVoxelAt(v) == VoxelType::Air)
-			{
-				return vec3{ v.x , v.y , v.z  };
-			}
-		}
-	}
-	return vec3{origin.x , origin.y , origin.z };
+	// 		vec3i v{ x + dx, y + dy, z + dz };
+	// 		if (getVoxelAt(v) == VoxelType::Air)
+	// 		{
+	// 			return vec3{ v.x , v.y , v.z  };
+	// 		}
+	// 	}
+	// }
+	// return vec3{origin.x , origin.y , origin.z };
 }
 
 void	VoxelMap::insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept
 {
-	constexpr float playerRadius = 0.5f - epsilon();
+	static constexpr float playerRadius = 0.5f * VOXEL_SIZE - epsilon();
+	static const std::array<vec3, 8>	directions {
+		vec3{playerRadius, playerRadius, playerRadius},	// right-up-forward
+		vec3{playerRadius, playerRadius, -playerRadius},	// right-up-back
+		vec3{playerRadius, -playerRadius, playerRadius},	// right-down-forward
+		vec3{playerRadius, -playerRadius, -playerRadius},	// right-down-back
+		vec3{-playerRadius, playerRadius, playerRadius},	// left-up-forward
+		vec3{-playerRadius, playerRadius, -playerRadius},	// left-up-back
+		vec3{-playerRadius, -playerRadius, playerRadius},	// left-down-forward
+		vec3{-playerRadius, -playerRadius, -playerRadius},	// left-down-backward
+	};
 	
-	locations.clear();
-	locations.push_back(roundyRound(position));
-	locations.push_back(roundyRound(position + vec3(playerRadius, 0.0f, 0.0f)));
-	locations.push_back(roundyRound(position + vec3(-playerRadius, 0.0f, 0.0f)));
-	locations.push_back(roundyRound(position + vec3(0.0f, playerRadius, 0.0f)));
-	locations.push_back(roundyRound(position + vec3(0.0f, -playerRadius, 0.0f)));
-	locations.push_back(roundyRound(position + vec3(0.0f, 0.0f, playerRadius)));
-	locations.push_back(roundyRound(position + vec3(0.0f, 0.0f, -playerRadius)));
+	for (size_t i = 0; i < locations.size(); i++)
+	{
+		locations[i] = roundyRound(position + directions[i]);
+	}
 }
 
 bool	VoxelMap::testVoxels(const vec3& location)
 {
-	static std::vector<vec3i> voxelsToTest{};
+	static std::vector<vec3i> voxelsToTest(8);
 
 	if (location.y <= 0 || location.y >= VoxelChunk::chunkDimensions.y)
 	{
@@ -126,18 +133,23 @@ bool	VoxelMap::testVoxels(const vec3& location)
 	{
 		return false;
 	}
-	vec3i	chunkWorld = map[index].getWorldPos();
-	vec3	chunkWorldF = vec3(chunkWorld.x, chunkWorld.y, chunkWorld.z);
-	vec3	locationOnChunk = location - chunkWorldF;
+	vec3	locationOnChunk = vec3{
+		std::fmod(location.x, (float)VoxelChunk::chunkDimensions.x),
+		std::fmod(location.y, (float)VoxelChunk::chunkDimensions.y),
+		std::fmod(location.z, (float)VoxelChunk::chunkDimensions.z)
+	};
+	if (location.x < 0.0f) { locationOnChunk.x += (float)VoxelChunk::chunkDimensions.x; }
+	if (location.y < 0.0f) { locationOnChunk.y += (float)VoxelChunk::chunkDimensions.y; }
+	if (location.z < 0.0f) { locationOnChunk.z += (float)VoxelChunk::chunkDimensions.z; }
+
+	std::cout << "location: " << location << std::endl;
+	std::cout << "location on chunk: " << locationOnChunk << std::endl;
 
 	insideVoxels(locationOnChunk, voxelsToTest);
 	const bool result = map[index].testForCollision(voxelsToTest);
 
 	if (result == true)
 	{
-		std::cout << "collision at: " << location << std::endl;
-		std::cout << "chunk world pos: " << chunkWorldF << std::endl;
-		std::cout << "location on chunk: " << locationOnChunk << std::endl;
 		std::cout << "voxels tested: ";
 		for (const vec3i& v : voxelsToTest)
 		{
@@ -152,7 +164,6 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 {
 	constexpr float stepSize = 0.01f;
 
-	const vec3	moveTo = origin + movement;
 	const vec3	movementStep = movement.normalized() * stepSize;
 	const float	steps = movement.length();
 
@@ -160,22 +171,19 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 	vec3	position = origin;
 	float	moved;
 
-	std::cout << "\nmovement length: " << steps << std::endl;
-	std::cout << "we are at: " << origin << std::endl;
-	std::cout << "move to: " << moveTo << std::endl;
+	// const bool collided = testVoxels(origin);
+	// if (collided == true)
+	// {
+	// 	std::cout << "starting inside a block, searching for nearest air voxel..." << std::endl;
+	// 	vec3 nearestAir = nearestAirVoxel(roundyRound(origin));
+	// 	std::cout << "nearest air voxel found at: " << nearestAir << std::endl;
+	// 	vec3 escapeVector = origin;
 
-	if (getVoxelAt(roundyRound(origin)) != VoxelType::Air)
-	{
-		std::cout << "starting inside a block, searching for nearest air voxel..." << std::endl;
-		vec3 nearestAir = nearestAirVoxel(roundyRound(origin));
-		std::cout << "nearest air voxel found at: " << nearestAir << std::endl;
-		vec3 escapeVector = nearestAir - origin;
-
-		escapeVector.x = std::floor(escapeVector.x) + 0.5f;
-		escapeVector.y = std::floor(escapeVector.y) + 0.5f;
-		escapeVector.z = std::floor(escapeVector.z) + 0.5f;
-		return escapeVector;
-	}
+	// 	escapeVector.x = std::floor(escapeVector.x) + 0.5f;
+	// 	escapeVector.y = std::floor(escapeVector.y) + 0.5f;
+	// 	escapeVector.z = std::floor(escapeVector.z) + 0.5f;
+	// 	return escapeVector;
+	// }
 	for (moved = 0.0f; moved < steps; moved += stepSize)
 	{
 		const vec3 nextPosition = position + movementStep;
@@ -194,8 +202,9 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 		return movement;
 	}
 	nonBlockedMovement = position - origin;
-	std::cout << "attempted movement: " << movement << std::endl;
-	std::cout << "non blocked movement: " << nonBlockedMovement << std::endl;
+	
+	// std::cout << "attempted movement: " << movement << std::endl;
+	// std::cout << "non blocked movement: " << nonBlockedMovement << std::endl;
 	return nonBlockedMovement;
 }
 

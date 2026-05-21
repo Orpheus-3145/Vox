@@ -265,7 +265,7 @@ bool	VoxelChunk::testForCollision(const std::vector<vec3i>& locations) const noe
 			loc.z < 0 || loc.z >= chunkDimensions.z)
 		{
 			continue;
-        }
+		}
 		if (at(loc.x + 1, loc.y + 1, loc.z + 1) != VoxelType::Air)
 		{
 			return true;

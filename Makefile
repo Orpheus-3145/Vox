@@ -2,7 +2,7 @@ TARGET			:=	ft_vox
 
 CC				:=	c++
 CPP_FLAGS		:=	-std=c++2b -Wall -Wextra -Werror
-DEBUG_FLAGS		:=	-O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+DEBUG_FLAGS		:=	-O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
 RELEASE_FLAGS	:=	-O3 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -fno-rtti -ffast-math -funroll-loops
 # -flto				--> apply optimizations between different .o files
 # -fno-math-errno	--> do not update errno variable if cmath functions fail
