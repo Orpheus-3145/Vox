@@ -6,6 +6,7 @@
 #include "World.hpp"
 #include "TypeAliases.hpp"
 
+#include <mutex>
 
 namespace vox {
 
@@ -36,7 +37,9 @@ class VoxelMap
 		vec3	getMapMiddle() const noexcept;
 		vec3	detectCollision(const vec3& origin, const vec3& movement);
 		
-		VoxelType	getVoxelAt(const vec3i& location) const noexcept;
+		// VoxelType	getVoxelAt(const vec3i& location) const noexcept;
+
+		static inline	std::mutex	lock;
 		
 	private:
 		std::vector<VoxelChunk>	map;
@@ -70,7 +73,6 @@ class VoxelMap
 		void	setAdjacentPointers();
 
 		vec3	nearestAirVoxel(const vec3i& origin);
-		void	insideVoxels(const vec3& position, std::vector<vec3i>& locations) const noexcept;
 		bool	testVoxels(const vec3& location);
 };
 

@@ -260,14 +260,17 @@ bool	VoxelChunk::testForCollision(const std::vector<vec3i>& locations) const noe
 {
 	for (const vec3i& loc : locations)
 	{
-		// if (loc.x < 0 || loc.x >= chunkDimensions.x ||
-		// 	loc.y < 0 || loc.y >= chunkDimensions.y ||
-		// 	loc.z < 0 || loc.z >= chunkDimensions.z)
-		// {
-		// 	continue;
-		// }
-		if (at(loc.x + 1, loc.y + 1, loc.z + 1) != VoxelType::Air)
+		if (loc.x <= 0 || loc.x >= paddedDimensions.x ||
+			loc.y <= 0 || loc.y >= paddedDimensions.y ||
+			loc.z <= 0 || loc.z >= paddedDimensions.z)
 		{
+			continue;
+		}
+		const VoxelType voxel = this->at(loc.x + 1, loc.y + 1, loc.z + 1);
+		if (voxel != VoxelType::Air && voxel != VoxelType::Padding)
+		{
+			// std::cout << "Collision at: " << loc << std::endl;
+			// std::cout << "Voxel type: " << static_cast<int>(voxel) << std::endl;
 			return true;
 		}
 	}

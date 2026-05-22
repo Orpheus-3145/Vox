@@ -175,13 +175,13 @@ void	VoxelMap::init()
 			map.emplace_back(std::move(chunk));
 		}
 	}
-	setAdjacentPointers();
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		threadManager.enqueue([this, i] {
 			map[i].generateMap();
 		});
 	}
+	setAdjacentPointers();
 	threadManager.waitIdle();
 	timer.stop();
 	std::cout << "Initial chunk generation complete in: " << timer << std::endl;
