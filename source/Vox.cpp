@@ -235,11 +235,9 @@ void Vox::run( void )
 			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
 			this->vulkanRenderer.endFrame();
 		}
-		timer.stop();
 
-		// std::cout << "\033[K" << "Player position - x: " << playerPos.x << " y: " << playerPos.y << " z: " << playerPos.z << std::endl;
-		// int32_t	fps = static_cast<int32_t> (1.0f / timer.elapsed(Unit::Seconds));
-		// std::cout << "\033[3A" << "\033[K" << "Frames per second: " << fps << ", Frame time: " << timer.elapsed(Unit::Milliseconds) << "ms " << std::endl;
+		this->inputHandler.reset();
+		timer.stop();
 	}
 	vkDeviceWaitIdle(vulkanDevice.device());
 }

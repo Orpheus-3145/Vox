@@ -30,10 +30,10 @@ class VulkanTexture
 	ImageInfo		imageInfo;
 	VkDeviceSize	nPixels;
 
-	VkImage			textureImage = VK_NULL_HANDLE;
-	VkDeviceMemory	textureImageMemory = VK_NULL_HANDLE;
-	VkImageView		textureImageView = VK_NULL_HANDLE;
-	VkSampler		textureSampler = VK_NULL_HANDLE;
+	VkImage			textureImage{VK_NULL_HANDLE};
+	VkDeviceMemory	textureImageMemory{VK_NULL_HANDLE};
+	VkImageView		textureImageView{VK_NULL_HANDLE};
+	VkSampler		textureSampler{VK_NULL_HANDLE};
 
 	VkImageCreateInfo	info{};
 
