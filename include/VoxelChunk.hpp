@@ -43,6 +43,8 @@ class VoxelChunk
 		const VertexVector&	getVertexTerrainData() const noexcept { return terrainVertexes; }
 		const VertexVector&	getVertexUndergroundData() const noexcept { return undergroundVertexes; }
 
+		const vec3i& getWorldPos() const noexcept { return this->worldPosition; }
+		
 		void	setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChunk* south, VoxelChunk* west) noexcept;
 		void	setLocation(vec2i loc);
 
@@ -52,6 +54,8 @@ class VoxelChunk
 		VoxelType	at(i32 x, i32 y, i32 z) const noexcept { return map[index(x, y, z)]; }
 		VoxelType	at(i32 index) const noexcept { return map[index]; }
 		const VoxelType*	dataAt(i32 index) const noexcept { return map.data() + index; }
+
+		bool	testForCollision(const std::vector<vec3i>& locations) const noexcept;
 
 	private:
 		void	addVoxelFace(const vec3& voxelLocation, size_t faceIndex, i32 voxelIndex);

@@ -225,9 +225,9 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 					{
 						vec3
 						{
-							VOXEL_VERTEXES_ATLAS[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
-							VOXEL_VERTEXES_ATLAS[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
-							VOXEL_VERTEXES_ATLAS[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+							VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
+							VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
+							VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES_ATLAS[i].normal,
 					VOXEL_VERTEXES_ATLAS[i].textureUv
@@ -241,9 +241,9 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 					{
 						vec3
 						{
-							VOXEL_VERTEXES[i].pos.x + VOXEL_SIZE * 0.5f + location.x,
-							VOXEL_VERTEXES[i].pos.y + VOXEL_SIZE * 0.5f + location.y,
-							VOXEL_VERTEXES[i].pos.z + VOXEL_SIZE * 0.5f + location.z
+							VOXEL_VERTEXES[i].pos.x + location.x,
+							VOXEL_VERTEXES[i].pos.y + location.y,
+							VOXEL_VERTEXES[i].pos.z + location.z
 						},
 					VOXEL_VERTEXES[i].normal,
 					VOXEL_VERTEXES[i].textureUv
@@ -254,6 +254,27 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex)
 				break;
 		}
 	}
+}
+
+bool	VoxelChunk::testForCollision(const std::vector<vec3i>& locations) const noexcept
+{
+	for (const vec3i& loc : locations)
+	{
+		if (loc.x <= 0 || loc.x >= paddedDimensions.x ||
+			loc.y <= 0 || loc.y >= paddedDimensions.y ||
+			loc.z <= 0 || loc.z >= paddedDimensions.z)
+		{
+			continue;
+		}
+		const VoxelType voxel = this->at(loc.x + 1, loc.y + 1, loc.z + 1);
+		if (voxel != VoxelType::Air && voxel != VoxelType::Padding)
+		{
+			// std::cout << "Collision at: " << loc << std::endl;
+			// std::cout << "Voxel type: " << static_cast<int>(voxel) << std::endl;
+			return true;
+		}
+	}
+	return false;
 }
 
 }	// namespace vox

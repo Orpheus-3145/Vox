@@ -28,7 +28,7 @@ INCLUDE		:=	-Iinclude \
 PLATFORM	:=	$(shell uname -s)
 
 ifeq ($(PLATFORM), Darwin)
-	INCLUDE	+= isystem /opt/homebrew/include -isystem /usr/local/include
+	INCLUDE	+= -isystem /opt/homebrew/include -isystem /usr/local/include
 endif
 
 

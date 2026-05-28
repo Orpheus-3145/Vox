@@ -6,6 +6,7 @@
 #include "World.hpp"
 #include "TypeAliases.hpp"
 
+#include <mutex>
 
 namespace vox {
 
@@ -31,35 +32,48 @@ class VoxelMap
 		bool	update(const vec3& newPosition);
 		void	init();
 
-		std::unique_ptr<ve::VulkanModel> createNewModelTerrain( ve::VulkanDevice& device, ui32 binding = 0U );
-		std::unique_ptr<ve::VulkanModel> createNewModelUnderground( ve::VulkanDevice& device, ui32 binding = 0U );
+		std::unique_ptr<ve::VulkanModel> createNewTerrainModel(ve::VulkanDevice& device, ui32 binding = 0U);
+		std::unique_ptr<ve::VulkanModel> createNewUndergroundModel(ve::VulkanDevice& device, ui32 binding = 0U);
+		vec3	getMapMiddle() const noexcept;
+		vec3	detectCollision(const vec3& origin, const vec3& movement);
+		
+		// VoxelType	getVoxelAt(const vec3i& location) const noexcept;
 
+		static inline	std::mutex	lock;
+		
 	private:
 		std::vector<VoxelChunk>	map;
-
+		
 		i32 	squareSize;
 		vec2i	minPositions;
 		vec2i	maxPositions;
 		vec2i	playerOnChunk;
-		vec3	rawPosition;
-
-		VertexVector	modelVector;
-		IndexVector		modelIndexes;
-
+		
+		VertexVector	terrainVertexes;
+		IndexVector		terrainIndexes;
+		
+		VertexVector	undergroundVertexes;
+		IndexVector		undergroundIndexes;
+		
 		ThreadManager&	threadManager;
-
-		void	north();
-		void	south();
-		void	west();
-		void	east();
+		
+		std::vector<bool> scheduledChanges;
+		
+		void	regenerateTerrainBuffer();
+		void	regenerateUndergroundBuffer();
 
 		vec2i	voxelToChunkPosition(const vec3& position) const noexcept;
-		void	generateRow(i32 index);
-		void	generateColumn(i32 index);
 
-		void	meshRow(i32 index);
-		void	meshColumn(i32 index);
+		void	moveMap(const vec2i& delta);
+
+		void	enqueueChanges(const vec2i& delta);
+
+		void	enqueueRowChanges(i32 row, std::vector<bool>& scheduled);
+		void	enqueueColumnChanges(i32 col, std::vector<bool>& scheduled);
 		void	setAdjacentPointers();
+
+		vec3	nearestAirVoxel(const vec3i& origin);
+		bool	testVoxels(const vec3& location);
 };
 
 }	// namespace vox

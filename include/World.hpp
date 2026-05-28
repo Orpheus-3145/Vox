@@ -30,36 +30,36 @@ enum VertexFaces : size_t
 
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
 inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES{
-	// face FRONT (z = +0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::forward(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::forward(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::forward(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::forward(), vec2{ 0.0f, 0.0f }},
-	//face BACK (z = -0.5)
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::backward(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::backward(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::backward(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::backward(), vec2{ 0.0f, 0.0f }},
-	// face LEFT (x = -0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::left(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::left(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::left(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::left(), vec2{ 0.0f, 0.0f }},
-	// face RIGHT (x = +0.5)
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::right(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::right(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::right(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::right(), vec2{ 0.0f, 0.0f }},
-	// face TOP (y = +0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::up(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::up(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::up(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::up(), vec2{ 0.0f, 0.0f }},
-	// face BOTTOM (y = -0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::down(), vec2{ 0.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::down(), vec2{ 1.0f, 1.0f }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::down(), vec2{ 1.0f, 0.0f }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::down(), vec2{ 0.0f, 0.0f }}
+	// face FRONT (z = 1)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }},
+	//face BACK (z = 0)
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }},
+	// face LEFT (x = 0)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }},
+	// face RIGHT (x = 1)
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }},
+	// face TOP (y = 1)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }},
+	// face BOTTOM (y = 0)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }}
 };
 
 
@@ -68,36 +68,36 @@ static constexpr float H = 1.0f / 3.0f;  // height of a tile
 static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
 inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
-	// face FRONT (z = +0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::forward(), vec2{ W + padding, 3 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::forward(), vec2{ 2 * W - padding, 3 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::forward(), vec2{ 2 * W - padding, 2 * H + padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::forward(), vec2{ W + padding, 2 * H + padding }},
-	//face BACK (z = -0.5)
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::backward(), vec2{ 2 * W - padding, padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::backward(), vec2{ W + padding, padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::backward(), vec2{ W + padding, H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }},
-	// face LEFT (x = -0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::left(), vec2{ padding, H + padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::left(), vec2{ padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::left(), vec2{ W - padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::left(), vec2{ W - padding, H + padding }},
-	// face RIGHT (x = +0.5)
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::right(), vec2{ 3 * W - padding, H + padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::right(), vec2{ 2 * W + padding, H + padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }},
-	// face TOP (y = +0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f,  0.5f }, vec3::up(), vec2{ W + padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f,  0.5f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f,  0.5f, -0.5f }, vec3::up(), vec2{ 2 * W - padding, H + padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f,  0.5f, -0.5f }, vec3::up(), vec2{ W + padding, H + padding }},
-	// face BOTTOM (y = -0.5)
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f, -0.5f }, vec3::down(), vec2{ 3 * W + padding, H + padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f, -0.5f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{  0.5f, -0.5f,  0.5f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }},
-	ve::VulkanModel::Vertex{vec3{ -0.5f, -0.5f,  0.5f }, vec3::down(), vec2{ 4 * W - padding, H + padding }}
+	// face FRONT (z = 1)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ W + padding, 3 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 2 * W - padding, 3 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::forward(), vec2{ 2 * W - padding, 2 * H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::forward(), vec2{ W + padding, 2 * H + padding }},
+	//face BACK (z = 0)
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::backward(), vec2{ W + padding, padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::backward(), vec2{ W + padding, H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }},
+	// face LEFT (x = 0)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }},
+	// face RIGHT (x = 1)
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }},
+	// face TOP (y = 1)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ W + padding, H + padding }},
+	// face BOTTOM (y = 0)
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }},
+	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }}
 };
 
 // hard-coded face indexes of a voxel

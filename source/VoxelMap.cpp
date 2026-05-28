@@ -19,83 +19,96 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 	this->squareSize = visibleVoxels / static_cast<i32>(Config::chunkLength) + 1;
 	i32 visibleChunks = this->squareSize * this->squareSize;
 
-	std::cout << "Visible chunks: " << visibleChunks << std::endl;
 	VoxelChunk::chunkDimensions = vec3i{Config::chunkLength, Config::chunkHeight, Config::chunkLength};
-	std::cout << "Chunk dimensions: " << VoxelChunk::chunkDimensions << std::endl;
 	VoxelChunk::chunkSize = Config::chunkLength * Config::chunkHeight * Config::chunkLength;
 	VoxelChunk::paddedSize = (Config::chunkLength + 2) * (Config::chunkHeight + 2) * (Config::chunkLength + 2);
 
-	std::cout << "Allocating: " << formatBytes(VoxelChunk::chunkSize * visibleChunks * sizeof(VoxelType)) << " for voxel map" << std::endl;
-
 	map.reserve(visibleChunks);
-	minPositions = vec2i{0, 0};
+	playerOnChunk = voxelToChunkPosition(Config::startingPosition);
+	minPositions = vec2i{playerOnChunk.x - (squareSize - 1) / 2, playerOnChunk.y - (squareSize - 1) / 2};
 	maxPositions = vec2i{minPositions.x + squareSize - 1, minPositions.y + squareSize - 1};
+
 	std::cout << "Map ranges from: " << minPositions << " to: " << maxPositions << std::endl;
 	playerOnChunk = vec2i{minPositions.x + squareSize / 2, minPositions.y + squareSize / 2};
-	rawPosition = vec3::zero();
 	VoxelChunk::paddedDimensions = VoxelChunk::chunkDimensions + vec3i{2, 2, 2};
+	scheduledChanges.resize(visibleChunks);
 }
 
-std::unique_ptr<ve::VulkanModel> VoxelMap::createNewModelTerrain( ve::VulkanDevice& device, ui32 binding )
+void	VoxelMap::regenerateTerrainBuffer()
 {
-	std::unique_ptr<ve::VulkanModel> model;
-	size_t totalVertexes = 0;
-
-	modelVector.clear();
-	modelIndexes.clear();
+	size_t	totalVertexes = 0;
+	size_t	oldVertexSize = terrainVertexes.size();
+	
+	terrainVertexes.clear();
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		totalVertexes += map[i].getVertexTerrainSize();
 	}
-	if (totalVertexes > modelVector.capacity())
+	if (totalVertexes > oldVertexSize)
 	{
-		modelVector.reserve(totalVertexes);
-		modelIndexes.reserve(totalVertexes * 6 / 4);
+		terrainVertexes.reserve(totalVertexes);
+		terrainIndexes.reserve(totalVertexes * 6 / 4);
+
+		for (ui32 i = oldVertexSize; i < static_cast<ui32>(totalVertexes); i += 4)
+		{
+			IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
+			terrainIndexes.insert(terrainIndexes.end(), indexes.begin(), indexes.end());
+		}
+	}
+	else
+	{
+		terrainIndexes.erase(terrainIndexes.begin() + totalVertexes * 6 / 4, terrainIndexes.end());
 	}
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		const VertexVector& chunkVertexes = map[i].getVertexTerrainData();
 
-		modelVector.insert(modelVector.end(), chunkVertexes.begin(), chunkVertexes.end());
+		terrainVertexes.insert(terrainVertexes.end(), chunkVertexes.begin(), chunkVertexes.end());
 	}
-	for (ui32 i = 0; i < modelVector.size(); i += 4)
-	{
-		IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
-		modelIndexes.insert(modelIndexes.end(), indexes.begin(), indexes.end());
-	}
-	model = std::make_unique<ve::VulkanModel>(device, modelVector, modelIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
-	return model;
 }
 
-std::unique_ptr<ve::VulkanModel> VoxelMap::createNewModelUnderground( ve::VulkanDevice& device, ui32 binding )
+void	VoxelMap::regenerateUndergroundBuffer()
 {
-	std::unique_ptr<ve::VulkanModel> model;
-	size_t totalVertexes = 0;
-
-	modelVector.clear();
-	modelIndexes.clear();
+	size_t	totalVertexes = 0;
+	size_t	oldVertexSize = undergroundVertexes.size();
+	
+	undergroundVertexes.clear();
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		totalVertexes += map[i].getVertexUndergroundSize();
 	}
-	if (totalVertexes > modelVector.capacity())
+	if (totalVertexes > oldVertexSize)
 	{
-		modelVector.reserve(totalVertexes);
-		modelIndexes.reserve(totalVertexes * 6 / 4);
+		undergroundVertexes.reserve(totalVertexes);
+		undergroundIndexes.reserve(totalVertexes * 6 / 4);
+
+		for (ui32 i = oldVertexSize; i < static_cast<ui32>(totalVertexes); i += 4)
+		{
+			IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
+			undergroundIndexes.insert(undergroundIndexes.end(), indexes.begin(), indexes.end());
+		}
+	}
+	else
+	{
+		undergroundIndexes.erase(undergroundIndexes.begin() + totalVertexes * 6 / 4, undergroundIndexes.end());
 	}
 	for (size_t i = 0; i < map.size(); i++)
 	{
 		const VertexVector& chunkVertexes = map[i].getVertexUndergroundData();
 
-		modelVector.insert(modelVector.end(), chunkVertexes.begin(), chunkVertexes.end());
+		undergroundVertexes.insert(undergroundVertexes.end(), chunkVertexes.begin(), chunkVertexes.end());
 	}
-	for (ui32 i = 0; i < modelVector.size(); i += 4)
-	{
-		IndexVector indexes = {0U + i, 1U + i, 2U + i, 0U + i, 2U + i, 3U + i};
-		modelIndexes.insert(modelIndexes.end(), indexes.begin(), indexes.end());
-	}
-	model = std::make_unique<ve::VulkanModel>(device, modelVector, modelIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
-	return model;
+}
+
+std::unique_ptr<ve::VulkanModel> VoxelMap::createNewTerrainModel(ve::VulkanDevice& device, ui32 binding)
+{
+	return std::make_unique<ve::VulkanModel>(device, terrainVertexes, terrainIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
+}
+
+//	what happens if no underground by chance?
+std::unique_ptr<ve::VulkanModel> VoxelMap::createNewUndergroundModel(ve::VulkanDevice& device, ui32 binding)
+{
+	return std::make_unique<ve::VulkanModel>(device, undergroundVertexes, undergroundIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
 }
 
 void	VoxelMap::setAdjacentPointers()
@@ -162,13 +175,13 @@ void	VoxelMap::init()
 			map.emplace_back(std::move(chunk));
 		}
 	}
-	setAdjacentPointers();
-	for (VoxelChunk& chunk : map)
+	for (size_t i = 0; i < map.size(); i++)
 	{
-		threadManager.enqueue([&] {
-			chunk.generateMap();
+		threadManager.enqueue([this, i] {
+			map[i].generateMap();
 		});
 	}
+	setAdjacentPointers();
 	threadManager.waitIdle();
 	timer.stop();
 	std::cout << "Initial chunk generation complete in: " << timer << std::endl;
@@ -176,9 +189,13 @@ void	VoxelMap::init()
 	timer.start();
 	for (size_t i = 0; i < map.size(); i++)
 	{
-		map[i].generateVertexes();
+		threadManager.enqueue([this, i] {
+			map[i].generateVertexes();
+		});
 	}
 	threadManager.waitIdle();
+	regenerateTerrainBuffer();
+	regenerateUndergroundBuffer();
 	timer.stop();
 	std::cout << "Initial voxel map generation took: " << timer << std::endl;
 }
@@ -190,6 +207,13 @@ vec2i	VoxelMap::voxelToChunkPosition(const vec3& position) const noexcept
 		static_cast<i32>(std::floor(position.z / static_cast<float>(VoxelChunk::chunkDimensions.z)))
 	};
 	return chunkPos;
+}
+
+vec3	VoxelMap::getMapMiddle() const noexcept
+{
+	return vec3((maxPositions.x + minPositions.x + 1) * VoxelChunk::chunkDimensions.x / 2.0f,
+				VoxelChunk::chunkDimensions.height - 1.0f,
+				(maxPositions.y + minPositions.y + 1) * VoxelChunk::chunkDimensions.z / 2.0f);
 }
 
 }	// namespace vox

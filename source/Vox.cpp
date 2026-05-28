@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <future>
 
 namespace vox {
 
@@ -46,7 +47,7 @@ Vox::Vox( void ) :
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
-	camera{Config::cameraStartPos, Config::cameraForward, this->vulkanWindow.getAspectRatio()},
+	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getAspectRatio()},
 	voxelMap{threadManager},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
@@ -98,8 +99,8 @@ void Vox::setupVulkan( void )
 	this->textSkyboxDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSkyboxSetBindings);
 	this->textSkyboxDescriptorSet->addSamplerDescriptor(0, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 
-	this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice));
+	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	this->skyboxObject->setModel(this->createVoxelMesh());
 
 	std::vector<VkDescriptorSetLayout> descriptorSetLayouts{
@@ -155,6 +156,8 @@ void Vox::run( void )
 
 	float deltaTime = 0.0f;
 	Stopwatch timer;
+	std::future<bool>	mapUpdateResult;
+
 	std::cout << "\n\n\n\n";
 	while (vulkanWindow.shouldClose() == false)
 	{
@@ -165,10 +168,36 @@ void Vox::run( void )
 		this->moveCamera(deltaTime);
 
 		vec3 playerPos = this->camera.getCameraPos();
-		if (voxelMap.update(playerPos) == true)
+		this->inputHandler.reset();
+
+		// if (voxelMap.update(playerPos) == true)
+		// {
+		// 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+		// 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
+		// }
+		if (mapUpdateResult.valid() == false)
 		{
-			this->terrainObject->setModel(this->voxelMap.createNewModelTerrain(vulkanDevice));
-			this->undergroundObject->setModel(this->voxelMap.createNewModelUnderground(vulkanDevice));
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				return voxelMap.update(playerPos);
+			});
+		}
+		else
+		{
+			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+
+			if (status == std::future_status::ready)
+			{
+				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
+
+				if (changed == true)
+				{
+					this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+					this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
+				}
+				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+					return voxelMap.update(playerPos);
+				});
+			}
 		}
 
 		VkCommandBuffer commandBuffer = this->vulkanRenderer.beginFrame();
@@ -214,7 +243,6 @@ void Vox::run( void )
 			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
 			this->vulkanRenderer.endFrame();
 		}
-		this->inputHandler.reset();
 		timer.stop();
 
 		// std::cout << "\033[K" << "Player position - x: " << playerPos.x << " y: " << playerPos.y << " z: " << playerPos.z << std::endl;
@@ -235,7 +263,7 @@ void Vox::moveCamera( float deltaTime )
 {
 	vec3	moveDirection = vec3::zero();
 	vec3	rotation = vec3::zero();
-	float	moveScalar = deltaTime * Config::movementSpeed;
+	float	moveScalar = std::min(deltaTime * Config::movementSpeed, static_cast<float>(Config::chunkLength));
 	float	rotationScalar = deltaTime * Config::lookSpeed;
 
 	if (this->inputHandler.isKeyPressed(GLFW_KEY_W)) { moveDirection.z -= moveScalar; }
@@ -257,7 +285,11 @@ void Vox::moveCamera( float deltaTime )
 	if (moveDirection != vec3::zero())
 	{
 		// test for movement
-		this->camera.move(moveDirection);
+		vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
+		vec3 location = this->camera.getCameraPos();
+
+		vec3 movement = this->voxelMap.detectCollision(location, relativeMoveDirection);
+		this->camera.move(movement);
 		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
 }

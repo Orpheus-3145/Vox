@@ -2,7 +2,7 @@ TARGET			:=	ft_vox
 
 CC				:=	c++
 CPP_FLAGS		:=	-std=c++2b -Wall -Wextra -Werror
-DEBUG_FLAGS		:=	-O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+DEBUG_FLAGS		:=	-O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
 RELEASE_FLAGS	:=	-O3 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -fno-rtti -ffast-math -funroll-loops
 # -flto				--> apply optimizations between different .o files
 # -fno-math-errno	--> do not update errno variable if cmath functions fail
@@ -42,12 +42,11 @@ ifeq ($(PLATFORM), Linux)
 
 else ifeq ($(PLATFORM), Darwin)
 	INCLUDE		+= -isystem /opt/homebrew/include -isystem /usr/local/include
-	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,$(/usr/local/lib) -framework Cocoa -framework IOKit -framework OpenGL
+	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,/usr/local/lib -framework Cocoa -framework IOKit -framework OpenGL -lglfw3
 
 endif
 
 # source /opt/vulkan/current/setup-env.sh
-
 
 all: libs $(TARGET)
 
