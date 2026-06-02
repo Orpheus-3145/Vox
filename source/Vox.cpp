@@ -47,7 +47,7 @@ void Vox::setupVulkanBuffers( void )
 	// vertex buffers
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
-	this->skyboxObject->setModel(this->createVoxelMesh());		// NB use only vertex data, no normal, uv, ...
+	this->skyboxObject->setModel(createVoxelModel(this->vulkanDevice));
 
 	// uniform buffer for view and projection matrixes
 	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(this->camera.getViewMatrix(), this->camera.getProjectionMatrix());
@@ -341,18 +341,6 @@ void Vox::toggleFullscreen( void )
 	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
 
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-}
-/**
- * Creates a new ve::VulkanModel, that loads vertex data into the GPU. It shall be called everytime
- * a new world/chunks is created (i.e. whenever WorldNavigator::spawnCloseByWorlds() returns true)
- *
- * @param device vulkan object used to build the buffers
- *
- * @return pointer to the newly created model
- */
-std::shared_ptr<ve::VulkanModel> Vox::createVoxelMesh( vec3 const& relativePos )
-{
-	return std::make_shared<ve::VulkanModel>(vulkanDevice, getVertexAtlasRelative(relativePos), getIndexRelative());
 }
 
 }	// namespace vox

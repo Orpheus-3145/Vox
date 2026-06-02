@@ -14,8 +14,8 @@
 
 namespace vox {
 
-inline constexpr ui32	VERTEX_PER_VOXEL = 24U;	// number of vertexes per voxel
-inline constexpr ui32	INDEX_PER_VOXEL = 36U;	// number of vertex indexes per voxel
+inline constexpr ui32	VERTEX_PER_VOXEL = 24U;		// number of vertexes per voxel
+inline constexpr ui32	INDEX_PER_VOXEL = 36U;		// number of vertex indexes per voxel
 inline constexpr float		VOXEL_SIZE = 1.0f;		// length of a voxel edge
 
 enum VertexFaces : size_t
@@ -102,23 +102,25 @@ inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERT
 
 // hard-coded face indexes of a voxel
 inline constexpr std::array<ui32, INDEX_PER_VOXEL> VOXEL_VERTEX_INDEXES{
-	0U, 1U, 2U, 			// front face
-	0U, 2U, 3U, 			// front face
-	4U, 5U, 6U, 			// back face
-	4U, 6U, 7U, 			// back face
-	8U, 9U, 10U, 			// left face
+	0U, 1U, 2U, 		// front face
+	0U, 2U, 3U, 		// front face
+	4U, 5U, 6U, 		// back face
+	4U, 6U, 7U, 		// back face
+	8U, 9U, 10U, 		// left face
 	8U, 10U, 11U, 		// left face
 	12U, 13U, 14U, 		// right face
 	12U, 14U, 15U, 		// right face
 	16U, 17U, 18U, 		// top face
 	16U, 18U, 19U, 		// top face
 	20U, 21U, 22U, 		// bottom face
-	20U, 22U, 23U			// bottom face
+	20U, 22U, 23U		// bottom face
 };
 
-std::vector<vec3>											getVertexRelative( vec3 const& relativeOrigin );
+std::vector<vec3>						getVertexRelative( vec3 const& relativeOrigin );
 // std::vector<ve::VulkanModel::Vertex>	getVertexRelative( vec3 const& = vec3(0.0f) );
 std::vector<ve::VulkanModel::Vertex>	getVertexAtlasRelative( vec3 const& = vec3(0.0f) );
-IndexVector														getIndexRelative( ui32 = 0U );
+IndexVector								getIndexRelative( ui32 = 0U );
+
+std::unique_ptr<ve::VulkanModel> 		createVoxelModel( ve::VulkanDevice& vulkanDevice, vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );
 
 }	// namespace vox

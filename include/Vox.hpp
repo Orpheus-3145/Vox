@@ -37,9 +37,7 @@ class Vox
 		void setupVulkanBuffers( void );
 		void setupVulkanDescSets( void );
 		void setupVulkanPipelines( void );
-		
-		std::shared_ptr<ve::VulkanModel> createVoxelMesh( vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );
-		
+
 		ve::VulkanWindow				vulkanWindow;
 		ve::VulkanDevice				vulkanDevice;
 		ve::VulkanRenderer				vulkanRenderer;
