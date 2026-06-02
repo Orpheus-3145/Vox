@@ -51,6 +51,7 @@ void Vox::setupVulkan( void )
 	this->materialsUbo->updateNormalMatrix(2, mat4::idMat());
 
 	this->materialsUbo->updateMaterial(0U, Config::dirtMaterial);
+	this->materialsUbo->updateMaterial(1U, Config::stoneMaterial);
 	this->materialsUbo->updateLight(0U, Config::lightMaterial, this->camera.getViewMatrix(false));
 
 	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 1U;
@@ -142,14 +143,14 @@ void Vox::setupVulkan( void )
  */
 void Vox::run( void )
 {
-	vec3							playerPos;
-	Stopwatch					timer;
- 	float							deltaTime = 0.0f;
-	ui32							currentFrame = 0U;
+	vec3				playerPos;
+	Stopwatch			timer;
+ 	float				deltaTime = 0.0f;
+	ui32				currentFrame = 0U;
 
 	VkCommandBuffer		commandBuffer = nullptr;
 	std::future<bool>	mapUpdateResult;
-	DrawDataIndex			indexes{};
+	DrawDataIndex		indexes{};
 
 	while (vulkanWindow.shouldClose() == false)
 	{
@@ -164,9 +165,9 @@ void Vox::run( void )
 
 		if (mapUpdateResult.valid() == false)
 		{
-				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-					return voxelMap.update(playerPos);
-				});
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				return voxelMap.update(playerPos);
+			});
 		}
 		else
 		{
@@ -207,11 +208,13 @@ void Vox::run( void )
 				this->countFramesToUpdate--;
 			}
 
+			this->terrainPipeline->bindPipeline(commandBuffer);
+
 			this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->terrainPipeline, 0U);
 			this->textureDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
-			
-			this->terrainPipeline->bindPipeline(commandBuffer);
+
 			indexes.models = 0U;
+			indexes.materials = 0U;
 			indexes.textures = 0U;
 			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
@@ -219,6 +222,7 @@ void Vox::run( void )
 			this->terrainObject->draw(commandBuffer);
 
 			indexes.models = 1U;
+			indexes.materials = 1U;
 			indexes.textures = 2U;
 			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
@@ -226,6 +230,7 @@ void Vox::run( void )
 			this->undergroundObject->draw(commandBuffer);
 
 			this->skyboxPipeline->bindPipeline(commandBuffer);
+
 			indexes.models = 2U;
 			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
