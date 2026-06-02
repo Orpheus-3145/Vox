@@ -6,8 +6,6 @@
 
 
 namespace ve {
-// NB move header + cpp outside of library
-
 
 static_assert(sizeof(mat4) == 64 && "mat4 type size has to be 64B");
 static_assert(sizeof(vec4) == 16 && "vec4 type size has to be 16B");

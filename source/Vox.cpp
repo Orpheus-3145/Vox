@@ -35,12 +35,24 @@ Vox::Vox( void ) :
 
 void Vox::setupVulkan( void )
 {
+	this->setupVulkanBuffers();
+	this->setupVulkanDescSets();
+	this->setupVulkanPipelines();
+
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Vox::setupVulkanBuffers( void )
+{
+	// vertex buffers
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	this->skyboxObject->setModel(this->createVoxelMesh());		// NB use only vertex data, no normal, uv, ...
 
+	// uniform buffer for view and projection matrixes
 	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(this->camera.getViewMatrix(), this->camera.getProjectionMatrix());
 
+	// uniform buffers for per-mesh data: model and normal matrixes, materials, lights
 	this->materialsUbo = std::make_unique<ve::MeshUniform>();
 	this->materialsUbo->updateModelMatrix(0, this->terrainObject->getModelMatrix());
 	this->materialsUbo->updateModelMatrix(1, this->undergroundObject->getModelMatrix());
@@ -53,7 +65,12 @@ void Vox::setupVulkan( void )
 	this->materialsUbo->updateMaterial(0U, Config::dirtMaterial);
 	this->materialsUbo->updateMaterial(1U, Config::stoneMaterial);
 	this->materialsUbo->updateLight(0U, Config::lightMaterial, this->camera.getViewMatrix(false));
+}
 
+void Vox::setupVulkanDescSets( void )
+{
+	// creates two sets (one for uniforms one for textures) but, because data inside the 
+	// uniforms change a set is needed fo every frames is flight, total sets: 1 * Nframes + 1
 	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 1U;
 	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	ui32	nSamplerDescriptors = 5U;
@@ -64,15 +81,9 @@ void Vox::setupVulkan( void )
 		.addSamplerPoolSize(nSamplerDescriptors)
 		.createPool();
 
-	// NB create a second set to store material data instead of using the second binding
-	// NB use set = 0 binding 0 for view, binding 1 for projection ?
 	ve::VulkanBindingSet uboSetBindings;
 	uboSetBindings.addBufferBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
 	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MeshUniform));
-
-	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
-	this->skyboxObject->setModel(this->createVoxelMesh());
 
 	this->uboDescriptorSet.resize(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT);
 	for (uint32_t i = 0U; i < ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT; i++)
@@ -86,18 +97,16 @@ void Vox::setupVulkan( void )
 		Config::textureStone1,
 		Config::textureStone2
 	};
-	std::vector<ve::TextureType>	textureTypes{
-		ve::TextureType::TEXTURE_PLAIN,
-		ve::TextureType::TEXTURE_PLAIN,
-		ve::TextureType::TEXTURE_PLAIN,
-		ve::TextureType::TEXTURE_PLAIN
-	};
+	std::vector<ve::TextureType>	textureTypes(4, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureSetBindings;
 	textureSetBindings.addSamplerArrayBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, texturePaths, textureTypes);
 	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkybox, ve::TextureType::TEXTURE_CUBEMAP);
 	this->textureDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSetBindings);
+}
 
+void Vox::setupVulkanPipelines( void )
+{
 	std::string vertexShader;
 	std::string fragmentShader;
 	if (Config::lightingMode == true)
@@ -134,9 +143,8 @@ void Vox::setupVulkan( void )
 		sizeof(DrawDataLimit),
 		&ve::drawingDataLimits
 	);
-
-	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
+
 
 /**
  * Run the rendering loop

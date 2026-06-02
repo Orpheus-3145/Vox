@@ -33,8 +33,11 @@ class Vox
 		void resizeWindow( ui32, ui32 );
 		void toggleFullscreen( void );
 
+	private:
+		void setupVulkanBuffers( void );
+		void setupVulkanDescSets( void );
+		void setupVulkanPipelines( void );
 		
-		private:
 		std::shared_ptr<ve::VulkanModel> createVoxelMesh( vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );
 		
 		ve::VulkanWindow				vulkanWindow;
