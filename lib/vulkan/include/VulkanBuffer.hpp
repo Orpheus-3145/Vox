@@ -5,6 +5,15 @@
 
 namespace ve {
 
+enum BufferType
+{
+	BUFFER_UNIFORM,
+	BUFFER_STORAGE,
+	BUFFER_VERTEX,
+	BUFFER_INDEX,
+	BUFFER_RAW
+};
+
 class VulkanBuffer
 {
 	public:
@@ -13,8 +22,8 @@ class VulkanBuffer
 		VulkanDevice& device,
 		VkDeviceSize instanceSize,
 		uint32_t instanceCount,
-		VkBufferUsageFlags usageFlags,
 		VkMemoryPropertyFlags memoryPropertyFlags,
+		BufferType bufferType,
 		VkDeviceSize minOffsetAlignment = 1);
 	~VulkanBuffer();
 
@@ -29,7 +38,7 @@ class VulkanBuffer
 	void		writeToBuffer(const void* data, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
 	VkResult	flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
 	
-	VkDescriptorBufferInfo	descriptorInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const noexcept;
+	VkDescriptorBufferInfo	descriptorBufferInfo(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) const noexcept;
 	VkResult				invalidate(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) noexcept;
 
 	void		writeToIndex(const void* data, int index) noexcept;

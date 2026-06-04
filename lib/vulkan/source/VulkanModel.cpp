@@ -100,33 +100,42 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	}
 }
 
-MeshlayoutDescription	VulkanModel::getVboLayout() const noexcept
+MeshLayoutDescription	VulkanModel::getVboLayout() const noexcept
 {
-	MeshlayoutDescription data{};
+	MeshLayoutDescription data{};
 	data.bindingConfig.resize(1);
 
 	data.bindingConfig[0].binding = this->binding;
 	data.bindingConfig[0].stride = 0;
 	data.bindingConfig[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+	uint32_t locationIndex = 0U;
 	if (this->type & MeshLayout::VERTEX)
 	{
 		data.bindingConfig[0].stride += sizeof(vec3);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{0, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
 		);
 	}
 	if (this->type & MeshLayout::NORMAL)
 	{
 		data.bindingConfig[0].stride += sizeof(vec3);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{1, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
 		);
 	}
 	if (this->type & MeshLayout::TEXTURE)
 	{
 		data.bindingConfig[0].stride += sizeof(vec2);
 		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{2, this->binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+		);
+	}
+	if (this->type & MeshLayout::RANDOM_INDEX_TEXT)
+	{
+		data.bindingConfig[0].stride += sizeof(uint32_t);
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32_UINT, offsetof(Vertex, textureIndex)}
 		);
 	}
 	return data;
@@ -160,8 +169,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -172,8 +181,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
 }
@@ -190,8 +199,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<vec3>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -202,8 +211,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<vec3>& vertices)
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
 }
@@ -221,8 +230,8 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 
 	stagingBuffer.map();
@@ -233,8 +242,8 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->indexBuffer->getBuffer(), bufferSize);
 }
@@ -249,8 +258,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
 	);
 	stagingBufferVertex.map();
 
@@ -259,8 +268,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
 	);
 	stagingBufferIndex.map();
 	// the face index data doesn't 'exist' yet because the indexes depend
@@ -293,8 +302,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		vertexSize,
 		this->vertexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBufferVertex.getBuffer(), this->vertexBuffer->getBuffer(), this->vertexCount * vertexSize);
 
@@ -302,8 +311,8 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		this->vulkanDevice,
 		indexSize,
 		this->indexCount,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBufferIndex.getBuffer(), this->indexBuffer->getBuffer(), this->indexCount * indexSize);
 }
@@ -341,19 +350,23 @@ std::vector<VkVertexInputAttributeDescription>	VulkanModel::Vertex::getAttribute
 {
 	std::vector<VkVertexInputAttributeDescription>	attributeDescriptions;
 
-	attributeDescriptions.reserve(3);
+	attributeDescriptions.reserve(4);
 
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
+		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, pos)}
 	);
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
+		VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, normal)}
 	);
 	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
+		VkVertexInputAttributeDescription{2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ve::VulkanModel::Vertex, textureUv)}
+	);
+	attributeDescriptions.push_back(
+		VkVertexInputAttributeDescription{3, 0, VK_FORMAT_R32_UINT, offsetof(ve::VulkanModel::Vertex, textureIndex)}
 	);
 	return attributeDescriptions;
 }
+
 
 void	VulkanModel::Builder::emptyData( void ) noexcept {
 	this->vertices.clear();

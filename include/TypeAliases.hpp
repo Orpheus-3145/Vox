@@ -15,3 +15,6 @@ using ui64 = uint64_t;
 
 using VertexVector = std::vector<ve::VulkanModel::Vertex>;
 using IndexVector = std::vector<ui32>;
+
+using DrawDataLimit = ve::VkConstants;
+using DrawDataIndex = ve::VkConstants;

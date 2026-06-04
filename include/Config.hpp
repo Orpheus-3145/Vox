@@ -7,7 +7,9 @@ namespace vox {
 
 struct Config
 {
-	static constexpr bool fullScreenMode = false;
+	static constexpr bool lightingMode = true;
+	static constexpr bool fullScreenMode = true;
+
 	static constexpr ui32 defaultWindowWidth = 1300;
 	static constexpr ui32 defaultWindowHeight = 1300;
 	static constexpr ui32 minimumViewingDistance = 160;
@@ -33,13 +35,40 @@ struct Config
 
 	static constexpr char skyboxVertShaderPath[] = "build/skybox.vert.spv";
 	static constexpr char skyboxFragShaderPath[] = "build/skybox.frag.spv";
-	static constexpr char simpleVertShaderPath[] = "build/terrain.vert.spv";
-	static constexpr char simpleFragShaderPath[] = "build/terrain.frag.spv";
+	static constexpr char terrainVertShaderPath[] = "build/terrain.vert.spv";
+	static constexpr char terrainFragShaderPath[] = "build/terrain.frag.spv";
+	static constexpr char terrainNoLightVertShaderPath[] = "build/terrainNoLight.vert.spv";
+	static constexpr char terrainNoLightFragShaderPath[] = "build/terrainNoLight.frag.spv";
 
-	static constexpr char textureStonePath[] = "textures/texture_stone_mono.jpeg";
-	static constexpr char textureWaterPath[] = "textures/texture_water_mono.jpeg";
-	static constexpr char textureDirtPath[] = "textures/texture_dirt_atlas.jpeg";
-	static constexpr char textureSkyboxPath[] = "textures/skybox1.png";
+	static constexpr char textureStone1[] = "textures/texture_stone_mono_1.jpeg";
+	static constexpr char textureStone2[] = "textures/texture_stone_mono_2.jpeg";
+	static constexpr char textureDirt1[] = "textures/texture_dirt_atlas.jpeg";
+	static constexpr char textureDirt2[] = "textures/texture_dirt_mono.jpeg";
+	static constexpr char textureWater[] = "textures/texture_water_mono.jpeg";
+	static constexpr char textureSkybox[] = "textures/skybox1.png";
+
+	static constexpr ve::MaterialData dirtMaterial{
+		vec4(0.15f, 0.15f, 0.15f, 1.0f),
+		vec4(0.2f, 0.2f, 0.2f, 1.0f),
+		vec4(0.2f, 0.2f, 0.2f, 1.0f),
+		8.0f,
+		1.0f
+	};
+
+	static constexpr ve::MaterialData stoneMaterial{
+		vec4(0.25f, 0.22f, 0.20f, 1.0f),
+		vec4(0.55f, 0.50f, 0.46f, 1.0f),
+		vec4(0.10f, 0.10f, 0.10f, 1.0f),
+		8.0f,
+		1.0f
+	};
+
+	static constexpr ve::LightData lightMaterial{
+		vec4{0.2f, 0.2f, 0.2f, 1.0f},
+		vec4{0.6f, 0.6f, 0.6f, 1.0f},
+		vec4{0.1f, 0.1f, 0.1f, 1.0f},
+		vec4{0.0f, -300.0f, 0.0f, 0.0f}
+	};
 };
 
 } // namespace vox

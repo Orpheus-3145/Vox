@@ -92,7 +92,10 @@ void VulkanDevice::createInstance()
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = "No Engine";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_1;
+
+	uint32_t deviceApiVersion;
+	vkEnumerateInstanceVersion(&deviceApiVersion);
+	appInfo.apiVersion = std::min(deviceApiVersion, VK_API_VERSION_1_2);
 
 	VkInstanceCreateInfo createInfo{};
 
@@ -177,8 +180,8 @@ void	VulkanDevice::createLogicalDevice()
     vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
-	// deviceFeatures.samplerAnisotropy = supportedFeatures.samplerAnisotropy;
 	deviceFeatures.samplerAnisotropy = VK_TRUE;
+	deviceFeatures.imageCubeArray = VK_TRUE;
 
 	VkDeviceCreateInfo createInfo = {};
 	createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -194,6 +197,21 @@ void	VulkanDevice::createLogicalDevice()
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		createInfo.ppEnabledLayerNames = validationLayers.data();
+	}
+
+	uint32_t deviceApiVersion;
+	vkEnumerateInstanceVersion(&deviceApiVersion);
+	VkPhysicalDeviceVulkan12Features features12{};
+	if (deviceApiVersion >= VK_API_VERSION_1_2)
+	{
+		// enable GL_EXT_nonuniform_qualifier feature for dynamic indexing
+		// in bindless mode accessing descriptors uniform/storage
+		features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		features12.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+		features12.descriptorIndexing = VK_TRUE;
+		features12.runtimeDescriptorArray = VK_TRUE;
+
+		createInfo.pNext = &features12;
 	}
 
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device_) != VK_SUCCESS)

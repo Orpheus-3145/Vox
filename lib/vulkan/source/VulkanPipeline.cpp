@@ -7,22 +7,30 @@
 namespace ve {
 
 VulkanShader::VulkanShader( VulkanDevice& device, VkShaderStageFlagBits	shaderStageFlag, std::string const& shaderPath) : 
-	vulkanDevice{device}, shaderStageFlag{shaderStageFlag}, shaderPath{shaderPath}, shaderModule{VK_NULL_HANDLE}
+	vulkanDevice{device}, shaderStageFlag{shaderStageFlag}, shaderModule{VK_NULL_HANDLE}
 {
 	std::vector<char> content = readFile(shaderPath);
 	this->createModule(content);
 }
 
-VulkanShader::VulkanShader( VulkanShader&& other ) :
-	vulkanDevice{other.vulkanDevice}, shaderStageFlag{other.shaderStageFlag}, shaderPath{other.shaderPath}, shaderModule{other.shaderModule}
+VulkanShader::VulkanShader( VulkanShader&& other ) noexcept :
+	vulkanDevice{other.vulkanDevice}
 {
-	other.shaderModule = VK_NULL_HANDLE;
+	if (this != &other)
+	{
+		this->shaderStageFlag = other.shaderStageFlag;
+		this->shaderModule = other.shaderModule;
+
+		other.shaderModule = VK_NULL_HANDLE;
+	}
 }
 
-VulkanShader::~VulkanShader( void )
+VulkanShader::~VulkanShader( void ) noexcept
 {
 	if (this->shaderModule != VK_NULL_HANDLE)
+	{
 		vkDestroyShaderModule(this->vulkanDevice.device(), this->shaderModule, nullptr);
+	}
 }
 
 void VulkanShader::createModule(std::vector<char> const& fileContent)
@@ -49,11 +57,22 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 	VkRenderPass renderPass,
 	std::string const& vertexShaderFile,
 	std::string const& fragmentShaderFile,
-	MeshlayoutDescription const& meshLayout,
+	MeshLayoutDescription const& meshLayout,
 	bool hasCubemapsTexture,
-	uint32_t sizePushConstants
+	uint32_t sizePushConstants,
+	VkConstants const* constants
 )
 {
+	// vulkan push_constant max size must be 128 or 256 b
+	if (descriptorSetLayouts.size() == 0U)
+	{
+		throw std::runtime_error("no descritptor layour provided");
+	}
+	else if (sizePushConstants > device.getMaxSizePushConstants())
+	{
+		throw std::runtime_error("vulkan push_constant input size exceeds device limit");
+	}
+
 	return std::make_unique<VulkanPipeline>(
 		device,
 		descriptorSetLayouts,
@@ -62,7 +81,8 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 		fragmentShaderFile,
 		meshLayout,
 		hasCubemapsTexture,
-		sizePushConstants
+		sizePushConstants,
+		constants
 	);
 }
 
@@ -72,16 +92,15 @@ VulkanPipeline::VulkanPipeline(
 		VkRenderPass renderPass,
 		std::string const& vertexShaderFile,
 		std::string const& fragmentShaderFile,
-		MeshlayoutDescription const& meshLayout,
+		MeshLayoutDescription const& meshLayout,
 		bool hasCubemapsTexture,
-		uint32_t sizePushConstants
+		uint32_t sizePushConstants,
+		VkConstants const* constants
 	) :
 	vulkanDevice{device}, sizePushConstants{sizePushConstants}
 {
-	assert( this->sizePushConstants <= this->vulkanDevice.getMaxPushConstantsSize() && "Push constants size exceeds limit");
-
 	this->setupPipelineLayout(descriptorSetLayouts);
-	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, hasCubemapsTexture, renderPass);
+	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, hasCubemapsTexture, renderPass, constants);
 }
 
 VulkanPipeline::~VulkanPipeline()
@@ -92,11 +111,18 @@ VulkanPipeline::~VulkanPipeline()
 		vkDestroyPipelineLayout(this->vulkanDevice.device(), this->pipelineLayout, nullptr);
 }
 
-VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) :
-	vulkanDevice{other.vulkanDevice}, pipelineLayout{other.pipelineLayout}, pipeline{other.pipeline}
+VulkanPipeline::VulkanPipeline(VulkanPipeline&& other) noexcept :
+	vulkanDevice{other.vulkanDevice}
 {
-	other.pipelineLayout = VK_NULL_HANDLE;
-	other.pipeline = VK_NULL_HANDLE;
+	if (this != &other)
+	{
+		this->pipelineLayout = other.pipelineLayout;
+		this->pipeline = other.pipeline;
+		this->sizePushConstants = other.sizePushConstants;
+
+		other.pipelineLayout = VK_NULL_HANDLE;
+		other.pipeline = VK_NULL_HANDLE;
+	}
 }
 
 void VulkanPipeline::bindPipeline(VkCommandBuffer commandBuffer) const noexcept
@@ -142,7 +168,13 @@ void VulkanPipeline::setupPipelineLayout(std::vector<VkDescriptorSetLayout> cons
 	}
 }
 
-void VulkanPipeline::setupPipeline(std::string const& vertexShaderFile, std::string const& fragmentShaderFile, MeshlayoutDescription const& meshLayout, bool hasCubemapsTexture, VkRenderPass renderPass)
+void VulkanPipeline::setupPipeline(
+	std::string const& vertexShaderFile,
+	std::string const& fragmentShaderFile,
+	MeshLayoutDescription const& meshLayout,
+	bool hasCubemapsTexture,
+	VkRenderPass renderPass,
+	VkConstants const* constants)
 {
 	assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
@@ -150,7 +182,7 @@ void VulkanPipeline::setupPipeline(std::string const& vertexShaderFile, std::str
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderFile);
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderFile);
 
-	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout, hasCubemapsTexture);
+	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout, constants, hasCubemapsTexture);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -183,7 +215,7 @@ void VulkanPipeline::setupPipeline(std::string const& vertexShaderFile, std::str
 	}
 }
 
-VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshlayoutDescription const& meshLayout, bool hasCubemapsTexture ) const noexcept
+VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, bool hasCubemapsTexture ) const noexcept
 {
 	assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
@@ -198,6 +230,32 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.vertexInputInfo.vertexAttributeDescriptionCount = configInfo.attributeVboConfig.size();
 	configInfo.vertexInputInfo.pVertexAttributeDescriptions = configInfo.attributeVboConfig.data();
 
+	if (constants != nullptr)
+	{
+		configInfo.constantEntries = std::make_unique<VkSpecializationMapEntry[]>(4);
+		configInfo.constantEntries[0].constantID = 0;
+		configInfo.constantEntries[0].offset = offsetof(VkConstants, models);
+		configInfo.constantEntries[0].size = sizeof(uint32_t);
+
+		configInfo.constantEntries[1].constantID = 1;
+		configInfo.constantEntries[1].offset = offsetof(VkConstants, materials);
+		configInfo.constantEntries[1].size = sizeof(uint32_t);
+
+		configInfo.constantEntries[2].constantID = 2;
+		configInfo.constantEntries[2].offset = offsetof(VkConstants, lights);
+		configInfo.constantEntries[2].size = sizeof(uint32_t);
+
+		configInfo.constantEntries[3].constantID = 3;
+		configInfo.constantEntries[3].offset = offsetof(VkConstants, textures);
+		configInfo.constantEntries[3].size = sizeof(uint32_t);
+
+		configInfo.constantsInfo = std::make_unique<VkSpecializationInfo>();
+		configInfo.constantsInfo->mapEntryCount = 4;
+		configInfo.constantsInfo->pMapEntries = configInfo.constantEntries.get();
+		configInfo.constantsInfo->dataSize = sizeof(VkConstants);
+		configInfo.constantsInfo->pData = constants;
+	}
+
 	configInfo.shadersConfig.resize(shaders.size());
 	for (uint32_t i = 0U; i < shaders.size(); i++)
 	{
@@ -207,7 +265,7 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 		configInfo.shadersConfig[i].stage = shaders[i].getStageFlag();
 		configInfo.shadersConfig[i].module = shaders[i].getModule();
 		configInfo.shadersConfig[i].pName = "main";
-		configInfo.shadersConfig[i].pSpecializationInfo = nullptr;
+		configInfo.shadersConfig[i].pSpecializationInfo = configInfo.constantsInfo.get();
 	}
 
 	configInfo.viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

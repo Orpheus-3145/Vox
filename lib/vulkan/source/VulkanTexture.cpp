@@ -1,15 +1,13 @@
 #include "VulkanTexture.hpp"
+
 #include <iostream>
+#include <cstring>
 
 namespace ve {
 
 VulkanTexture::VulkanTexture(VulkanDevice& device, const std::string& filePath, TextureType type) : 
 	device(device), type(type)
 {
-	textureImage = VK_NULL_HANDLE;
-	textureImageView = VK_NULL_HANDLE;
-	textureSampler = VK_NULL_HANDLE;
-
 	imageInfo = loadImage(filePath);
 	if (imageInfo.imageData == nullptr)
 	{
@@ -99,8 +97,8 @@ void	VulkanTexture::createTextureImage()
 		device,
 		VulkanTexture::sizeOfPixel,
 		nPixels,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+		BUFFER_RAW
 	);
 	stagingBuffer.map();
 
@@ -112,36 +110,48 @@ void	VulkanTexture::createTextureImage()
 	{
 		uint32_t faceWidth = static_cast<uint32_t>(imageInfo.width) / 4U;
 		uint32_t faceHeight = static_cast<uint32_t>(imageInfo.height) / 3U;
-		uint32_t paddingFace = std::abs(static_cast<int32_t>(faceHeight) - static_cast<int32_t>(faceWidth));
-		if (paddingFace != 0U) {
-			faceWidth = std::min(faceWidth, faceHeight);
-			faceHeight = faceWidth;
-		}
 
-		// order of the faces matters!
 		std::vector<vec2ui> offsets = {
-			vec2ui{0 * faceWidth + paddingFace, 1 * faceHeight + paddingFace},	// left
-			vec2ui{2 * faceWidth + paddingFace, 1 * faceHeight + paddingFace},	// right
-			vec2ui{1 * faceWidth + paddingFace, 0 * faceHeight + paddingFace},	// down
-			vec2ui{1 * faceWidth + paddingFace, 2 * faceHeight + paddingFace},	// up
-			vec2ui{3 * faceWidth + paddingFace, 1 * faceHeight + paddingFace},	// back
-			vec2ui{1 * faceWidth + paddingFace, 1 * faceHeight + paddingFace},	// front
+			vec2ui{0 * faceWidth, 1 * faceHeight},	// left
+			vec2ui{2 * faceWidth, 1 * faceHeight},	// right
+			vec2ui{1 * faceWidth, 0 * faceHeight},	// down
+			vec2ui{1 * faceWidth, 2 * faceHeight},	// up
+			vec2ui{3 * faceWidth, 1 * faceHeight},	// back
+			vec2ui{1 * faceWidth, 1 * faceHeight},	// front
 		};
 
-		uint32_t faceWidthBytes  = (faceWidth - 2 * paddingFace) * VulkanTexture::sizeOfPixel;
-		uint32_t faceSizeBytes  = (faceWidth - paddingFace) * (faceHeight - paddingFace) * VulkanTexture::sizeOfPixel;
-		uint32_t textureWidthBytes = (imageInfo.width - 2 * paddingFace) * VulkanTexture::sizeOfPixel;
+		uint32_t faceWidthBytes = faceWidth * VulkanTexture::sizeOfPixel;
+		uint32_t faceSizeBytes  = faceWidth * faceHeight * VulkanTexture::sizeOfPixel;
+		uint32_t textureWidthBytes = imageInfo.width * VulkanTexture::sizeOfPixel;
+
 		for (uint32_t face = 0; face < 6; face++)
 		{
 			uint32_t x = offsets[face].x;
 			uint32_t y = offsets[face].y;
+			bool rotate180 = (face == 2 || face == 3); // +Y and -Y faces need 180° rotation to match Vulkan cubemap orientation
 			for (uint32_t h = 0; h < faceHeight; h++)
 			{
-				stagingBuffer.writeToBuffer(
-					imageInfo.imageData + (h + y) * textureWidthBytes + x * VulkanTexture::sizeOfPixel,
-					faceWidthBytes,
-					face * faceSizeBytes + h * faceWidthBytes
-				);
+				if (!rotate180)
+				{
+					stagingBuffer.writeToBuffer(
+						imageInfo.imageData + (h + y) * textureWidthBytes + x * VulkanTexture::sizeOfPixel,
+						faceWidthBytes,
+						face * faceSizeBytes + h * faceWidthBytes
+					);
+				}
+				else
+				{
+					uint32_t srcH = faceHeight - 1 - h;
+					for (uint32_t w = 0; w < faceWidth; w++)
+					{
+						uint32_t srcW = faceWidth - 1 - w;
+						stagingBuffer.writeToBuffer(
+							imageInfo.imageData + (srcH + y) * textureWidthBytes + (x + srcW) * VulkanTexture::sizeOfPixel,
+							VulkanTexture::sizeOfPixel,
+							face * faceSizeBytes + h * faceWidthBytes + w * VulkanTexture::sizeOfPixel
+						);
+					}
+				}
 			}
 		}
 	}
@@ -203,9 +213,9 @@ VkDescriptorImageInfo	VulkanTexture::getDescriptorImageInfo() const noexcept {
 void	VulkanTexture::createTextureSampler()
 {
 	VkSamplerCreateInfo	samplerInfo{};
-	
+
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_LINEAR;		// VK_FILTER_NEAREST for cubemaps (adds padding) but result is ugly
+	samplerInfo.magFilter = VK_FILTER_LINEAR;
 	samplerInfo.minFilter = VK_FILTER_LINEAR;
 	if (type == TEXTURE_PLAIN)
 	{
@@ -215,6 +225,7 @@ void	VulkanTexture::createTextureSampler()
 	}
 	else if (type == TEXTURE_CUBEMAP)
 	{
+		samplerInfo.flags = 0;
 		samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
@@ -229,8 +240,6 @@ void	VulkanTexture::createTextureSampler()
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
-
-	samplerInfo.maxAnisotropy = 1.0f;
 
 	if (vkCreateSampler(device.device(), &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
 	{

@@ -1,9 +1,12 @@
 #include "Vec2.hpp"
 #include "Vec3.hpp"
+#include "Vec4.hpp"
 #include "Quat.hpp"
 #include "Mat4.hpp"
 
 #include <algorithm>
+
+vec3::vec3(const vec4& other) : x(other.x), y(other.y), z(other.z) {}
 
 vec3&	vec3::operator=(const vec3& other)
 {

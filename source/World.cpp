@@ -64,4 +64,9 @@ IndexVector getIndexRelative( ui32 start ) {
 	return indexes;
 }
 
+std::unique_ptr<ve::VulkanModel> createVoxelModel( ve::VulkanDevice& vulkanDevice, vec3 const& relativePos )
+{
+	return std::make_unique<ve::VulkanModel>(vulkanDevice, getVertexRelative(relativePos), getIndexRelative());
+}
+
 }	// namespace vox
