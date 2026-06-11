@@ -263,9 +263,9 @@ bool	VoxelChunk::testForCollision(const std::vector<vec3i>& locations) const noe
 {
 	for (const vec3i& loc : locations)
 	{
-		if (loc.x <= 0 || loc.x >= paddedDimensions.x ||
-			loc.y <= 0 || loc.y >= paddedDimensions.y ||
-			loc.z <= 0 || loc.z >= paddedDimensions.z)
+		if (loc.x < -1 || loc.x >= paddedDimensions.x ||
+			loc.y < 0 || loc.y >= paddedDimensions.y ||
+			loc.z < -1 || loc.z >= paddedDimensions.z)
 		{
 			continue;
 		}
