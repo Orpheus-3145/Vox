@@ -4,6 +4,7 @@ layout(set = 0, binding = 0) uniform ViewProjectUBO
 {
 	mat4	view;
 	mat4	projection;
+	mat4	orthographic;
 }	ubo;
 
 layout(push_constant) uniform MeshData {

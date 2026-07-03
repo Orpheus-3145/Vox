@@ -127,8 +127,6 @@ class VulkanDescriptorSetFactory
 
 		std::unique_ptr<VulkanDescriptorSet>	createDescriptorSet( VulkanBindingSet const& bindings );
 
-		std::vector<VkDescriptorSetLayout>	getDescriptorSetLayout( void ) const noexcept { return this->descriptorSetlayouts; }
-
 	private:
 		void	addNewLayout( VulkanBindingSet const& bindings );
 
@@ -150,6 +148,8 @@ class VulkanDescriptorSetFactory
 
 
 class VulkanDescriptor;
+class VulkanBufferDescriptor;
+class VulkanSamplerDescriptor;
 
 class VulkanDescriptorSet
 {
@@ -161,16 +161,22 @@ class VulkanDescriptorSet
 			VkDescriptorPool		descriptorPool,
 			VulkanBindingSet const&	bindings
 		);
+		~VulkanDescriptorSet( void ) = default;
 		VulkanDescriptorSet( VulkanDescriptorSet const& other ) = delete;
 		VulkanDescriptorSet( VulkanDescriptorSet&& other ) = delete;
 		VulkanDescriptorSet& operator=( VulkanDescriptorSet const& other ) = delete;
 		VulkanDescriptorSet& operator=( VulkanDescriptorSet&& other ) = delete;
 
-		void	updateDescriptor( int32_t binding, void const* data, uint32_t index = 0U ) noexcept;
+		void	updateDescriptor( uint32_t binding, void const* data, uint32_t index = 0U ) noexcept;
 		void	bindSet( VkCommandBuffer commandBuffer, VulkanPipeline const& pipeline, uint32_t setIndex ) noexcept;
 
+		VkDescriptorSetLayout			getLayout( void ) const noexcept { return this->descriptorSetLayout; };
+		VulkanBufferDescriptor const*	getBufferDescriptor(uint32_t binding) const noexcept;
+		VulkanSamplerDescriptor const*	getSamplerDescriptor(uint32_t binding) const noexcept;
+
 	private:
-		VkDescriptorSet		descriptorSet{VK_NULL_HANDLE};
+		VkDescriptorSetLayout	descriptorSetLayout{VK_NULL_HANDLE};
+		VkDescriptorSet			descriptorSet{VK_NULL_HANDLE};
 
 		std::map<uint32_t,std::unique_ptr<VulkanDescriptor>>	descriptors{};
 
@@ -211,6 +217,8 @@ class VulkanSamplerDescriptor : public VulkanDescriptor
 		VulkanSamplerDescriptor( SamplerBindInfo const& binding, VulkanDevice& vulkanDevice, VkDescriptorSet descriptorSet );
 
 		void	update( void const* data, uint32_t index = 0U ) noexcept override;
+
+		std::unique_ptr<VulkanModel>	getModelFromText(std::string const& text, uint32_t index = 0U) const noexcept;
 
 	private:
 		std::vector<std::unique_ptr<VulkanTexture>>	textures{};

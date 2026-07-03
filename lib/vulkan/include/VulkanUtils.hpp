@@ -22,6 +22,6 @@ vec3		generateRandomColor();
 vec3		generateRandomGreyscale();
 vec3		generateSoftGreyscale();
 
-std::vector<char>	readFile(std::string const& filePath);
+std::vector<unsigned char>	readFile(std::string const& filePath);
 
 } // namespace ve

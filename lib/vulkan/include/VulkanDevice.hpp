@@ -26,7 +26,8 @@ struct QueueFamilyIndices
 
 enum TextureType {
 	TEXTURE_PLAIN,
-	TEXTURE_CUBEMAP
+	TEXTURE_CUBEMAP,
+	TEXTURE_FONT
 };
 
 

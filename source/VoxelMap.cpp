@@ -102,13 +102,13 @@ void	VoxelMap::regenerateUndergroundBuffer()
 
 std::unique_ptr<ve::VulkanModel> VoxelMap::createNewTerrainModel(ve::VulkanDevice& device, ui32 binding)
 {
-	return std::make_unique<ve::VulkanModel>(device, terrainVertexes, terrainIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
+	return std::make_unique<ve::VulkanModel>(device, terrainVertexes, terrainIndexes, binding);
 }
 
 //	what happens if no underground by chance?
 std::unique_ptr<ve::VulkanModel> VoxelMap::createNewUndergroundModel(ve::VulkanDevice& device, ui32 binding)
 {
-	return std::make_unique<ve::VulkanModel>(device, undergroundVertexes, undergroundIndexes, binding, ve::DEFAULT_MODEL_LAYOUT);
+	return std::make_unique<ve::VulkanModel>(device, undergroundVertexes, undergroundIndexes, binding);
 }
 
 void	VoxelMap::setAdjacentPointers()

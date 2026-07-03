@@ -15,18 +15,21 @@ class ViewProjectUniform
 {
 	public:
 		ViewProjectUniform( void ) = delete;
-		ViewProjectUniform( mat4 const& view, mat4 const& projection ) :
+		ViewProjectUniform( mat4 const& view, mat4 const& projection, mat4 const& orthographic ) :
 			view{view},
-			projection{projection} {}
+			projection{projection},
+			orthographic{orthographic} {}
 
 		void	updateView( mat4 const& view ) noexcept { this->view = view; }
 		void	updateProjection( mat4 const& prj ) noexcept { this->projection = prj; }
+		void	updateOrthographic( mat4 const& ortho ) noexcept { this->orthographic = ortho; }
 
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
 
 	private:
 		mat4	view;
 		mat4	projection;
+		mat4	orthographic;
 };
 // check this: https://chatgpt.com/s/t_6a0c79f4930881919ea36656e039782a
 static_assert((sizeof(ViewProjectUniform) % 16 == 0) && "type not ...");

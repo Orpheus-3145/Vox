@@ -9,7 +9,7 @@ namespace ve {
 VulkanShader::VulkanShader( VulkanDevice& device, VkShaderStageFlagBits	shaderStageFlag, std::string const& shaderPath) : 
 	vulkanDevice{device}, shaderStageFlag{shaderStageFlag}, shaderModule{VK_NULL_HANDLE}
 {
-	std::vector<char> content = readFile(shaderPath);
+	std::vector<unsigned char> content = readFile(shaderPath);
 	this->createModule(content);
 }
 
@@ -33,7 +33,7 @@ VulkanShader::~VulkanShader( void ) noexcept
 	}
 }
 
-void VulkanShader::createModule(std::vector<char> const& fileContent)
+void VulkanShader::createModule(std::vector<unsigned char> const& fileContent)
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -58,7 +58,7 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 	std::string const& vertexShaderFile,
 	std::string const& fragmentShaderFile,
 	MeshLayoutDescription const& meshLayout,
-	bool hasCubemapsTexture,
+	TextureType textureUsed,
 	uint32_t sizePushConstants,
 	VkConstants const* constants
 )
@@ -80,7 +80,7 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 		vertexShaderFile,
 		fragmentShaderFile,
 		meshLayout,
-		hasCubemapsTexture,
+		textureUsed,
 		sizePushConstants,
 		constants
 	);
@@ -93,14 +93,14 @@ VulkanPipeline::VulkanPipeline(
 		std::string const& vertexShaderFile,
 		std::string const& fragmentShaderFile,
 		MeshLayoutDescription const& meshLayout,
-		bool hasCubemapsTexture,
+		TextureType textureUsed,
 		uint32_t sizePushConstants,
 		VkConstants const* constants
 	) :
 	vulkanDevice{device}, sizePushConstants{sizePushConstants}
 {
 	this->setupPipelineLayout(descriptorSetLayouts);
-	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, hasCubemapsTexture, renderPass, constants);
+	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, textureUsed, renderPass, constants);
 }
 
 VulkanPipeline::~VulkanPipeline()
@@ -172,7 +172,7 @@ void VulkanPipeline::setupPipeline(
 	std::string const& vertexShaderFile,
 	std::string const& fragmentShaderFile,
 	MeshLayoutDescription const& meshLayout,
-	bool hasCubemapsTexture,
+	TextureType textureUsed,
 	VkRenderPass renderPass,
 	VkConstants const* constants)
 {
@@ -182,7 +182,7 @@ void VulkanPipeline::setupPipeline(
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderFile);
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderFile);
 
-	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout, constants, hasCubemapsTexture);
+	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout, constants, textureUsed);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -215,7 +215,7 @@ void VulkanPipeline::setupPipeline(
 	}
 }
 
-VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, bool hasCubemapsTexture ) const noexcept
+VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, TextureType textureUsed ) const noexcept
 {
 	assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
@@ -283,7 +283,14 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
 	configInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	configInfo.rasterizationInfo.lineWidth = 1.0f;
-	configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	if (textureUsed == TEXTURE_FONT || textureUsed == TEXTURE_CUBEMAP)
+	{
+		configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
+	}
+	else
+	{
+		configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+	}
 	configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 	configInfo.rasterizationInfo.depthBiasEnable = VK_FALSE;
 	configInfo.rasterizationInfo.depthBiasConstantFactor = 0.0f;
@@ -299,9 +306,18 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.multisampleInfo.alphaToOneEnable = VK_FALSE;
 
 	configInfo.colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
-	configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	if (textureUsed == TEXTURE_FONT)
+	{
+		configInfo.colorBlendAttachment.blendEnable = VK_TRUE;
+		configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	}
+	else
+	{
+		configInfo.colorBlendAttachment.blendEnable = VK_FALSE;
+		configInfo.colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+		configInfo.colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	}
 	configInfo.colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 	configInfo.colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 	configInfo.colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -324,11 +340,10 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.depthStencilInfo.maxDepthBounds = 1.0f;
 	configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
 
-	if (hasCubemapsTexture == TEXTURE_CUBEMAP)
+	if (textureUsed == TEXTURE_CUBEMAP)
 	{
 		configInfo.depthStencilInfo.depthWriteEnable = VK_FALSE;
 		configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
-		configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
 	}
 	else
 	{

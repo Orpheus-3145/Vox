@@ -11,14 +11,6 @@
 
 namespace ve {
 
-struct ImageInfo
-{
-	const unsigned char*	imageData;
-	int32_t					width;
-	int32_t					height;
-	int32_t					channels;
-};
-
 struct Material
 {
 	std::string	name;
@@ -75,7 +67,7 @@ class VulkanObject
 		void							setMaterial(MaterialData const& material) noexcept { this->materialData = material; };
 		MaterialData const&				getMaterial() const noexcept { return this->materialData; };
 		uint32_t						getID() const noexcept { return this->id; }
-		MeshLayoutDescription			getVboLayout() const noexcept;
+		MeshLayoutDescription			getModelLayout() const noexcept;
 
 		mat4							getModelMatrix(bool columnMajor = false) const noexcept;
 		mat4							getNormalMatrix(bool columnMajor = false) const noexcept;
@@ -97,7 +89,6 @@ class VulkanObject
 };
 
 std::ostream&	operator<<(std::ostream& os, const ObjInfo& obj);
-ImageInfo		loadImage(const std::string& imagePath);
 std::vector<ObjInfo>	parseOBJFile(const std::string& objFilePath);
 
 } // namespace ve

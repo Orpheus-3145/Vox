@@ -18,11 +18,13 @@ struct CameraSettings {
 class Camera
 {
 	public:
+		// NB create camera with width and height, not aspect ratio
 		Camera( vec3 const& pos, vec3 const& forward, float aspect ) : 
 			position(pos),
 			forward(forward),
 			aspect(aspect) { this->updateCameraAxis(); };
 
+		mat4	getOrthographicMatrix( bool columnMajor = true ) const noexcept;
 		mat4	getProjectionMatrix( bool columnMajor = true ) const noexcept;
 		mat4	getViewMatrix( bool columnMajor = true ) const noexcept;
 		mat4	getViewMatrixNoTranslation( bool columnMajor = true ) const noexcept;

@@ -556,7 +556,7 @@ void	VulkanDevice::copyBufferToImage(
 	VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, uint32_t layerCount, TextureType textureType)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-	if (textureType == TEXTURE_PLAIN)
+	if (textureType == TEXTURE_PLAIN || textureType == TEXTURE_FONT)
 	{
 		VkBufferImageCopy region{};
 
@@ -716,10 +716,14 @@ VkImageView	VulkanDevice::createImageView(
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = layerCount;
 
-	if (textureType == TEXTURE_PLAIN)
-		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	else if (textureType == TEXTURE_CUBEMAP)
+	if (textureType == TEXTURE_CUBEMAP)
+	{
 		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+	}
+	else 
+	{
+		viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	}
 
 	VkImageView imageView{};
 

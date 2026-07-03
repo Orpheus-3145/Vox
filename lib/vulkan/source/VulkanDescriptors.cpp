@@ -261,7 +261,7 @@ std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorSetFactory::createDescripto
 
 	if ((countUBOs + countSSBOs + countSamplers) == 0U)
 	{
-		throw std::runtime_error("no binding set");
+		throw std::runtime_error("no binding set for descriptor set creation");
 	}
 
 	if(this->countTypes[VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER] < countUBOs)
@@ -325,12 +325,12 @@ VulkanDescriptorSet::VulkanDescriptorSet(
 	VkDescriptorSetLayout	descriptorSetLayout,
 	VkDescriptorPool		descriptorPool,
 	VulkanBindingSet const&	bindings
-)
+) : descriptorSetLayout{descriptorSetLayout}
 {
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;
-	allocInfo.pSetLayouts = &descriptorSetLayout;
+	allocInfo.pSetLayouts = &this->descriptorSetLayout;
 	allocInfo.descriptorSetCount = 1;
 
 	if (vkAllocateDescriptorSets(vulkanDevice.device(), &allocInfo, &this->descriptorSet) != VK_SUCCESS)
@@ -353,9 +353,9 @@ VulkanDescriptorSet::VulkanDescriptorSet(
 	}
 }
 
-void VulkanDescriptorSet::updateDescriptor(int32_t binding, void const* data, uint32_t index) noexcept
+void VulkanDescriptorSet::updateDescriptor(uint32_t binding, void const* data, uint32_t index) noexcept
 {
-	assert(this->descriptors.count(binding) != 0U && "Buffer binding not found in descriptor set");
+	assert(this->descriptors.count(binding) != 0U && "Binding not found in descriptor set");
 
 	this->descriptors[binding]->update(data, index);
 }
@@ -372,6 +372,22 @@ void VulkanDescriptorSet::bindSet(VkCommandBuffer commandBuffer, VulkanPipeline 
 		0,
 		nullptr
 	);
+}
+
+VulkanBufferDescriptor const* VulkanDescriptorSet::getBufferDescriptor(uint32_t binding) const noexcept
+{
+	assert(this->descriptors.count(binding) != 0U && "Binding not found in descriptor set");
+	assert(dynamic_cast<VulkanBufferDescriptor*>(this->descriptors.at(binding).get()) && "Binding is not a buffer descriptor");
+
+	return dynamic_cast<VulkanBufferDescriptor*>(this->descriptors.at(binding).get());
+}
+
+VulkanSamplerDescriptor const* VulkanDescriptorSet::getSamplerDescriptor(uint32_t binding) const noexcept
+{
+	assert(this->descriptors.count(binding) != 0U && "Binding not found in descriptor set");
+	assert(dynamic_cast<VulkanSamplerDescriptor*>(this->descriptors.at(binding).get()) && "Binding is not a sampler descriptor");
+
+	return dynamic_cast<VulkanSamplerDescriptor*>(this->descriptors.at(binding).get());
 }
 
 
@@ -405,7 +421,7 @@ VulkanBufferDescriptor::VulkanBufferDescriptor(UniformBindInfo const& binding, V
 	VkWriteDescriptorSet write{};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.dstBinding = this->binding;
-	write.descriptorType = (binding.getBufferType() == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	write.descriptorType = (bufferType == BUFFER_UNIFORM) ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	write.descriptorCount = nBuffers;
 	write.dstSet = descriptorSet;
 	write.pBufferInfo = bufferInfo.data();
@@ -436,7 +452,7 @@ VulkanSamplerDescriptor::VulkanSamplerDescriptor(SamplerBindInfo const& binding,
 		this->textures[i] = std::make_unique<VulkanTexture>(vulkanDevice, texturePaths[i], textureTypes[i]);
 		textureInfo[i] = this->textures[i]->getDescriptorImageInfo();
 	}
-		
+
 	VkWriteDescriptorSet write{};
 	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write.dstBinding = this->binding;
@@ -452,6 +468,13 @@ void VulkanSamplerDescriptor::update( void const* data, uint32_t index ) noexcep
 {
 	(void) data;
 	(void) index;
+}
+
+std::unique_ptr<VulkanModel> VulkanSamplerDescriptor::getModelFromText(std::string const& text, uint32_t index) const noexcept
+{
+	assert(index < this->textures.size() && "Texture index not found in descriptor");
+
+	return this->textures[index]->getModelFromText(text);	
 }
 
 }	// namespace ve

@@ -2,15 +2,41 @@
 
 #include <cassert>
 #include <cmath>
-#include <iostream>
 
 namespace vox {
+
+mat4	Camera::getOrthographicMatrix( bool columnMajor ) const noexcept
+{
+	// NB on Codam pc max res is more dan FHD, Camera has has to receive width and height of the screen (not the aspect ratio)
+	float width = 1920;
+	float height = 1080;
+	if (columnMajor == true)
+	{
+		return mat4{
+			{2.0f / width,  0.0f,           0.0f,  0.0f},
+			{0.0f,          2.0f / height,  0.0f,  0.0f},
+			{0.0f,          0.0f,           1.0f,  0.0f},
+			{-1.0f,         -1.0f,          0.0f,  1.0f}
+		};
+	}
+	else
+	{
+		return mat4{
+			{2.0f / width,  0.0f,           0.0f,  -1.0f},
+			{0.0f,          2.0f / height,  0.0f,  -1.0f},
+			{0.0f,          0.0f,           1.0f,  0.0f},
+			{0.0f,          0.0f,           0.0f,  1.0f}
+		};
+	}
+}
 
 mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 {
 	float fov = CameraSettings::projectionFov;
 	if ( fov > M_2_PI or fov < -M_2_PI )
+	{
 		fov = radians(fov);
+	}
 	float near = CameraSettings::projectionNear;
 	float far = CameraSettings::projectionFar;
 	const float tanHalfFovy = std::tan(fov / 2.f);
