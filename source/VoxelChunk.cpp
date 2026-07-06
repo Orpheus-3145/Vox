@@ -222,20 +222,41 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 		switch (map[voxelIndex])
 		{
 			case VoxelType::Dirt:
-				terrainVertexes->emplace_back
-				(
-					ve::VulkanModel::Vertex
-					{
-						vec3
+				if (textureIndex == 0)
+				{
+					terrainVertexes->emplace_back
+					(
+						ve::VulkanModel::Vertex
 						{
-							VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
-							VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
-							VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
-						},
-					VOXEL_VERTEXES_ATLAS[i].normal,
-					VOXEL_VERTEXES_ATLAS[i].textureUv,
-					textureIndex
-				});
+							vec3
+							{
+								VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
+								VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
+								VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
+							},
+						VOXEL_VERTEXES_ATLAS[i].normal,
+						VOXEL_VERTEXES_ATLAS[i].textureUv,
+						textureIndex
+					});
+				}
+				else
+				{
+					terrainVertexes->emplace_back
+					(
+						ve::VulkanModel::Vertex
+						{
+							vec3
+							{
+								VOXEL_VERTEXES[i].pos.x + location.x,
+								VOXEL_VERTEXES[i].pos.y + location.y,
+								VOXEL_VERTEXES[i].pos.z + location.z
+							},
+						VOXEL_VERTEXES[i].normal,
+						VOXEL_VERTEXES[i].textureUv,
+						textureIndex
+					});
+
+				}
 				break;
 
 			case VoxelType::Stone:
