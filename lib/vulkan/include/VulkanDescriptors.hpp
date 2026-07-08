@@ -37,8 +37,7 @@ class UniformBindInfo : public BindInfo
 {
 	public:
 		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, uint32_t bufferSize, BufferType bufferType)
-			:	BindInfo(vkInfo),
-				bufferType{bufferType}
+			:	BindInfo(vkInfo), bufferType{bufferType}
 		{
 			this->bufferSizes.push_back(bufferSize);
 		}
@@ -188,7 +187,7 @@ class VulkanDescriptor
 	public:
 		VulkanDescriptor( BindInfo const& binding ) : binding{binding.getBinding()} {}
 		VulkanDescriptor( void ) = delete;
-		virtual ~VulkanDescriptor( void ) = 0;
+		virtual ~VulkanDescriptor( void ) {};
 		VulkanDescriptor( VulkanDescriptor const& other ) = delete;
 		VulkanDescriptor( VulkanDescriptor&& other ) = default;
 		VulkanDescriptor& operator=( VulkanDescriptor const& other ) = delete;

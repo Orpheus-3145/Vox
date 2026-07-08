@@ -9,9 +9,6 @@
 
 namespace vox {
 
-/**
- * Create the engine of the game
- */
 Vox::Vox( void ) :
 	vulkanWindow{"ft_vox", Config::fullScreenMode, Config::defaultWindowWidth, Config::defaultWindowHeight},
 	vulkanDevice{vulkanWindow},
@@ -67,8 +64,7 @@ void Vox::setupVulkanBuffers( void )
 
 void Vox::setupVulkanDescSets( void )
 {
-	// creates three sets (one for uniforms, one for textures, one for fonts) but, because data inside the 
-	// uniforms change, a set is needed for every frame is flight, so total sets: 1 * Nframes + 2
+	// three sets (one for uniforms *[see later], one for textures, one for fonts)
 	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
 	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
 	ui32	nSamplerDescriptors = 6U;	// 2 textures for dirt, 2 textures for stone, 1 for skybox, 1 for font
@@ -85,6 +81,8 @@ void Vox::setupVulkanDescSets( void )
 	// UBO with data mesh-specific data: model, normal, lights, ...
 	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MeshUniform));
 
+	// data inside this set changes per frame so a copy of such data is needed for every frame buffer
+	// to avoid modifyind something which is used by another frame buffer
 	this->uboDescriptorSet.resize(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT);
 	for (uint32_t i = 0U; i < ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT; i++)
 	{
@@ -92,21 +90,25 @@ void Vox::setupVulkanDescSets( void )
 	}
 
 	std::vector<std::string>	texturePaths{
-		Config::textureDirt1,
-		Config::textureDirt2,
-		Config::textureStone1,
-		Config::textureStone2
+		Config::textureDirt1Path,
+		Config::textureDirt2Path,
+		Config::textureStone1Path,
+		Config::textureStone2Path
 	};
 	std::vector<ve::TextureType>	textureTypes(4, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureSetBindings;
+	// normal textures
 	textureSetBindings.addSamplerArrayBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, texturePaths, textureTypes);
-	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkybox, ve::TextureType::TEXTURE_CUBEMAP);
+	// cubemap texture
+	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 	this->textureDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSetBindings);
 
 	ve::VulkanBindingSet fontSetBindings;
+	// array of uniforms containing colors for the font (text, background, ...)
 	fontSetBindings.addBufferArrayBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, std::vector<ui32>{sizeof(vec4), sizeof(vec4)});
-	fontSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::font, ve::TextureType::TEXTURE_FONT);
+	// texture/sampler of the font used
+	fontSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::fontPath, ve::TextureType::TEXTURE_FONT);
 	this->fontDescriptorSet = this->vulkanSetFactory.createDescriptorSet(fontSetBindings);
 }
 
@@ -129,6 +131,7 @@ void Vox::setupVulkanPipelines( void )
 	setLayouts.push_back(this->uboDescriptorSet[0]->getLayout());
 	setLayouts.push_back(this->textureDescriptorSet->getLayout());
 
+	// main pipeline to render the map (surface terrain + underground)
 	this->terrainPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
 		setLayouts,
@@ -141,6 +144,7 @@ void Vox::setupVulkanPipelines( void )
 		&ve::drawingDataLimits
 	);
 
+	// skybox rendering
 	this->skyboxPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
 		setLayouts,
@@ -153,6 +157,7 @@ void Vox::setupVulkanPipelines( void )
 		&ve::drawingDataLimits
 	);
 
+	// text/UI rendering
 	setLayouts[1] = this->fontDescriptorSet->getLayout();
 	this->fpsCounterPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
@@ -167,9 +172,6 @@ void Vox::setupVulkanPipelines( void )
 	);
 }
 
-/**
- * Run the rendering loop
- */
 void Vox::run( void )
 {
 	vec3				playerPos;
@@ -259,13 +261,6 @@ void Vox::run( void )
 	vkDeviceWaitIdle(vulkanDevice.device());
 }
 
-/**
- * Handle camera transformation in case of keys W-A-S-D or up-left-bottom-right (arrow) keys are pressed
- *
- * @param deltaTime to normalize the transformation, so that it doesn't depend on the fps
- * 
- * @note camera rotation using a key will be removed in the final version
- */
 void Vox::moveCamera( float deltaTime )
 {
 	vec3	moveDirection = vec3::zero();
@@ -300,16 +295,7 @@ void Vox::moveCamera( float deltaTime )
 	}
 }
 
-/**
- * Handle camera rotation my cursor movement
- *
- * @param newX x position (relative to the monitor) of the cursor ( (0;0): top-left corner)
- *
- * @param newY y position (relative to the monitor) of the cursor ( (0;0): top-left corner)
- *
- * @return a vector of 36 uin32_t starting from the offset value
- */
-void Vox::rotateCameraFromCursorPos( vec2 const& currPos )
+void Vox::rotateCameraFromCursorPos( vec2 const& currPos )	
 {
 	vec2 const& oldPos = this->inputHandler.getCursorPos();
 
@@ -320,14 +306,6 @@ void Vox::rotateCameraFromCursorPos( vec2 const& currPos )
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
-/**
- * When a resize of the window happens, updates Vulkan and recalcolate projection matrix 
- * (since ration w/h changed)
- *
- * @param width new width
- *
- * @param height new height
- */
 void Vox::resizeWindow( ui32 width, ui32 height )
 {
 	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
@@ -354,12 +332,12 @@ void Vox::updateUniforms(ui32 currentFrame)
 {
 	this->matrixUbo->updateView(this->camera.getViewMatrix());
 	this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
-	this->uboDescriptorSet[currentFrame]->updateDescriptor(0, this->matrixUbo->getData());
+	this->uboDescriptorSet[currentFrame]->updateDescriptor(0U, this->matrixUbo->getData());
 
-	this->materialsUbo->updateNormalMatrix(0, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-	this->materialsUbo->updateNormalMatrix(1, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-	this->materialsUbo->updateLightDir(0, Config::lightDirection, this->camera.getViewMatrix(false));
-	this->uboDescriptorSet[currentFrame]->updateDescriptor(1, this->materialsUbo->getData());
+	this->materialsUbo->updateNormalMatrix(0U, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateNormalMatrix(1U, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateLightDir(0U, Config::lightDirection, this->camera.getViewMatrix(false));
+	this->uboDescriptorSet[currentFrame]->updateDescriptor(1U, this->materialsUbo->getData());
 
 	this->countFramesToUpdate--;
 }
@@ -421,13 +399,13 @@ void Vox::drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
 	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
 
-	indexes.fontColor = 0;
+	indexes.fontColor = 0;		// background color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->textBackgroundObject->bindBuffer(commandBuffer);
 	this->textBackgroundObject->draw(commandBuffer);
 
-	indexes.fontColor = 1;
+	indexes.fontColor = 1;		// text color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->fpsCounterObject->bindBuffer(commandBuffer);

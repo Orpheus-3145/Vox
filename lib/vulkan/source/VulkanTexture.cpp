@@ -107,19 +107,19 @@ VulkanTexture::~VulkanTexture()
 }
 
 VulkanTexture::VulkanTexture(VulkanTexture&& other) :
+	device(other.device),
+	type(other.type),
 	imageInfo(std::move(other.imageInfo)),
 	fontInfo(std::move(other.fontInfo)),
+	info(other.info),
 	nPixels(other.nPixels),
 	textureImage(other.textureImage),
 	textureImageMemory(other.textureImageMemory),
 	textureImageView(other.textureImageView),
-	textureSampler(other.textureSampler),
-	info(other.info),
-	device(other.device)
+	textureSampler(other.textureSampler)
 {
 	other.imageInfo = nullptr;
 	other.fontInfo = nullptr;
-	other.nPixels = 0;
 	other.textureImage = VK_NULL_HANDLE;
 	other.textureImageView = VK_NULL_HANDLE;
 	other.textureSampler = VK_NULL_HANDLE;
@@ -235,8 +235,8 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 		std::make_shared<ve::VulkanModel>(
 			device,
 			textVertexes,
-		std::vector<uint32_t>(),
-		0U,
+			std::vector<uint32_t>(),
+			0U,
 			ve::FONT_MODEL_LAYOUT
 		)
 	};
@@ -449,6 +449,7 @@ std::unique_ptr<FontInfo> loadFont(const std::string& fontPath, float fontSize, 
 		fontInfo->fontData = nullptr;
 		throw std::runtime_error("Failed to load font: " + fontPath);
 	}
+
 	std::cout << "Loaded font: " << fontPath << std::endl;
 	return fontInfo;
 }

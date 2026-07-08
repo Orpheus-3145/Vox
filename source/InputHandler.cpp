@@ -3,13 +3,6 @@
 
 namespace vox {
 
-/**
- * Set up callbacks for input, currently used: 1. callback for key T (toggle fps mode)
- * and ESC (window closing), 2. mouse capture for camera rotation (only when fps mode is
- * active), 3. resizing the window
- *
- * @param window GLFW window listening to the events
- */
 void	InputHandler::setCallbacks(GLFWwindow* window)
 {
 	glfwSetWindowUserPointer(window, this);
@@ -87,31 +80,18 @@ void	InputHandler::setCallbacks(GLFWwindow* window)
 	});
 }
 
-/**
- * Zero the input listeners
- */
 void InputHandler::reset() noexcept
 {
 	keyboard.reset();
 	mouse.reset();
 }
 
-/**
- * Toggle fps mode, by enabling/disabling the cursor, the callback of glfwSetCursorPosCallback() is enabled
- *
- * @param window GLFW window that handles the cursor
- */
 void InputHandler::toggleFpsMode( GLFWwindow* window ) noexcept
 {
 	this->fpsMode = !this->fpsMode; 
 	glfwSetInputMode(window, GLFW_CURSOR, this->fpsMode ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
 
-/**
- * Close the GLFW window
- *
- * @param window GLFW window to be closed
- */
 void InputHandler::closeWindow( GLFWwindow* window ) const noexcept
 {
 	glfwSetWindowShouldClose(window, GLFW_TRUE);

@@ -42,15 +42,15 @@ class VulkanTexture
 	~VulkanTexture();
 	VulkanTexture(const VulkanTexture& other) = delete;
 	VulkanTexture(VulkanTexture&&);
-	VulkanTexture&	operator=(const VulkanTexture& other) = delete;
+	VulkanTexture& operator=(const VulkanTexture& other) = delete;
 
-	VkDescriptorImageInfo			getDescriptorImageInfo() const noexcept;
-	FontModel	getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned) const noexcept;
+	VkDescriptorImageInfo	getDescriptorImageInfo() const noexcept;
+	FontModel				getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned = false) const noexcept;
 
-	static constexpr uint32_t	sizeOfPixel = sizeof(int32_t);
-	static constexpr uint32_t	defaultSizeFont = 32U;
+	static constexpr uint32_t sizeOfPixel = sizeof(int32_t);
+	static constexpr uint32_t defaultSizeFont = 32U;
 	static constexpr VkExtent2D defaultSizeFontTexture = VkExtent2D{512U, 512U};
-	static constexpr uint32_t	fontPadding = 5U;
+	static constexpr uint32_t fontPadding = 5U;
 
 	private:
 
@@ -58,19 +58,19 @@ class VulkanTexture
 	void	createTextureImageView();
 	void	createTextureSampler();
 
+	VulkanDevice&	device;
+	TextureType		type;
+
 	std::unique_ptr<ImageInfo>	imageInfo;
 	std::unique_ptr<FontInfo>	fontInfo;
-	VkDeviceSize				nPixels;
+	VkImageCreateInfo			info{};
+	VkDeviceSize				nPixels{0U};
 
 	VkImage			textureImage{VK_NULL_HANDLE};
 	VkDeviceMemory	textureImageMemory{VK_NULL_HANDLE};
 	VkImageView		textureImageView{VK_NULL_HANDLE};
 	VkSampler		textureSampler{VK_NULL_HANDLE};
 
-	VkImageCreateInfo	info{};
-
-	VulkanDevice&	device;
-	TextureType		type;
 };
 
 } // namespace ve

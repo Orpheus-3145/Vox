@@ -148,7 +148,7 @@ void Camera::moveDown( float delta ) noexcept
 	this->updateCameraAxis();
 }
 
-vec3	Camera::getRelativeMoveDirection(const vec3& rawDirection)
+vec3 Camera::getRelativeMoveDirection(const vec3& rawDirection) const noexcept
 {
 	vec3 right = this->cameraRight * rawDirection.x;
 	vec3 up = this->cameraUp * rawDirection.y;
@@ -158,7 +158,7 @@ vec3	Camera::getRelativeMoveDirection(const vec3& rawDirection)
 	return relativeMoveDirection;
 }
 
-void	Camera::move(const vec3& direction) noexcept
+void Camera::move(const vec3& direction) noexcept
 {
 	this->position += direction;
 }

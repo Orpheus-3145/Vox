@@ -7,11 +7,11 @@
 namespace vox {
 
 struct CameraSettings {
-	static constexpr float	projectionFov = 50.0f;
-	static constexpr float	projectionNear = .1f;
-	static constexpr float	projectionFar = 1000.0f;
-	static constexpr float	cameraDistance = 50.0f;
-	static constexpr float	cameraSensitivity = 0.1f;
+	static constexpr float	projectionFov{50.0f};
+	static constexpr float	projectionNear{.1f};
+	static constexpr float	projectionFar{1000.0f};
+	static constexpr float	cameraDistance{50.0f};
+	static constexpr float	cameraSensitivity{0.1f};
 	static constexpr vec3	cameraForward{0.0f, 0.0f, 10.0f};
 	static constexpr vec3	cameraUpDefault{0.0f, 1.0f, 0.0f};
 };
@@ -42,7 +42,7 @@ class Camera
 		void	move(const vec3& direction) noexcept;
 		void	rotate( float, float, float ) noexcept;
 
-		vec3	getRelativeMoveDirection(const vec3& rawDirection);
+		vec3	getRelativeMoveDirection(const vec3& rawDirection) const noexcept;
 		void	updateWindowSize( ui32 width, ui32 height ) noexcept;
 
 	private:

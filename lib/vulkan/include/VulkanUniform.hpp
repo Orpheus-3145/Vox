@@ -94,7 +94,6 @@ class MeshUniform
 		LightData 		lights[drawingDataLimits.lights];
 };
 
-
 class PushConstantsData {};
 
 }	// namespace ve

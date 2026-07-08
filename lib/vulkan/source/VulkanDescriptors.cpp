@@ -391,9 +391,6 @@ VulkanSamplerDescriptor const* VulkanDescriptorSet::getSamplerDescriptor(uint32_
 }
 
 
-VulkanDescriptor::~VulkanDescriptor( void ) {}
-
-
 VulkanBufferDescriptor::VulkanBufferDescriptor(UniformBindInfo const& binding, VulkanDevice& vulkanDevice, VkDescriptorSet descriptorSet)
 	: VulkanDescriptor(binding)
 {

@@ -3,6 +3,7 @@
 
 #include <cassert>
 
+
 namespace ve {
 
 VulkanModel::VulkanModel(
@@ -36,15 +37,6 @@ VulkanModel::VulkanModel(
 	}
 }
 
-/**
- * Load data in GPU, combining together the 
- * chunks of vertexes and building indexed data on the spot
- *
- * @param device VulkanDevice instance
- * @param vertices vector of pointers, each one points to a chunk of voxels, each voxel has 24 vertexes ( type Vertex )
- * @param indexesVoxel sequence of (36) indexes that represent the faces of a voxel
- *
- */
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
 	const std::vector<std::vector<Vertex>>& vertices,
