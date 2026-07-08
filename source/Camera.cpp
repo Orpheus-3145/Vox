@@ -5,16 +5,13 @@
 
 namespace vox {
 
-mat4	Camera::getOrthographicMatrix( bool columnMajor ) const noexcept
+mat4 Camera::getOrthographicMatrix( bool columnMajor ) const noexcept
 {
-	// NB on Codam pc max res is more dan FHD, Camera has has to receive width and height of the screen (not the aspect ratio)
-	float width = 1920;
-	float height = 1080;
 	if (columnMajor == true)
 	{
 		return mat4{
-			{2.0f / width,  0.0f,           0.0f,  0.0f},
-			{0.0f,          2.0f / height,  0.0f,  0.0f},
+			{2.0f / this->size.width,  0.0f,           0.0f,  0.0f},
+			{0.0f,          2.0f / this->size.height,  0.0f,  0.0f},
 			{0.0f,          0.0f,           1.0f,  0.0f},
 			{-1.0f,         -1.0f,          0.0f,  1.0f}
 		};
@@ -22,8 +19,8 @@ mat4	Camera::getOrthographicMatrix( bool columnMajor ) const noexcept
 	else
 	{
 		return mat4{
-			{2.0f / width,  0.0f,           0.0f,  -1.0f},
-			{0.0f,          2.0f / height,  0.0f,  -1.0f},
+			{2.0f / this->size.width,  0.0f,           0.0f,  -1.0f},
+			{0.0f,          2.0f / this->size.height,  0.0f,  -1.0f},
 			{0.0f,          0.0f,           1.0f,  0.0f},
 			{0.0f,          0.0f,           0.0f,  1.0f}
 		};
@@ -37,6 +34,7 @@ mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 	{
 		fov = radians(fov);
 	}
+	float aspect = static_cast<float>(this->size.width) / static_cast<float>(this->size.height);
 	float near = CameraSettings::projectionNear;
 	float far = CameraSettings::projectionFar;
 	const float tanHalfFovy = std::tan(fov / 2.f);
@@ -44,19 +42,19 @@ mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 	if (columnMajor == true)
 	{
 		return mat4{
-			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                          0.0f},
-			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                          0.0f},
-			{0.0f,                                0.0f,                far / (far - near),            1.0f},
-			{0.0f,                                0.0f,                -(far * near) / (far - near),  0.0f}
+			{1.f / (aspect * tanHalfFovy),  0.0f,                0.0f,                          0.0f},
+			{0.0f,                          -1.f / tanHalfFovy,  0.0f,                          0.0f},
+			{0.0f,                          0.0f,                far / (far - near),            1.0f},
+			{0.0f,                          0.0f,                -(far * near) / (far - near),  0.0f}
 		};
 	}
 	else
 	{
 		return mat4{
-			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                0.0f                        },
-			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                0.0f                        },
-			{0.0f,                                0.0f,                far / (far - near),  -(far * near) / (far - near)},
-			{0.0f,                                0.0f,                1.0f,                0.0f                        }
+			{1.f / (aspect * tanHalfFovy),  0.0f,                0.0f,                0.0f                        },
+			{0.0f,                          -1.f / tanHalfFovy,  0.0f,                0.0f                        },
+			{0.0f,                          0.0f,                far / (far - near),  -(far * near) / (far - near)},
+			{0.0f,                          0.0f,                1.0f,                0.0f                        }
 		};
 	}
 }
@@ -206,10 +204,10 @@ void Camera::rotate( float pitch, float yaw, float roll ) noexcept
 	this->updateCameraAxis();
 }
 
-void Camera::updateAspect( float aspect ) noexcept
+void Camera::updateWindowSize( ui32 width, ui32 height ) noexcept
 {
-	assert(std::abs(this->aspect - epsilon()) > 0.0f);
-	this->aspect = aspect;
+	this->size.width = width;
+	this->size.height = height;
 }
 
 void Camera::updateCameraAxis( void ) noexcept

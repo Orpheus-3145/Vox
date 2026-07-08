@@ -18,8 +18,7 @@ class VulkanWindow
 	~VulkanWindow();
 
 	GLFWwindow*	getGLFWwindow() const noexcept { return window; }
-	float		getAspectRatio() const noexcept;
-	VkExtent2D	getFramebufferExtent() const noexcept;
+	VkExtent2D	getWindowSize( void ) const noexcept;
 
 	bool	shouldClose() const noexcept { return glfwWindowShouldClose(window); }
 	void	createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const;

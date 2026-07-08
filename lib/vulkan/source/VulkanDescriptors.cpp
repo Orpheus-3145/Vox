@@ -470,11 +470,11 @@ void VulkanSamplerDescriptor::update( void const* data, uint32_t index ) noexcep
 	(void) index;
 }
 
-std::unique_ptr<VulkanModel> VulkanSamplerDescriptor::getModelFromText(std::string const& text, uint32_t index) const noexcept
+FontModel VulkanSamplerDescriptor::getModelFromText(std::string const& text, vec2i const& origin, uint32_t index, bool isRightAligned) const noexcept
 {
 	assert(index < this->textures.size() && "Texture index not found in descriptor");
 
-	return this->textures[index]->getModelFromText(text);	
+	return this->textures[index]->getModelFromText(text, origin, isRightAligned);	
 }
 
 }	// namespace ve

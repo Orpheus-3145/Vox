@@ -334,7 +334,6 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.colorBlendInfo.blendConstants[3] = 0.0f;
 
 	configInfo.depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
 	configInfo.depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
 	configInfo.depthStencilInfo.minDepthBounds = 0.0f;
 	configInfo.depthStencilInfo.maxDepthBounds = 1.0f;
@@ -342,11 +341,19 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 
 	if (textureUsed == TEXTURE_CUBEMAP)
 	{
+		configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
 		configInfo.depthStencilInfo.depthWriteEnable = VK_FALSE;
 		configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
 	}
+	else if (textureUsed == TEXTURE_FONT)
+	{
+		configInfo.depthStencilInfo.depthTestEnable  = VK_FALSE;
+		configInfo.depthStencilInfo.depthWriteEnable = VK_FALSE;
+		configInfo.depthStencilInfo.depthCompareOp   = VK_COMPARE_OP_ALWAYS;
+	}
 	else
 	{
+		configInfo.depthStencilInfo.depthTestEnable = VK_TRUE;
 		configInfo.depthStencilInfo.depthWriteEnable = VK_TRUE;
 		configInfo.depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS;
 	}

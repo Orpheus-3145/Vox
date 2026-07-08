@@ -21,10 +21,17 @@ struct FontInfo
 	int32_t			width;
 	int32_t			height;
 	stbtt_bakedchar cdata[128];
+	stbtt_fontinfo	basicFontInfo;
+};
+
+struct FontModel
+{
+	std::shared_ptr<VulkanModel> background;
+	std::shared_ptr<VulkanModel> text;
 };
 
 std::unique_ptr<ImageInfo>		loadImage(const std::string& imagePath);
-std::unique_ptr<FontInfo>		loadFont(const std::string& fontPath);
+std::unique_ptr<FontInfo>		loadFont(const std::string& fontPath, float fontSize, VkExtent2D sizeTexture);
 
 class VulkanTexture
 {
@@ -38,10 +45,12 @@ class VulkanTexture
 	VulkanTexture&	operator=(const VulkanTexture& other) = delete;
 
 	VkDescriptorImageInfo			getDescriptorImageInfo() const noexcept;
-	std::unique_ptr<VulkanModel>	getModelFromText(std::string const& text) const noexcept;
+	FontModel	getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned) const noexcept;
 
-	static constexpr uint32_t sizeOfPixel = sizeof(int32_t);
-	static constexpr uint32_t sizeOfFontPixel = sizeof(int8_t);
+	static constexpr uint32_t	sizeOfPixel = sizeof(int32_t);
+	static constexpr uint32_t	defaultSizeFont = 32U;
+	static constexpr VkExtent2D defaultSizeFontTexture = VkExtent2D{512U, 512U};
+	static constexpr uint32_t	fontPadding = 5U;
 
 	private:
 

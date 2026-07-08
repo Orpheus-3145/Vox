@@ -35,6 +35,7 @@ layout(push_constant) uniform DescriptorIndexes {
 	uint	mesh;
 	uint	material;
 	uint	light;
+	uint	fontColor;
 	uint	texture;
 } index;
 

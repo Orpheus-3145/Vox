@@ -25,11 +25,11 @@ VulkanRenderer::~VulkanRenderer()
 
 void	VulkanRenderer::recreateSwapChain()
 {
-	VkExtent2D extent = vulkanWindow.getFramebufferExtent();
+	VkExtent2D extent = vulkanWindow.getWindowSize();
 
 	while (extent.width == 0 || extent.height == 0)
 	{
-		extent = vulkanWindow.getFramebufferExtent();
+		extent = vulkanWindow.getWindowSize();
 		glfwWaitEvents();
 	}
 

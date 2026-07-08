@@ -25,7 +25,6 @@ class Vox
 		Vox& operator=( Vox const& ) = delete;
 		Vox& operator=( Vox&& ) = delete;
 
-		void setupVulkan( void );
 		void run( void );
 
 		void moveCamera( float );
@@ -56,6 +55,7 @@ class Vox
 		std::unique_ptr<ve::VulkanObject> terrainObject;
 		std::unique_ptr<ve::VulkanObject> undergroundObject;
 		std::unique_ptr<ve::VulkanObject> skyboxObject;
+		std::unique_ptr<ve::VulkanObject> textBackgroundObject;
 		std::unique_ptr<ve::VulkanObject> fpsCounterObject;
 
 		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;

@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <cstring>
+#include <limits>
 
 
 namespace ve {
@@ -17,7 +18,7 @@ VulkanTexture::VulkanTexture(VulkanDevice& device, const std::string& filePath, 
 {
 	if (type == TEXTURE_FONT)
 	{
-		fontInfo = loadFont(filePath);
+		fontInfo = loadFont(filePath, VulkanTexture::defaultSizeFont, VulkanTexture::defaultSizeFontTexture);
 	}
 	else
 	{
@@ -134,52 +135,118 @@ VkDescriptorImageInfo VulkanTexture::getDescriptorImageInfo() const noexcept {
 	return imageInfo;
 }
 
-std::unique_ptr<VulkanModel> VulkanTexture::getModelFromText(std::string const& text) const noexcept
+FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned) const noexcept
 {
 	assert(type == TEXTURE_FONT && "Texture doesn't represent a font");
 
-	std::vector<VulkanModel::Vertex> vertexes(6 * text.size());
-	stbtt_aligned_quad q;
-	float x = 1920.0f - (32.0f + 5.0f) * text.size(), y = 32.0f;
+	std::vector<VulkanModel::Vertex> textVertexes, bgVertexes;
+	textVertexes.resize(6 * text.size());
 
+	uint32_t fontSize = VulkanTexture::defaultSizeFont;
+	uint32_t fontPadding = VulkanTexture::fontPadding;
+
+	float minX = std::numeric_limits<float>::max();
+	float maxX = std::numeric_limits<float>::lowest();
+
+	stbtt_aligned_quad q;
+	float x = 0.0f, y = 0.0f;
 	for (size_t i=0; i<text.size(); i++)
 	{
-		stbtt_GetBakedQuad(fontInfo->cdata, 512, 512, static_cast<int32_t>(text[i]), &x, &y, &q, 1);
+		stbtt_GetBakedQuad(
+			this->fontInfo->cdata,
+			VulkanTexture::defaultSizeFontTexture.width,
+			VulkanTexture::defaultSizeFontTexture.height,
+			static_cast<int32_t>(text[i]),
+			&x, &y, &q, 1
+		);
 
-		vertexes[i * 6].pos = vec3(q.x0, q.y0, 0.0f);
-		vertexes[i * 6].textureUv = vec2(q.s0, q.t0);
+		textVertexes[i * 6].pos = vec3(q.x0, q.y0, 0.0f);
+		textVertexes[i * 6].textureUv = vec2(q.s0, q.t0);
 
-		vertexes[i * 6 + 1].pos = vec3(q.x1, q.y0, 0.0f);
-		vertexes[i * 6 + 1].textureUv = vec2(q.s1, q.t0);
+		textVertexes[i * 6 + 1].pos = vec3(q.x1, q.y0, 0.0f);
+		textVertexes[i * 6 + 1].textureUv = vec2(q.s1, q.t0);
 
-		vertexes[i * 6 + 2].pos = vec3(q.x1, q.y1, 0.0f);
-		vertexes[i * 6 + 2].textureUv = vec2(q.s1, q.t1);
+		textVertexes[i * 6 + 2].pos = vec3(q.x1, q.y1, 0.0f);
+		textVertexes[i * 6 + 2].textureUv = vec2(q.s1, q.t1);
 
-		vertexes[i * 6 + 3].pos = vec3(q.x0, q.y0, 0.0f);
-		vertexes[i * 6 + 3].textureUv = vec2(q.s0, q.t0);
+		textVertexes[i * 6 + 3].pos = vec3(q.x0, q.y0, 0.0f);
+		textVertexes[i * 6 + 3].textureUv = vec2(q.s0, q.t0);
 
-		vertexes[i * 6 + 4].pos = vec3(q.x1, q.y1, 0.0f);
-		vertexes[i * 6 + 4].textureUv = vec2(q.s1, q.t1);
+		textVertexes[i * 6 + 4].pos = vec3(q.x1, q.y1, 0.0f);
+		textVertexes[i * 6 + 4].textureUv = vec2(q.s1, q.t1);
 
-		vertexes[i * 6 + 5].pos = vec3(q.x0, q.y1, 0.0f);
-		vertexes[i * 6 + 5].textureUv = vec2(q.s0, q.t1);
+		textVertexes[i * 6 + 5].pos = vec3(q.x0, q.y1, 0.0f);
+		textVertexes[i * 6 + 5].textureUv = vec2(q.s0, q.t1);
 
-		x += 5;
+		minX = std::min(minX, q.x0);
+		maxX = std::max(maxX, q.x1);
 	}
-	return std::make_unique<VulkanModel>(
-		this->device,
-		vertexes,
+
+	float startX = origin.x;
+	if (isRightAligned)
+	{
+		startX -= maxX;
+	}
+	float startY = origin.y + fontSize - fontPadding;
+
+	for (size_t i=0; i<textVertexes.size(); i++)
+	{
+		textVertexes[i].pos.x += startX;
+		textVertexes[i].pos.y += startY;
+	}
+	float scale = stbtt_ScaleForPixelHeight(&this->fontInfo->basicFontInfo, fontSize);
+
+	int ascentRaw, descentRaw, lineGapRaw;
+	stbtt_GetFontVMetrics(&this->fontInfo->basicFontInfo, &ascentRaw, &descentRaw, &lineGapRaw);
+
+	float lineTop = -ascentRaw  * scale;
+	float lineBottom = -descentRaw * scale;
+
+	vec2 whiteUV{
+		(this->fontInfo->width - 1 + 0.5f) / (float)this->fontInfo->width,
+		(this->fontInfo->height - 1 + 0.5f) / (float)this->fontInfo->height
+	};
+
+	// add padding for background
+	minX -= fontPadding;
+	maxX += fontPadding;
+	lineTop -= fontPadding;
+	lineBottom += fontPadding;
+
+	bgVertexes = std::vector<VulkanModel::Vertex>{
+		VulkanModel::Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		VulkanModel::Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		VulkanModel::Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+
+		VulkanModel::Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		VulkanModel::Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+		VulkanModel::Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+	};
+
+	return FontModel
+	{
+		std::make_shared<ve::VulkanModel>(
+			device,
+			bgVertexes,
+			std::vector<uint32_t>(),
+			0U,
+			ve::FONT_MODEL_LAYOUT
+		),
+		std::make_shared<ve::VulkanModel>(
+			device,
+			textVertexes,
 		std::vector<uint32_t>(),
 		0U,
-		ve::MeshLayout::VERTEX | ve::MeshLayout::TEXTURE
-	);
+			ve::FONT_MODEL_LAYOUT
+		)
+	};
 }
 
 void VulkanTexture::createTextureImage()
 {
 	VulkanBuffer	stagingBuffer(
 		device,
-		(type == TEXTURE_FONT) ? VulkanTexture::sizeOfFontPixel : VulkanTexture::sizeOfPixel,
+		VulkanTexture::sizeOfPixel,
 		nPixels,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 		BUFFER_RAW
@@ -241,7 +308,7 @@ void VulkanTexture::createTextureImage()
 	}
 	else if (type == TEXTURE_FONT)
 	{
-		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels * static_cast<VkDeviceSize>(VulkanTexture::sizeOfFontPixel));		// NB check if this size for pixels work
+		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels * static_cast<VkDeviceSize>(VulkanTexture::sizeOfPixel));
 	}
 	stagingBuffer.flush();
 
@@ -348,20 +415,38 @@ std::unique_ptr<ImageInfo> loadImage(const std::string& imagePath)
 	return imageInfo;
 }
 
-std::unique_ptr<FontInfo> loadFont(const std::string& fontPath)
+std::unique_ptr<FontInfo> loadFont(const std::string& fontPath, float fontSize, VkExtent2D sizeTexture)
 {
 	std::unique_ptr<FontInfo> fontInfo = std::make_unique<FontInfo>();
 	// size of the atlas in byte is: nGliphs * areaGliph ( = widthGliph * heightGliph = sizeGliph^2)
 	// assuming the atlas to be a square, width = height = sqrt(sizeAtlas) = sqrt(nGliphs * sizeGliph^2) =
 	// = sqrt(nGliphs) * sizeGliph [nGliphs = 96, sizeGliph (=fontSize) = 32] ~= 314 [rounded to 512]
-	fontInfo->width = 512;
-	fontInfo->height = 512;
+	fontInfo->width = sizeTexture.width;
+	fontInfo->height = sizeTexture.height;
 	fontInfo->fontData = new unsigned char[fontInfo->width * fontInfo->height];
 
+	int32_t count = 2;
 	std::vector<unsigned char> fileContent = readFile(fontPath);
-	if (stbtt_BakeFontBitmap(fileContent.data(), 0, 32.0f, fontInfo->fontData, fontInfo->width, fontInfo->height, 0, 128, fontInfo->cdata) <= 0)
+	while (stbtt_BakeFontBitmap(fileContent.data(), 0, fontSize, fontInfo->fontData, fontInfo->width, fontInfo->height, 0, 128, fontInfo->cdata) <= 0)
 	{
-		// NB if it fails it means that fontInfo->fontData is too small, double width and height of atlas
+		delete [] fontInfo->fontData;
+		if (count < 0)
+		{
+			throw std::runtime_error("Failed to load font: " + fontPath);
+		}
+		fontInfo->width *= 2;
+		fontInfo->height *= 2;
+		fontInfo->fontData = new unsigned char[fontInfo->width * fontInfo->height];
+		count--;
+	}
+
+	int32_t whitePixelX = fontInfo->width - 1;
+	int32_t whitePixelY = fontInfo->height - 1;
+	fontInfo->fontData[whitePixelY * fontInfo->width + whitePixelX] = 255;
+	if (!stbtt_InitFont(&fontInfo->basicFontInfo, fileContent.data(), stbtt_GetFontOffsetForIndex(fileContent.data(), 0)))
+	{
+		delete [] fontInfo->fontData;
+		fontInfo->fontData = nullptr;
 		throw std::runtime_error("Failed to load font: " + fontPath);
 	}
 	std::cout << "Loaded font: " << fontPath << std::endl;

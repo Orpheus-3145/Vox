@@ -17,7 +17,7 @@ Vox::Vox( void ) :
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
-	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getAspectRatio()},
+	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getWindowSize()},
 	voxelMap{threadManager},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
@@ -31,11 +31,9 @@ Vox::Vox( void ) :
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
 	this->undergroundObject = std::make_unique<ve::VulkanObject>();
 	this->skyboxObject = std::make_unique<ve::VulkanObject>();
+	this->textBackgroundObject = std::make_unique<ve::VulkanObject>();
 	this->fpsCounterObject = std::make_unique<ve::VulkanObject>();
-}
 
-void Vox::setupVulkan( void )
-{
 	this->setupVulkanBuffers();
 	this->setupVulkanDescSets();
 	this->setupVulkanPipelines();
@@ -72,7 +70,7 @@ void Vox::setupVulkanDescSets( void )
 	// creates three sets (one for uniforms, one for textures, one for fonts) but, because data inside the 
 	// uniforms change, a set is needed for every frame is flight, so total sets: 1 * Nframes + 2
 	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
-	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
 	ui32	nSamplerDescriptors = 6U;	// 2 textures for dirt, 2 textures for stone, 1 for skybox, 1 for font
 
 	this->vulkanSetFactory
@@ -107,7 +105,8 @@ void Vox::setupVulkanDescSets( void )
 	this->textureDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSetBindings);
 
 	ve::VulkanBindingSet fontSetBindings;
-	fontSetBindings.addSamplerBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, Config::font, ve::TextureType::TEXTURE_FONT);
+	fontSetBindings.addBufferArrayBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, std::vector<ui32>{sizeof(vec4), sizeof(vec4)});
+	fontSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::font, ve::TextureType::TEXTURE_FONT);
 	this->fontDescriptorSet = this->vulkanSetFactory.createDescriptorSet(fontSetBindings);
 }
 
@@ -162,7 +161,9 @@ void Vox::setupVulkanPipelines( void )
 		Config::textVertShaderPath,
 		Config::textFragShaderPath,
 		ve::VulkanModel::getModelLayout(0U, ve::FONT_MODEL_LAYOUT),
-		ve::TEXTURE_FONT
+		ve::TEXTURE_FONT,
+		sizeof(DrawDataLimit),
+		&ve::drawingDataLimits
 	);
 }
 
@@ -184,6 +185,9 @@ void Vox::run( void )
 	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(this->vulkanDevice));
 	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(this->vulkanDevice));
 	this->skyboxObject->setModel(createVoxelAtlasModel(this->vulkanDevice));
+	
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::backgroundColor), 0U);
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::fontColor), 1U);
 
 	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)
@@ -328,8 +332,9 @@ void Vox::resizeWindow( ui32 width, ui32 height )
 {
 	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
 	this->vulkanRenderer.recreateSwapChain();
-	// NB update W and H instead of aspect ratio
-	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
 
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
@@ -338,7 +343,9 @@ void Vox::toggleFullscreen( void )
 {
 	this->vulkanWindow.toggleFullscreen();
 	this->vulkanRenderer.recreateSwapChain();
-	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
 
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
@@ -401,12 +408,27 @@ void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
 
 void Vox::drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text)
 {
-	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(0U);
-	this->fpsCounterObject->setModel(fontTexture->getModelFromText(text));
+	DrawDataIndex	indexes{};
+
+	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
+	vec2i originText2D{static_cast<i32>(this->vulkanWindow.getWindowSize().width), 0};
+
+	ve::FontModel fontData = fontTexture->getModelFromText(text, originText2D, 0U, true);
+	this->textBackgroundObject->setModel(fontData.background);
+	this->fpsCounterObject->setModel(fontData.text);
 
 	this->fpsCounterPipeline->bindPipeline(commandBuffer);
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
 	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
+
+	indexes.fontColor = 0;
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->textBackgroundObject->bindBuffer(commandBuffer);
+	this->textBackgroundObject->draw(commandBuffer);
+
+	indexes.fontColor = 1;
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->fpsCounterObject->bindBuffer(commandBuffer);
 	this->fpsCounterObject->draw(commandBuffer);
