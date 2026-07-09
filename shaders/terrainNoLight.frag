@@ -1,25 +1,24 @@
 #version 450
+#extension GL_EXT_nonuniform_qualifier : require
 
-layout(set = 1, binding = 0) uniform sampler2D terrainSampler;
-layout(set = 1, binding = 1) uniform sampler2D undergroundSampler;
-layout(set = 1, binding = 2) uniform samplerCube skyboxSampler;
+layout(constant_id = 0) const uint MAX_TEXTURES = 8;
 
-layout(push_constant) uniform MeshData {
-	mat4	modelMatrix;
-	mat4	normalMatrix;
-	uint	materialIndex;
-	uint	lightIndex;
-	uint	textureIndex;
-} meshData;
+layout(push_constant) uniform DescriptorIndexes {
+	uint	mesh;
+	uint	material;
+	uint	light;
+	uint	fontColor;
+	uint	texture;
+} index;
 
-layout(location = 2) in vec2 fragTextureUV;
+layout(set = 1, binding = 0) uniform sampler2D samplers[MAX_TEXTURES];
+
+layout(location = 0) in vec2 fragTextureUV;
+layout(location = 1) flat in uint fragTextureIndex;
 
 layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	if (meshData.textureIndex == 0)
-		outColor = texture(terrainSampler, fragTextureUV);
-	else
-		outColor = texture(undergroundSampler, fragTextureUV);
+	outColor = texture(samplers[nonuniformEXT(index.texture + fragTextureIndex)], fragTextureUV);
 }
