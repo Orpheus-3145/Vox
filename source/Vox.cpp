@@ -9,15 +9,12 @@
 
 namespace vox {
 
-/**
- * Create the engine of the game
- */
 Vox::Vox( void ) :
 	vulkanWindow{"ft_vox", Config::fullScreenMode, Config::defaultWindowWidth, Config::defaultWindowHeight},
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
-	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getAspectRatio()},
+	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getWindowSize()},
 	voxelMap{threadManager},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
@@ -31,10 +28,9 @@ Vox::Vox( void ) :
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
 	this->undergroundObject = std::make_unique<ve::VulkanObject>();
 	this->skyboxObject = std::make_unique<ve::VulkanObject>();
-}
+	this->textBackgroundObject = std::make_unique<ve::VulkanObject>();
+	this->fpsCounterObject = std::make_unique<ve::VulkanObject>();
 
-void Vox::setupVulkan( void )
-{
 	this->setupVulkanBuffers();
 	this->setupVulkanDescSets();
 	this->setupVulkanPipelines();
@@ -44,13 +40,12 @@ void Vox::setupVulkan( void )
 
 void Vox::setupVulkanBuffers( void )
 {
-	// vertex buffers
-	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
-	this->skyboxObject->setModel(createVoxelModel(this->vulkanDevice));
-
 	// uniform buffer for view and projection matrixes
-	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(this->camera.getViewMatrix(), this->camera.getProjectionMatrix());
+	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(
+		this->camera.getViewMatrix(),
+		this->camera.getProjectionMatrix(),
+		this->camera.getOrthographicMatrix()
+	);
 
 	// uniform buffers for per-mesh data: model and normal matrixes, materials, lights
 	this->materialsUbo = std::make_unique<ve::MeshUniform>();
@@ -69,11 +64,10 @@ void Vox::setupVulkanBuffers( void )
 
 void Vox::setupVulkanDescSets( void )
 {
-	// creates two sets (one for uniforms one for textures) but, because data inside the 
-	// uniforms change a set is needed fo every frames is flight, total sets: 1 * Nframes + 1
-	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 1U;
-	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-	ui32	nSamplerDescriptors = 5U;
+	// three sets (one for uniforms *[see later], one for textures, one for fonts)
+	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
+	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
+	ui32	nSamplerDescriptors = 6U;	// 2 textures for dirt, 2 textures for stone, 1 for skybox, 1 for font
 
 	this->vulkanSetFactory
 		.setMaxSets(maxSetsToCreate)
@@ -82,9 +76,13 @@ void Vox::setupVulkanDescSets( void )
 		.createPool();
 
 	ve::VulkanBindingSet uboSetBindings;
+	// UBO with matrixes equal for every mesh: view and projections
 	uboSetBindings.addBufferBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
+	// UBO with data mesh-specific data: model, normal, lights, ...
 	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MeshUniform));
 
+	// data inside this set changes per frame so a copy of such data is needed for every frame buffer
+	// to avoid modifyind something which is used by another frame buffer
 	this->uboDescriptorSet.resize(ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT);
 	for (uint32_t i = 0U; i < ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT; i++)
 	{
@@ -92,17 +90,26 @@ void Vox::setupVulkanDescSets( void )
 	}
 
 	std::vector<std::string>	texturePaths{
-		Config::textureDirt1,
-		Config::textureDirt2,
-		Config::textureStone1,
-		Config::textureStone2
+		Config::textureDirt1Path,
+		Config::textureDirt2Path,
+		Config::textureStone1Path,
+		Config::textureStone2Path
 	};
 	std::vector<ve::TextureType>	textureTypes(4, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureSetBindings;
+	// normal textures
 	textureSetBindings.addSamplerArrayBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, texturePaths, textureTypes);
-	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkybox, ve::TextureType::TEXTURE_CUBEMAP);
+	// cubemap texture
+	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 	this->textureDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSetBindings);
+
+	ve::VulkanBindingSet fontSetBindings;
+	// array of uniforms containing colors for the font (text, background, ...)
+	fontSetBindings.addBufferArrayBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, std::vector<ui32>{sizeof(vec4), sizeof(vec4)});
+	// texture/sampler of the font used
+	fontSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::fontPath, ve::TextureType::TEXTURE_FONT);
+	this->fontDescriptorSet = this->vulkanSetFactory.createDescriptorSet(fontSetBindings);
 }
 
 void Vox::setupVulkanPipelines( void )
@@ -120,52 +127,77 @@ void Vox::setupVulkanPipelines( void )
 		fragmentShader = Config::terrainNoLightFragShaderPath;
 	}
 
+	std::vector<VkDescriptorSetLayout> setLayouts;
+	setLayouts.push_back(this->uboDescriptorSet[0]->getLayout());
+	setLayouts.push_back(this->textureDescriptorSet->getLayout());
+
+	// main pipeline to render the map (surface terrain + underground)
 	this->terrainPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
-		this->vulkanSetFactory.getDescriptorSetLayout(),
+		setLayouts,
 		this->vulkanRenderer.getSwapChainRenderPass(),
 		vertexShader,
 		fragmentShader,
-		this->terrainObject->getVboLayout(),
-		false,
+		ve::VulkanModel::getModelLayout(0U),
+		ve::TEXTURE_PLAIN,
 		sizeof(DrawDataLimit),
 		&ve::drawingDataLimits
 	);
 
+	// skybox rendering
 	this->skyboxPipeline = ve::VulkanPipeline::createPipeline(
 		this->vulkanDevice,
-		this->vulkanSetFactory.getDescriptorSetLayout(),
+		setLayouts,
 		this->vulkanRenderer.getSwapChainRenderPass(),
 		Config::skyboxVertShaderPath,
 		Config::skyboxFragShaderPath,
-		this->skyboxObject->getVboLayout(),
-		true,
+		ve::VulkanModel::getModelLayout(0U, ve::ONLY_VERTEX_LAYOUT),
+		ve::TEXTURE_CUBEMAP,
+		sizeof(DrawDataLimit),
+		&ve::drawingDataLimits
+	);
+
+	// text/UI rendering
+	setLayouts[1] = this->fontDescriptorSet->getLayout();
+	this->fpsCounterPipeline = ve::VulkanPipeline::createPipeline(
+		this->vulkanDevice,
+		setLayouts,
+		this->vulkanRenderer.getSwapChainRenderPass(),
+		Config::textVertShaderPath,
+		Config::textFragShaderPath,
+		ve::VulkanModel::getModelLayout(0U, ve::FONT_MODEL_LAYOUT),
+		ve::TEXTURE_FONT,
 		sizeof(DrawDataLimit),
 		&ve::drawingDataLimits
 	);
 }
 
-
-/**
- * Run the rendering loop
- */
 void Vox::run( void )
 {
 	vec3				playerPos;
-	Stopwatch			timer;
+	Stopwatch			fpsTimer, printTimer;
  	float				deltaTime = 0.0f;
 	ui32				currentFrame = 0U;
+	i32					fps = 0;
+	std::string			UItext = "FPS: 0";
 
-	VkCommandBuffer		commandBuffer = nullptr;
+	VkCommandBuffer		commandBuffer = VK_NULL_HANDLE;
 	std::future<bool>	mapUpdateResult;
-	DrawDataIndex		indexes{};
 
+	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(this->vulkanDevice));
+	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(this->vulkanDevice));
+	this->skyboxObject->setModel(createVoxelAtlasModel(this->vulkanDevice));
+	
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::backgroundColor), 0U);
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::fontColor), 1U);
+
+	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)
 	{
-		timer.start();
+		fpsTimer.start();
 		glfwPollEvents();
 
-		deltaTime = timer.elapsed(Unit::Seconds);
+		deltaTime = fpsTimer.elapsed(Unit::Seconds);
 		this->moveCamera(deltaTime);
 
 		playerPos = this->camera.getCameraPos();
@@ -180,11 +212,11 @@ void Vox::run( void )
 		else
 		{
 			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
-
+		
 			if (status == std::future_status::ready)
 			{
 				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
-
+		
 				if (changed == true)
 				{
 					this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
@@ -204,64 +236,31 @@ void Vox::run( void )
 
 			if (this->countFramesToUpdate > 0)
 			{
-				this->matrixUbo->updateView(this->camera.getViewMatrix());
-				this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
-				this->uboDescriptorSet[currentFrame]->updateDescriptor(0, this->matrixUbo->getData());
-
-				this->materialsUbo->updateNormalMatrix(0, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-				this->materialsUbo->updateNormalMatrix(1, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-				this->materialsUbo->updateLightDir(0, Config::lightDirection, this->camera.getViewMatrix(false));
-				this->uboDescriptorSet[currentFrame]->updateDescriptor(1, this->materialsUbo->getData());
-
-				this->countFramesToUpdate--;
+				this->updateUniforms(currentFrame);
 			}
 
-			this->terrainPipeline->bindPipeline(commandBuffer);
+			this->drawTerrain(commandBuffer, currentFrame);
+			this->drawSkybox(commandBuffer, currentFrame);
 
-			this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->terrainPipeline, 0U);
-			this->textureDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
-
-			indexes.models = 0U;
-			indexes.materials = 0U;
-			indexes.textures = 0U;
-			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
-
-			this->terrainObject->bindBuffer(commandBuffer);
-			this->terrainObject->draw(commandBuffer);
-
-			indexes.models = 1U;
-			indexes.materials = 1U;
-			indexes.textures = 2U;
-			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
-
-			this->undergroundObject->bindBuffer(commandBuffer);
-			this->undergroundObject->draw(commandBuffer);
-
-			this->skyboxPipeline->bindPipeline(commandBuffer);
-
-			indexes.models = 2U;
-			this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
-
-			this->skyboxObject->bindBuffer(commandBuffer);
-			this->skyboxObject->draw(commandBuffer);
+			printTimer.stop();
+			if (printTimer.elapsed(Unit::Seconds) > 0.5)
+			{
+				fps = static_cast<int> (1.0f / fpsTimer.elapsed(Unit::Seconds));
+				UItext = "FPS: " + std::to_string(fps);
+				printTimer.reset();
+			}
+			this->drawText(commandBuffer, currentFrame, UItext);
 
 			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
 			this->vulkanRenderer.endFrame();
 		}
 
 		this->inputHandler.reset();
-		timer.stop();
+		fpsTimer.stop();
 	}
 	vkDeviceWaitIdle(vulkanDevice.device());
 }
 
-/**
- * Handle camera transformation in case of keys W-A-S-D or up-left-bottom-right (arrow) keys are pressed
- *
- * @param deltaTime to normalize the transformation, so that it doesn't depend on the fps
- * 
- * @note camera rotation using a key will be removed in the final version
- */
 void Vox::moveCamera( float deltaTime )
 {
 	vec3	moveDirection = vec3::zero();
@@ -287,26 +286,16 @@ void Vox::moveCamera( float deltaTime )
 	}
 	if (moveDirection != vec3::zero())
 	{
-		// test for movement
 		vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
 		vec3 location = this->camera.getCameraPos();
-
 		vec3 movement = this->voxelMap.detectCollision(location, relativeMoveDirection);
+
 		this->camera.move(movement);
 		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
 }
 
-/**
- * Handle camera rotation my cursor movement
- *
- * @param newX x position (relative to the monitor) of the cursor ( (0;0): top-left corner)
- *
- * @param newY y position (relative to the monitor) of the cursor ( (0;0): top-left corner)
- *
- * @return a vector of 36 uin32_t starting from the offset value
- */
-void	Vox::rotateCameraFromCursorPos( vec2 const& currPos )
+void Vox::rotateCameraFromCursorPos( vec2 const& currPos )	
 {
 	vec2 const& oldPos = this->inputHandler.getCursorPos();
 
@@ -317,19 +306,13 @@ void	Vox::rotateCameraFromCursorPos( vec2 const& currPos )
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
-/**
- * When a resize of the window happens, updates Vulkan and recalcolate projection matrix 
- * (since ration w/h changed)
- *
- * @param width new width
- *
- * @param height new height
- */
 void Vox::resizeWindow( ui32 width, ui32 height )
 {
 	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
 	this->vulkanRenderer.recreateSwapChain();
-	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
 
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
@@ -338,9 +321,95 @@ void Vox::toggleFullscreen( void )
 {
 	this->vulkanWindow.toggleFullscreen();
 	this->vulkanRenderer.recreateSwapChain();
-	this->camera.updateAspect(this->vulkanWindow.getAspectRatio());
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
 
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Vox::updateUniforms(ui32 currentFrame)
+{
+	this->matrixUbo->updateView(this->camera.getViewMatrix());
+	this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
+	this->uboDescriptorSet[currentFrame]->updateDescriptor(0U, this->matrixUbo->getData());
+
+	this->materialsUbo->updateNormalMatrix(0U, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateNormalMatrix(1U, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateLightDir(0U, Config::lightDirection, this->camera.getViewMatrix(false));
+	this->uboDescriptorSet[currentFrame]->updateDescriptor(1U, this->materialsUbo->getData());
+
+	this->countFramesToUpdate--;
+}
+
+void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
+{
+	DrawDataIndex	indexes{};
+
+	this->terrainPipeline->bindPipeline(commandBuffer);
+
+	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->terrainPipeline, 0U);
+	this->textureDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
+
+	indexes.models = 0U;
+	indexes.materials = 0U;
+	indexes.textures = 0U;
+	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->terrainObject->bindBuffer(commandBuffer);
+	this->terrainObject->draw(commandBuffer);
+
+	indexes.models = 1U;
+	indexes.materials = 1U;
+	indexes.textures = 2U;
+	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->undergroundObject->bindBuffer(commandBuffer);
+	this->undergroundObject->draw(commandBuffer);
+}
+
+void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
+{
+	DrawDataIndex	indexes{};
+
+	this->skyboxPipeline->bindPipeline(commandBuffer);
+
+	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->skyboxPipeline, 0U);
+	this->textureDescriptorSet->bindSet(commandBuffer, *this->skyboxPipeline, 1U);
+
+	indexes.models = 2U;
+	this->skyboxPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->skyboxObject->bindBuffer(commandBuffer);
+	this->skyboxObject->draw(commandBuffer);
+}
+
+void Vox::drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text)
+{
+	DrawDataIndex	indexes{};
+
+	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
+	vec2i originText2D{static_cast<i32>(this->vulkanWindow.getWindowSize().width), 0};
+
+	ve::FontModel fontData = fontTexture->getModelFromText(text, originText2D, 0U, true);
+	this->textBackgroundObject->setModel(fontData.background);
+	this->fpsCounterObject->setModel(fontData.text);
+
+	this->fpsCounterPipeline->bindPipeline(commandBuffer);
+	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
+	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
+
+	indexes.fontColor = 0;		// background color index
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->textBackgroundObject->bindBuffer(commandBuffer);
+	this->textBackgroundObject->draw(commandBuffer);
+
+	indexes.fontColor = 1;		// text color index
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->fpsCounterObject->bindBuffer(commandBuffer);
+	this->fpsCounterObject->draw(commandBuffer);
 }
 
 }	// namespace vox

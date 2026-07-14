@@ -2,7 +2,7 @@
 #include "VulkanObject.hpp"
 
 #include <cassert>
-#include <iostream>
+
 
 namespace ve {
 
@@ -16,12 +16,15 @@ VulkanModel::VulkanModel(
 {
 	this->createVertexBuffers(builder.vertices);
 	if (builder.indices.size() > 2U)
+	{
 		this->createIndexBuffers(builder.indices);
+	}
 }
 
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
-	const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices,
+	const std::vector<Vertex>& vertices,
+	const std::vector<uint32_t>& indices,
 	uint32_t binding,
 	MeshLayout type
 ) :
@@ -29,31 +32,11 @@ VulkanModel::VulkanModel(
 {
 	this->createVertexBuffers(vertices);
 	if (indices.size() > 2U)
+	{
 		this->createIndexBuffers(indices);
+	}
 }
 
-VulkanModel::VulkanModel(
-	VulkanDevice& device,
-	const std::vector<vec3>& vertices, const std::vector<uint32_t>& indices,
-	uint32_t binding,
-	MeshLayout type
-) : 
-	vulkanDevice{device}, binding{binding}, type{type}
-{
-	this->createVertexBuffers(vertices);
-	if (indices.size() > 2U)
-		this->createIndexBuffers(indices);
-}
-
-/**
- * Load data in GPU, combining together the 
- * chunks of vertexes and building indexed data on the spot
- *
- * @param device VulkanDevice instance
- * @param vertices vector of pointers, each one points to a chunk of voxels, each voxel has 24 vertexes ( type Vertex )
- * @param indexesVoxel sequence of (36) indexes that represent the faces of a voxel
- *
- */
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
 	const std::vector<std::vector<Vertex>>& vertices,
@@ -63,16 +46,14 @@ VulkanModel::VulkanModel(
 ) :
 	vulkanDevice{device}, binding{binding}, type{type}
 {
-	this->vertexCount = 0U;
-	this->indexCount = 0U;
-	for (std::vector<Vertex> const& worldVertexes : vertices) {
+	for (std::vector<Vertex> const& worldVertexes : vertices)
+	{
 		this->vertexCount += worldVertexes.size();
 		// a voxel has always 24 vertexes and 36 indexes, with this proportion, given
 		// an amount of voxels, the total number of indexes is: nVoxels * nIndexPerVoxel / nVertexPerVoxel
 		this->indexCount += (worldVertexes.size() * INDEX_PER_VOXEL) / VERTEX_PER_VOXEL;
 	}
 	assert(this->vertexCount >= 3 && "Vertex count must be at least 3");
-	this->isIndexed = true;
 	this->createVertexIndexBuffers(vertices, indexesVoxel);
 }
 
@@ -100,46 +81,6 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	}
 }
 
-MeshLayoutDescription	VulkanModel::getVboLayout() const noexcept
-{
-	MeshLayoutDescription data{};
-	data.bindingConfig.resize(1);
-
-	data.bindingConfig[0].binding = this->binding;
-	data.bindingConfig[0].stride = 0;
-	data.bindingConfig[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-	uint32_t locationIndex = 0U;
-	if (this->type & MeshLayout::VERTEX)
-	{
-		data.bindingConfig[0].stride += sizeof(vec3);
-		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)}
-		);
-	}
-	if (this->type & MeshLayout::NORMAL)
-	{
-		data.bindingConfig[0].stride += sizeof(vec3);
-		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)}
-		);
-	}
-	if (this->type & MeshLayout::TEXTURE)
-	{
-		data.bindingConfig[0].stride += sizeof(vec2);
-		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, textureUv)}
-		);
-	}
-	if (this->type & MeshLayout::RANDOM_INDEX_TEXT)
-	{
-		data.bindingConfig[0].stride += sizeof(uint32_t);
-		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{locationIndex++, this->binding, VK_FORMAT_R32_UINT, offsetof(Vertex, textureIndex)}
-		);
-	}
-	return data;
-}
 
 void	VulkanModel::setBoundingBox(const std::vector<Vertex>& vertices) noexcept
 {
@@ -162,8 +103,12 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 	this->vertexCount = static_cast<uint32_t>(vertices.size());
 	assert(this->vertexCount >= 3 && "Vertex count must be at least 3");
 
-	VkDeviceSize	bufferSize = sizeof(vertices[0]) * this->vertexCount;
-	uint32_t		vertexSize = sizeof(vertices[0]);
+	uint32_t	vertexSize = 0U;
+	if (this->type & MeshLayout::VERTEX) vertexSize += sizeof(vec3);
+	if (this->type & MeshLayout::NORMAL) vertexSize += sizeof(vec3);
+	if (this->type & MeshLayout::TEXTURE) vertexSize += sizeof(vec2);
+	if (this->type & MeshLayout::RANDOM_INDEX_TEXT) vertexSize += sizeof(uint32_t);
+	assert(vertexSize > 0U && "Empty layout for model");
 
 	VulkanBuffer	stagingBuffer(
 		this->vulkanDevice,
@@ -172,9 +117,39 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 		BUFFER_RAW
 	);
-
 	stagingBuffer.map();
-	stagingBuffer.writeToBuffer(static_cast<const void*>(vertices.data()));
+
+	if (this->type == DEFAULT_MODEL_LAYOUT)
+	{
+		stagingBuffer.writeToBuffer(static_cast<const void*>(vertices.data()));
+	}
+	else
+	{
+		uint32_t offset = 0U;
+		for (VulkanModel::Vertex const& vertex : vertices)
+		{
+			if (this->type & MeshLayout::VERTEX)
+			{
+				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.pos), sizeof(vec3), offset);
+				offset += sizeof(vec3);
+			}
+			if (this->type & MeshLayout::NORMAL)
+			{
+				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.normal), sizeof(vec3), offset);
+				offset += sizeof(vec3);
+			}
+			if (this->type & MeshLayout::TEXTURE)
+			{
+				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.textureUv), sizeof(vec2), offset);
+				offset += sizeof(vec2);
+			}
+			if (this->type & MeshLayout::RANDOM_INDEX_TEXT)
+			{
+				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.textureIndex), sizeof(uint32_t), offset);
+				offset += sizeof(uint32_t);
+			}
+		}
+	}
 	stagingBuffer.flush();
 
 	this->vertexBuffer = std::make_unique<VulkanBuffer>(
@@ -184,36 +159,8 @@ void	VulkanModel::createVertexBuffers(const std::vector<Vertex>& vertices)
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		BUFFER_VERTEX
 	);
-	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
-}
 
-void	VulkanModel::createVertexBuffers(const std::vector<vec3>& vertices)
-{
-	this->vertexCount = static_cast<uint32_t>(vertices.size());
-	assert(this->vertexCount >= 3 && "Vertex count must be at least 3");
-
-	uint32_t		vertexSize = sizeof(vec3);
 	VkDeviceSize	bufferSize = vertexSize * this->vertexCount;
-
-	VulkanBuffer	stagingBuffer(
-		this->vulkanDevice,
-		vertexSize,
-		this->vertexCount,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
-		BUFFER_RAW
-	);
-
-	stagingBuffer.map();
-	stagingBuffer.writeToBuffer(static_cast<const void*>(vertices.data()));
-	stagingBuffer.flush();
-
-	this->vertexBuffer = std::make_unique<VulkanBuffer>(
-		this->vulkanDevice,
-		vertexSize,
-		this->vertexCount,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		BUFFER_VERTEX
-	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->vertexBuffer->getBuffer(), bufferSize);
 }
 
@@ -221,7 +168,6 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 {
 	this->indexCount = static_cast<uint32_t>(indices.size());
 	assert(this->indexCount >= 3 && "Index count must be at least 3");
-	this->isIndexed = true;
 
 	uint32_t		indexSize = sizeof(uint32_t);
 	VkDeviceSize	bufferSize = indexSize * this->indexCount;
@@ -246,6 +192,7 @@ void	VulkanModel::createIndexBuffers(const std::vector<uint32_t>& indices)
 		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->indexBuffer->getBuffer(), bufferSize);
+	this->isIndexed = true;
 }
 
 void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>>& vertices, const std::array<uint32_t, INDEX_PER_VOXEL>& indexesVoxel)
@@ -315,6 +262,7 @@ void	VulkanModel::createVertexIndexBuffers(const std::vector<std::vector<Vertex>
 		BUFFER_INDEX
 	);
 	this->vulkanDevice.copyBuffer(stagingBufferIndex.getBuffer(), this->indexBuffer->getBuffer(), this->indexCount * indexSize);
+	this->isIndexed = true;
 }
 
 void	VulkanModel::setObjectCenter() noexcept
@@ -334,37 +282,45 @@ vec3	VulkanModel::calculateVertexCenter(const std::vector<Vertex>& vertices) noe
 	return center;
 }
 
-
-std::vector<VkVertexInputBindingDescription>	VulkanModel::Vertex::getBindingDescriptions()
+MeshLayoutDescription	VulkanModel::getModelLayout(uint32_t binding, MeshLayout type) noexcept
 {
-	std::vector<VkVertexInputBindingDescription>	bindingDescriptions(1);
+	MeshLayoutDescription data{};
+	data.bindingConfig.resize(1);
 
-	bindingDescriptions[0].binding = 0;
-	bindingDescriptions[0].stride = 0;
-	bindingDescriptions[0].stride = sizeof(Vertex);
-	bindingDescriptions[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	return bindingDescriptions;
-}
+	data.bindingConfig[0].binding = binding;
+	data.bindingConfig[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-std::vector<VkVertexInputAttributeDescription>	VulkanModel::Vertex::getAttributeDescriptions()
-{
-	std::vector<VkVertexInputAttributeDescription>	attributeDescriptions;
-
-	attributeDescriptions.reserve(4);
-
-	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, pos)}
-	);
-	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(ve::VulkanModel::Vertex, normal)}
-	);
-	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{2, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(ve::VulkanModel::Vertex, textureUv)}
-	);
-	attributeDescriptions.push_back(
-		VkVertexInputAttributeDescription{3, 0, VK_FORMAT_R32_UINT, offsetof(ve::VulkanModel::Vertex, textureIndex)}
-	);
-	return attributeDescriptions;
+	uint32_t locationIndex = 0U, offset = 0U;
+	if (type & MeshLayout::VERTEX)
+	{
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32G32B32_SFLOAT, offset}
+		);
+		offset += sizeof(vec3);
+	}
+	if (type & MeshLayout::NORMAL)
+	{
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32G32B32_SFLOAT, offset}
+		);
+		offset += sizeof(vec3);
+	}
+	if (type & MeshLayout::TEXTURE)
+	{
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32G32_SFLOAT, offset}
+		);
+		offset += sizeof(vec2);
+	}
+	if (type & MeshLayout::RANDOM_INDEX_TEXT)
+	{
+		data.attributeConfig.push_back(
+			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32_UINT, offset}
+		);
+		offset += sizeof(uint32_t);
+	}
+	data.bindingConfig[0].stride = offset;
+	return data;
 }
 
 

@@ -1,7 +1,5 @@
 #include "VulkanObject.hpp"
-#include "stb_image.h"
 
-#include <iostream>
 #include <cassert>
 
 
@@ -162,23 +160,10 @@ mat4 VulkanObject::getNormalViewMatrix(const mat4& viewNoTranslation, bool colum
 	}
 }
 
-MeshLayoutDescription VulkanObject::getVboLayout() const noexcept
+MeshLayoutDescription VulkanObject::getModelLayout() const noexcept
 {
 	assert(this->model != nullptr && "Model not set");
-	return this->model->getVboLayout();
-}
-
-ImageInfo	loadImage(const std::string& imagePath)
-{
-	ImageInfo	imageInfo = {};
-
-	imageInfo.imageData = stbi_load(imagePath.c_str(), &imageInfo.width, &imageInfo.height, &imageInfo.channels, STBI_rgb_alpha);
-	if (imageInfo.imageData == nullptr)
-	{
-		throw std::runtime_error("Failed to load image: " + imagePath);
-	}
-	std::cout << "Loaded image: " << imagePath << " (" << imageInfo.width << "x" << imageInfo.height << ", " << imageInfo.channels << " channels)" << std::endl;
-	return imageInfo;
+	return this->model->getModelLayout();
 }
 
 }	// namespace ve

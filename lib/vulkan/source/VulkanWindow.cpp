@@ -62,28 +62,21 @@ VulkanWindow::~VulkanWindow()
 	glfwTerminate();
 }
 
-float	VulkanWindow::getAspectRatio() const noexcept
+VkExtent2D	VulkanWindow::getWindowSize() const noexcept
 {
+	VkExtent2D size;
 	if (isFullscreenWindow())
 	{
-		return static_cast<float>(monitorInfo->width) / static_cast<float>(monitorInfo->height);
+		size.width = static_cast<uint32_t>(monitorInfo->width); 
+		size.height = static_cast<uint32_t>(monitorInfo->height); 
 	}
 	else
 	{
-		return static_cast<float>(widthNotFullscreen) / static_cast<float>(heightNotFullscreen);
+		size.width = static_cast<uint32_t>(widthNotFullscreen); 
+		size.height = static_cast<uint32_t>(heightNotFullscreen); 
 	}
-}
 
-VkExtent2D	VulkanWindow::getFramebufferExtent() const noexcept
-{
-	if (isFullscreenWindow())
-	{
-		return { static_cast<uint32_t>(monitorInfo->width), static_cast<uint32_t>(monitorInfo->height) };
-	}
-	else
-	{
-		return { static_cast<uint32_t>(widthNotFullscreen), static_cast<uint32_t>(heightNotFullscreen) };
-	}
+	return size;
 }
 
 void	VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const

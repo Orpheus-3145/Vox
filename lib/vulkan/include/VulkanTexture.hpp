@@ -1,10 +1,37 @@
 #pragma once
 
 #include "VulkanObject.hpp"
-#include "stb_image.h"
+
+#include "stb_truetype.h"
+
 
 namespace ve {
 
+struct ImageInfo
+{
+	unsigned char*	imageData;
+	int32_t			width;
+	int32_t			height;
+	int32_t			channels;
+};
+
+struct FontInfo
+{
+	unsigned char*	fontData;
+	int32_t			width;
+	int32_t			height;
+	stbtt_bakedchar cdata[128];
+	stbtt_fontinfo	basicFontInfo;
+};
+
+struct FontModel
+{
+	std::shared_ptr<VulkanModel> background;
+	std::shared_ptr<VulkanModel> text;
+};
+
+std::unique_ptr<ImageInfo>		loadImage(const std::string& imagePath);
+std::unique_ptr<FontInfo>		loadFont(const std::string& fontPath, float fontSize, VkExtent2D sizeTexture);
 
 class VulkanTexture
 {
@@ -15,30 +42,35 @@ class VulkanTexture
 	~VulkanTexture();
 	VulkanTexture(const VulkanTexture& other) = delete;
 	VulkanTexture(VulkanTexture&&);
-	VulkanTexture&	operator=(const VulkanTexture& other) = delete;
+	VulkanTexture& operator=(const VulkanTexture& other) = delete;
+
+	VkDescriptorImageInfo	getDescriptorImageInfo() const noexcept;
+	FontModel				getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned = false) const noexcept;
+
+	static constexpr uint32_t sizeOfPixel = sizeof(int32_t);
+	static constexpr uint32_t defaultSizeFont = 32U;
+	static constexpr VkExtent2D defaultSizeFontTexture = VkExtent2D{512U, 512U};
+	static constexpr uint32_t fontPadding = 5U;
+
+	private:
 
 	void	createTextureImage();
 	void	createTextureImageView();
 	void	createTextureSampler();
 
-	VkDescriptorImageInfo	getDescriptorImageInfo() const noexcept;
+	VulkanDevice&	device;
+	TextureType		type;
 
-	static constexpr uint32_t sizeOfPixel = sizeof(int32_t);
-
-	private:
-
-	ImageInfo		imageInfo;
-	VkDeviceSize	nPixels;
+	std::unique_ptr<ImageInfo>	imageInfo;
+	std::unique_ptr<FontInfo>	fontInfo;
+	VkImageCreateInfo			info{};
+	VkDeviceSize				nPixels{0U};
 
 	VkImage			textureImage{VK_NULL_HANDLE};
 	VkDeviceMemory	textureImageMemory{VK_NULL_HANDLE};
 	VkImageView		textureImageView{VK_NULL_HANDLE};
 	VkSampler		textureSampler{VK_NULL_HANDLE};
 
-	VkImageCreateInfo	info{};
-
-	VulkanDevice&	device;
-	TextureType		type;
 };
 
 } // namespace ve

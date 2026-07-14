@@ -7,6 +7,14 @@ layout(constant_id = 1) const uint MAX_MATERIALS = 8;
 layout(constant_id = 2) const uint MAX_LIGHTS = 8;
 layout(constant_id = 3) const uint MAX_TEXTURES = 8;
 
+layout(push_constant) uniform DescriptorIndexes {
+	uint	mesh;
+	uint	material;
+	uint	light;
+	uint	fontColor;
+	uint	texture;
+} index;
+
 struct MaterialData {
 	vec4	ambientColor;		// currently not used, since there's the color of the texture
 	vec4	diffuseColor;		// currently not used, since there's the color of the texture
@@ -31,15 +39,7 @@ layout(set = 0, binding = 1) uniform MeshData {
 	LightData		light[MAX_LIGHTS];
 } meshData;
 
-layout(push_constant) uniform DescriptorIndexes {
-	uint	mesh;
-	uint	material;
-	uint	light;
-	uint	texture;
-} index;
-
 layout(set = 1, binding = 0) uniform sampler2D samplers[MAX_TEXTURES];
-layout(set = 1, binding = 1) uniform samplerCube skySampler;
 
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNormal;

@@ -171,14 +171,12 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 
 bool	VoxelMap::update(const vec3& newPosition)
 {
-	Stopwatch	timer;
 	vec2i		delta = voxelToChunkPosition(newPosition) - playerOnChunk;
 
 	if (delta == vec2i::zero())
 	{
 		return false;
 	}
-	timer.start();
 	playerOnChunk = playerOnChunk + delta;
 	minPositions = minPositions + delta;
 	maxPositions = maxPositions + delta;
@@ -224,7 +222,6 @@ bool	VoxelMap::update(const vec3& newPosition)
 	threadManager.enqueue([this] { regenerateTerrainBuffer(); });
 	threadManager.enqueue([this] { regenerateUndergroundBuffer(); });
 	threadManager.waitIdle();
-	timer.stop();
 	assert(minPositions.x + squareSize - 1 == maxPositions.x && "Error: min/max X don't line up");
 	assert(minPositions.y + squareSize - 1 == maxPositions.y && "Error: min/max Y don't line up");
 	return true;

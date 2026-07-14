@@ -46,7 +46,7 @@ class VulkanShader
 		VkShaderStageFlagBits	getStageFlag( void ) const noexcept { return this->shaderStageFlag; };
 
 	private:
-		void createModule(std::vector<char> const& fileContent);
+		void createModule(std::vector<unsigned char> const& fileContent);
 
 		VulkanDevice&			vulkanDevice;
 		VkShaderStageFlagBits	shaderStageFlag;
@@ -64,7 +64,7 @@ class VulkanPipeline
 			std::string const& vertexShaderFile,
 			std::string const& fragmentShaderFile,
 			MeshLayoutDescription const& meshLayout,
-			bool hasCubemapsTexture,
+			TextureType textureUsed,
 			uint32_t sizePushConstants,
 			VkConstants const* constants
 		);
@@ -84,15 +84,15 @@ class VulkanPipeline
 			std::string const& vertexShaderFile,
 			std::string const& fragmentShaderFile,
 			MeshLayoutDescription const& meshLayout,
-			bool hasCubemapsTexture = false,
+			TextureType textureUsed = TEXTURE_PLAIN,
 			uint32_t sizePushConstants = 0U,
 			VkConstants const* constants = nullptr
 		);
 
 	private:
 		void					setupPipelineLayout( std::vector<VkDescriptorSetLayout> const& descriptorSetLayouts );
-		void					setupPipeline( std::string const& vertexShaderFile, std::string const& fragmentShaderFile, MeshLayoutDescription const& meshLayout, bool hasCubemapsTexture, VkRenderPass renderPass, VkConstants const* constants );
-		VulkanPipelineConfig	getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, bool hasCubemapsTexture ) const noexcept;
+		void					setupPipeline( std::string const& vertexShaderFile, std::string const& fragmentShaderFile, MeshLayoutDescription const& meshLayout, TextureType textureUsed, VkRenderPass renderPass, VkConstants const* constants );
+		VulkanPipelineConfig	getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, TextureType textureUsed ) const noexcept;
 
 		VulkanDevice&		vulkanDevice;
 		VkPipelineLayout	pipelineLayout;

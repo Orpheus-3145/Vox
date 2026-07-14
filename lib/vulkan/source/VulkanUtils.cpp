@@ -56,7 +56,7 @@ vec3	generateSoftGreyscale()
 }
 
 
-std::vector<char> readFile(std::string const& filePath)
+std::vector<unsigned char> readFile(std::string const& filePath)
 {
 	std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
@@ -65,10 +65,10 @@ std::vector<char> readFile(std::string const& filePath)
 		throw std::runtime_error("failed to open file: " + filePath);
 	}
 	size_t fileSize = static_cast<size_t>(file.tellg());
-	std::vector<char>	buffer(fileSize);
+	std::vector<unsigned char>	buffer(fileSize);
 
 	file.seekg(0);
-	file.read(buffer.data(), fileSize);
+	file.read(reinterpret_cast<char*>(buffer.data()), fileSize);
 	file.close();
 
 	return buffer;

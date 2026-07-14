@@ -4,13 +4,13 @@ layout(set = 0, binding = 0) uniform ViewProjectUBO
 {
 	mat4	view;
 	mat4	projection;
+	mat4	orthographic;
 }	matrixUbo;
 
 // default values if not overridden
 layout(constant_id = 0) const uint MAX_OBJS = 8;
 layout(constant_id = 1) const uint MAX_MATERIALS = 8;
 layout(constant_id = 2) const uint MAX_LIGHTS = 8;
-layout(constant_id = 3) const uint MAX_TEXTURES = 8;
 
 struct MaterialData {
 	vec4	ambientColor;		// currently not used, since there's the color of the texture
@@ -40,6 +40,7 @@ layout(push_constant) uniform DescriptorIndexes {
 	uint	mesh;
 	uint	material;
 	uint	light;
+	uint	fontColor;
 	uint	texture;
 } index;
 
@@ -58,9 +59,10 @@ void main()
 {
 	vec4 worldPos = matrixUbo.view * meshData.modelMatrix[index.mesh] * vec4(position, 1.0f);
 	fragNormal = normalize(mat3(meshData.normalMatrix[index.mesh]) * normal);
-	fragTextureUV = textureUV;
 	fragPos = worldPos.xyz;
 
-	gl_Position = matrixUbo.projection * worldPos;
+	fragTextureUV = textureUV;
 	fragTextureIndex = textureIndex;
+
+	gl_Position = matrixUbo.projection * worldPos;
 }

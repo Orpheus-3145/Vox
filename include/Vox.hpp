@@ -25,7 +25,6 @@ class Vox
 		Vox& operator=( Vox const& ) = delete;
 		Vox& operator=( Vox&& ) = delete;
 
-		void setupVulkan( void );
 		void run( void );
 
 		void moveCamera( float );
@@ -38,11 +37,16 @@ class Vox
 		void setupVulkanDescSets( void );
 		void setupVulkanPipelines( void );
 
+		void updateUniforms(ui32 currentFrame);
+		void drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame);
+		void drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame);
+		void drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text);
+
 		ve::VulkanWindow				vulkanWindow;
 		ve::VulkanDevice				vulkanDevice;
 		ve::VulkanRenderer				vulkanRenderer;
 		ve::VulkanDescriptorSetFactory	vulkanSetFactory;
-		
+
 		Camera			camera;
 		VoxelMap		voxelMap;
 		InputHandler	inputHandler;
@@ -51,15 +55,19 @@ class Vox
 		std::unique_ptr<ve::VulkanObject> terrainObject;
 		std::unique_ptr<ve::VulkanObject> undergroundObject;
 		std::unique_ptr<ve::VulkanObject> skyboxObject;
+		std::unique_ptr<ve::VulkanObject> textBackgroundObject;
+		std::unique_ptr<ve::VulkanObject> fpsCounterObject;
 
 		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;
 		std::unique_ptr<ve::MeshUniform>		materialsUbo;
 
 		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;
+		std::unique_ptr<ve::VulkanDescriptorSet> 				fontDescriptorSet;
 
 		std::unique_ptr<ve::VulkanPipeline> terrainPipeline;
 		std::unique_ptr<ve::VulkanPipeline> skyboxPipeline;
+		std::unique_ptr<ve::VulkanPipeline> fpsCounterPipeline;
 	
 		i32	countFramesToUpdate{0};
 };

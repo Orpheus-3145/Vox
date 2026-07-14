@@ -2,15 +2,39 @@
 
 #include <cassert>
 #include <cmath>
-#include <iostream>
 
 namespace vox {
+
+mat4 Camera::getOrthographicMatrix( bool columnMajor ) const noexcept
+{
+	if (columnMajor == true)
+	{
+		return mat4{
+			{2.0f / this->size.width,  0.0f,           0.0f,  0.0f},
+			{0.0f,          2.0f / this->size.height,  0.0f,  0.0f},
+			{0.0f,          0.0f,           1.0f,  0.0f},
+			{-1.0f,         -1.0f,          0.0f,  1.0f}
+		};
+	}
+	else
+	{
+		return mat4{
+			{2.0f / this->size.width,  0.0f,           0.0f,  -1.0f},
+			{0.0f,          2.0f / this->size.height,  0.0f,  -1.0f},
+			{0.0f,          0.0f,           1.0f,  0.0f},
+			{0.0f,          0.0f,           0.0f,  1.0f}
+		};
+	}
+}
 
 mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 {
 	float fov = CameraSettings::projectionFov;
 	if ( fov > M_2_PI or fov < -M_2_PI )
+	{
 		fov = radians(fov);
+	}
+	float aspect = static_cast<float>(this->size.width) / static_cast<float>(this->size.height);
 	float near = CameraSettings::projectionNear;
 	float far = CameraSettings::projectionFar;
 	const float tanHalfFovy = std::tan(fov / 2.f);
@@ -18,19 +42,19 @@ mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 	if (columnMajor == true)
 	{
 		return mat4{
-			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                          0.0f},
-			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                          0.0f},
-			{0.0f,                                0.0f,                far / (far - near),            1.0f},
-			{0.0f,                                0.0f,                -(far * near) / (far - near),  0.0f}
+			{1.f / (aspect * tanHalfFovy),  0.0f,                0.0f,                          0.0f},
+			{0.0f,                          -1.f / tanHalfFovy,  0.0f,                          0.0f},
+			{0.0f,                          0.0f,                far / (far - near),            1.0f},
+			{0.0f,                          0.0f,                -(far * near) / (far - near),  0.0f}
 		};
 	}
 	else
 	{
 		return mat4{
-			{1.f / (this->aspect * tanHalfFovy),  0.0f,                0.0f,                0.0f                        },
-			{0.0f,                                -1.f / tanHalfFovy,  0.0f,                0.0f                        },
-			{0.0f,                                0.0f,                far / (far - near),  -(far * near) / (far - near)},
-			{0.0f,                                0.0f,                1.0f,                0.0f                        }
+			{1.f / (aspect * tanHalfFovy),  0.0f,                0.0f,                0.0f                        },
+			{0.0f,                          -1.f / tanHalfFovy,  0.0f,                0.0f                        },
+			{0.0f,                          0.0f,                far / (far - near),  -(far * near) / (far - near)},
+			{0.0f,                          0.0f,                1.0f,                0.0f                        }
 		};
 	}
 }
@@ -124,7 +148,7 @@ void Camera::moveDown( float delta ) noexcept
 	this->updateCameraAxis();
 }
 
-vec3	Camera::getRelativeMoveDirection(const vec3& rawDirection)
+vec3 Camera::getRelativeMoveDirection(const vec3& rawDirection) const noexcept
 {
 	vec3 right = this->cameraRight * rawDirection.x;
 	vec3 up = this->cameraUp * rawDirection.y;
@@ -134,7 +158,7 @@ vec3	Camera::getRelativeMoveDirection(const vec3& rawDirection)
 	return relativeMoveDirection;
 }
 
-void	Camera::move(const vec3& direction) noexcept
+void Camera::move(const vec3& direction) noexcept
 {
 	this->position += direction;
 }
@@ -180,10 +204,10 @@ void Camera::rotate( float pitch, float yaw, float roll ) noexcept
 	this->updateCameraAxis();
 }
 
-void Camera::updateAspect( float aspect ) noexcept
+void Camera::updateWindowSize( ui32 width, ui32 height ) noexcept
 {
-	assert(std::abs(this->aspect - epsilon()) > 0.0f);
-	this->aspect = aspect;
+	this->size.width = width;
+	this->size.height = height;
 }
 
 void Camera::updateCameraAxis( void ) noexcept
