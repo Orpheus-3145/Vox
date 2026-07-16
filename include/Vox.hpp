@@ -72,6 +72,8 @@ class Vox
 		std::unique_ptr<ve::VulkanPipeline> fpsCounterPipeline;
 	
 		i32	countFramesToUpdate{0};
+
+		bool walkFast{false};
 };
 
 }	// namespace vox
