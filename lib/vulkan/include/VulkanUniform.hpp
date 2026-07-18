@@ -93,6 +93,19 @@ class MeshUniform
 		LightData 		lights[drawingDataLimits.lights];
 };
 
+
+// [has to comply with std140]
+class TextUniform
+{
+	public:
+		void	updateColor( uint32_t index, vec4 const& color ) noexcept;
+
+		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
+
+	private:
+		vec4	color[drawingDataLimits.fontColor];
+};
+
 class PushConstantsData {};
 
 }	// namespace ve

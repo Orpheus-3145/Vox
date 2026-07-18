@@ -62,6 +62,7 @@ class Vox
 
 		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;
 		std::unique_ptr<ve::MeshUniform>		materialsUbo;
+		std::unique_ptr<ve::TextUniform>		textDataUbo;
 
 		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;

@@ -43,4 +43,12 @@ void	MeshUniform::updateLightDir( uint32_t index, vec3 const& newDir, mat4 const
 	this->lights[index].lightDir = viewLightDir;
 }
 
+
+void	TextUniform::updateColor( uint32_t index, vec4 const& color ) noexcept
+{
+	assert(index < drawingDataLimits.fontColor && "text color index out of bounds");
+
+	this->color[index] = color;
+}
+
 }	// namespace ve
