@@ -1,117 +1,115 @@
-TARGET			:=	ft_vox
+TARGET          := ft_vox
+CC              := c++
+RM              := rm -rf
 
-CC				:=	c++
-CPP_FLAGS		:=	-std=c++2b -Wall -Wextra -Werror
-DEBUG_FLAGS		:=	-O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
-RELEASE_FLAGS	:=	-O3 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -fno-rtti -ffast-math -funroll-loops
-# -flto				--> apply optimizations between different .o files
-# -fno-math-errno	--> do not update errno variable if cmath functions fail
-# -fno-plt 			--> optimize calls to linked libs functions
-# -fno-rtti			-->	use this only if dynamic_casts are not used
-# -ffast-math		-->	approximation math for floating points
-# -funroll-loops	-->	unpack loops
-DEPS_FLAGS		:=	-MMD -MP -MF
-GLSLC			:=	$(shell which glslc)
+MODE            ?= default
 
-SRC_DIR		:=	source
-BUILD_DIR	:=	build
-OBJ_DIR		:=	$(BUILD_DIR)/obj
-DEPS_DIR	:=	$(BUILD_DIR)/deps
-SHADERS_DIR	:=	shaders
-VECTOR_DIR	:=	lib/vectors
-VULKAN_DIR	:=	lib/vulkan
+BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror
+DEFAULT_FLAGS   :=
+DEBUG_FLAGS     := -O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+RELEASE_FLAGS   := -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops
+DEPS_FLAGS      := -MMD -MP -MF
 
-SOURCES		:=	$(shell find $(SRC_DIR) -type f -name '*.cpp')
-OBJECTS		:=	$(addprefix $(OBJ_DIR)/,$(notdir $(SOURCES:%.cpp=%.o)))
-DEPS		:=	$(patsubst $(SRC_DIR)%,$(DEPS_DIR)%,$(SOURCES:.cpp=.d))
+GLSLC           := $(shell which glslc)
 
-SHADERS_SRC	:=	$(shell ls $(SHADERS_DIR))
-SHADERS_OBJ	:=	$(addprefix $(BUILD_DIR)/,$(addsuffix .spv,$(SHADERS_SRC)))
+SRC_DIR         := source
+SHADERS_DIR     := shaders
+VECTOR_DIR      := lib/vectors
+VULKAN_DIR      := lib/vulkan
 
-INCLUDE 	:=	-Iinclude \
-				-I$(VECTOR_DIR)/include \
-				-I$(VULKAN_DIR)/include
+BUILD_ROOT      := build/$(MODE)
+OBJ_DIR         := $(BUILD_ROOT)/obj
+DEPS_DIR        := $(BUILD_ROOT)/deps
+SHADERS_OUT_DIR := build
+TARGET_PATH     := $(BUILD_ROOT)/$(TARGET)
 
-LIBS		:=	$(VECTOR_DIR)/build/libvectors.a $(VULKAN_DIR)/build/libvk.a
-SYS_LIBS	:=	-lvulkan
+SOURCES         := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+OBJECTS         := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+DEPS            := $(patsubst $(SRC_DIR)/%.cpp,$(DEPS_DIR)/%.d,$(SOURCES))
 
-PLATFORM	:=	$(shell uname -s)
+SHADERS_SRC     := $(shell find $(SHADERS_DIR) -type f)
+SHADERS_OBJ     := $(patsubst $(SHADERS_DIR)/%,$(SHADERS_OUT_DIR)/%.spv,$(SHADERS_SRC))
 
-ifeq ($(PLATFORM), Linux)
-	SYS_LIBS	+= -lGL -lX11 -lpthread -lXrandr -lXi $(shell pkg-config --static --libs glfw3)
+INCLUDE         := -Iinclude -I$(VECTOR_DIR)/include -I$(VULKAN_DIR)/include
 
-else ifeq ($(PLATFORM), Darwin)
-	INCLUDE		+= -isystem /opt/homebrew/include -isystem /usr/local/include
-	SYS_LIBS	+= -L/opt/homebrew/lib -Wl,-rpath,/usr/local/lib -framework Cocoa -framework IOKit -framework OpenGL -lglfw3
+LIBS            :=	$(VULKAN_DIR)/build/$(MODE)/libvk.a \
+					$(VECTOR_DIR)/build/$(MODE)/libvectors.a
 
+SYS_LIBS        := -lvulkan
+PLATFORM        := $(shell uname -s)
+
+ifeq ($(PLATFORM),Linux)
+SYS_LIBS += -lGL -lX11 -lpthread -lXrandr -lXi $(shell pkg-config --static --libs glfw3)
+else ifeq ($(PLATFORM),Darwin)
+INCLUDE  += -isystem /opt/homebrew/include -isystem /usr/local/include
+SYS_LIBS += -L/opt/homebrew/lib -Wl,-rpath,/usr/local/lib -framework Cocoa -framework IOKit -framework OpenGL -lglfw3
 endif
 
-# source /opt/vulkan/current/setup-env.sh
+ifeq ($(MODE),default)
+MODE_FLAGS := $(DEFAULT_FLAGS)
+else ifeq ($(MODE),debug)
+MODE_FLAGS := $(DEBUG_FLAGS)
+else ifeq ($(MODE),release)
+MODE_FLAGS := $(RELEASE_FLAGS)
+else
+$(error Unknown MODE='$(MODE)'. Use MODE=default|debug|release)
+endif
 
-all: libs $(TARGET)
+CPP_FLAGS := $(BASE_FLAGS) $(MODE_FLAGS)
+
+all: libs $(TARGET_PATH)
+
+default:
+	$(MAKE) MODE=default all
+
+debug:
+	$(MAKE) MODE=debug all
+
+release:
+	$(MAKE) MODE=release all
 
 libs:
-	$(MAKE) -C $(VECTOR_DIR)
-	$(MAKE) -C $(VULKAN_DIR)
+	$(MAKE) -C $(VECTOR_DIR) MODE=$(MODE)
+	$(MAKE) -C $(VULKAN_DIR) MODE=$(MODE)
 
 run: all
-	./$(TARGET)
+	./$(TARGET_PATH)
 
-rerun: re run
+run-debug:
+	$(MAKE) MODE=debug run
 
-release: CPP_FLAGS += $(RELEASE_FLAGS)
-release: libs-release $(TARGET)
+run-release:
+	$(MAKE) MODE=release run
 
-libs-release: 
-	$(MAKE) -C $(VECTOR_DIR) release
-	$(MAKE) -C $(VULKAN_DIR) release
-
-run-release: release
-	./$(TARGET)
-
-rerun-release: re run-release
-
-debug: CPP_FLAGS += $(DEBUG_FLAGS)
-debug: libs-debug $(TARGET)
-
-libs-debug: 
-	$(MAKE) -C $(VECTOR_DIR) debug
-	$(MAKE) -C $(VULKAN_DIR) debug
-
-run-debug: debug
-	./$(TARGET)
-
-rerun-debug: re run-debug
-
-$(BUILD_DIR) $(OBJ_DIR) $(DEPS_DIR):
+$(OBJ_DIR) $(DEPS_DIR) $(SHADERS_OUT_DIR):
 	mkdir -p $@
 
-$(TARGET): $(LIBS) $(OBJ_DIR) $(DEPS_DIR) $(SHADERS_OBJ) $(OBJECTS)
-	$(CC) $(CPP_FLAGS) $(SYS_LIBS) $(INCLUDE) $(OBJECTS) $(LIBS) $(LIBS) -o $(TARGET)
+$(TARGET_PATH): $(LIBS) $(OBJ_DIR) $(DEPS_DIR) $(SHADERS_OUT_DIR) $(SHADERS_OBJ) $(OBJECTS)
+	$(CC) $(CPP_FLAGS) $(INCLUDE) $(OBJECTS) $(LIBS) $(SYS_LIBS) -o $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@) $(dir $(DEPS_DIR)/$*.d)
 	$(CC) $(CPP_FLAGS) $(INCLUDE) $(DEPS_FLAGS) $(DEPS_DIR)/$*.d -c $< -o $@
 
-$(BUILD_DIR)/%.spv: $(SHADERS_DIR)/%
+$(SHADERS_OUT_DIR)/%.spv: $(SHADERS_DIR)/%
+	@mkdir -p $(dir $@)
 	$(GLSLC) $< -o $@
 
 -include $(DEPS)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	$(RM) build
 	$(MAKE) -C $(VECTOR_DIR) clean
 	$(MAKE) -C $(VULKAN_DIR) clean
 
-fclean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(TARGET)
+fclean: clean
 	$(MAKE) -C $(VECTOR_DIR) fclean
 	$(MAKE) -C $(VULKAN_DIR) fclean
 
 re: fclean all
 
+rerun: fclean run
+re-debug: fclean debug
 re-release: fclean release
 
-re-debug: fclean debug
-
-.PHONY: all libs run rerun release libs-release run-release rerun-release debug libs-debug run-debug rerun-debug clean fclean re re-release re-debug
+.PHONY: all default debug release libs run run-debug run-release clean fclean re re-debug re-release

@@ -1,7 +1,6 @@
 #include "VulkanUniform.hpp"
 #include <cassert>
 
-
 namespace ve {
 
 void	MeshUniform::updateModelMatrix( uint32_t index, mat4 const& modelMatrix ) noexcept

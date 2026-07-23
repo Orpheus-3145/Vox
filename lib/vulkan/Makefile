@@ -1,67 +1,75 @@
-TARGET			:= libvk.a
+LIB_NAME        := libvk.a
+CC              := c++
+AR              := ar
+RM              := rm -rf
 
-CC				:=	c++
-CPP_FLAGS		:=	-std=c++2b -Wall -Wextra -Werror
-DEBUG_FLAGS		:=	-O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
-RELEASE_FLAGS	:=	-O3 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -fno-rtti -ffast-math -funroll-loops
-# -flto				--> apply optimizations between different .o files
-# -fno-math-errno	--> do not update errno variable if cmath functions fail
-# -fno-plt 			--> optimize calls to linked libs functions
-# -fno-rtti			-->	use this only if dynamic_casts are not used
-# -ffast-math		-->	approximation math for floating points
-# -funroll-loops	-->	unpack loops
-DEPS_FLAGS		:=	-MMD -MP -MF
+MODE            ?= default
 
-SRC_DIR		:=	source
-BUILD_DIR	:=  build
-OBJ_DIR		:=	$(BUILD_DIR)/obj
-DEPS_DIR	:=  $(BUILD_DIR)/deps
-TARGET		:=	$(BUILD_DIR)/$(TARGET)
+BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror
+DEFAULT_FLAGS   :=
+DEBUG_FLAGS     := -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
+RELEASE_FLAGS   := -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops
+DEPS_FLAGS      := -MMD -MP -MF
 
-SOURCES		:=	$(shell find $(SRC_DIR) -type f -name '*.cpp')
-OBJECTS		:=	$(addprefix $(OBJ_DIR)/,$(notdir $(SOURCES:%.cpp=%.o)))
-DEPS		:=	$(addprefix $(DEPS_DIR)/,$(notdir $(SOURCES:.cpp=.d)))
+SRC_DIR         := source
+BUILD_ROOT      := build/$(MODE)
+OBJ_DIR         := $(BUILD_ROOT)/obj
+DEPS_DIR        := $(BUILD_ROOT)/deps
+TARGET          := $(BUILD_ROOT)/$(LIB_NAME)
 
-INCLUDE		:=	-Iinclude \
-				-I../vectors/include
+SOURCES         := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+OBJECTS         := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+DEPS            := $(patsubst $(SRC_DIR)/%.cpp,$(DEPS_DIR)/%.d,$(SOURCES))
 
-PLATFORM	:=	$(shell uname -s)
+INCLUDE         := -Iinclude -I../vectors/include
+PLATFORM        := $(shell uname -s)
 
-ifeq ($(PLATFORM), Darwin)
-	INCLUDE	+= -isystem /opt/homebrew/include -isystem /usr/local/include
+ifeq ($(PLATFORM),Darwin)
+INCLUDE += -isystem /opt/homebrew/include -isystem /usr/local/include
 endif
 
+ifeq ($(MODE),default)
+MODE_FLAGS := $(DEFAULT_FLAGS)
+else ifeq ($(MODE),debug)
+MODE_FLAGS := $(DEBUG_FLAGS)
+else ifeq ($(MODE),release)
+MODE_FLAGS := $(RELEASE_FLAGS)
+else
+$(error Unknown MODE='$(MODE)'. Use MODE=default|debug|release)
+endif
+
+CPP_FLAGS := $(BASE_FLAGS) $(MODE_FLAGS)
 
 all: $(TARGET)
 
-release: CPP_FLAGS += $(RELEASE_FLAGS)
-release: all
+debug:
+	$(MAKE) MODE=debug all
 
-debug: CPP_FLAGS += $(DEBUG_FLAGS)
-debug: all
+release:
+	$(MAKE) MODE=release all
+
+default:
+	$(MAKE) MODE=default all
 
 $(OBJ_DIR) $(DEPS_DIR):
 	mkdir -p $@
 
 $(TARGET): $(OBJ_DIR) $(DEPS_DIR) $(OBJECTS)
-	ar -rcs $@ $(OBJECTS)
+	$(AR) -rcs $@ $(OBJECTS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@) $(dir $(DEPS_DIR)/$*.d)
 	$(CC) $(CPP_FLAGS) $(INCLUDE) $(DEPS_FLAGS) $(DEPS_DIR)/$*.d -c $< -o $@
 
 -include $(DEPS)
 
 clean:
-	rm -rf $(OBJ_DIR)
-	rm -rf $(DEPS_DIR)
+	$(RM) build
 
-fclean:
-	rm -rf $(BUILD_DIR)
+fclean: clean
 
 re: fclean all
-
+re-debug: fclean debug
 re-release: fclean release
 
-re-debug: fclean debug
-
-.PHONY: all release debug clean fclean re re-release re-debug
+.PHONY: all debug release default clean fclean re re-debug re-release

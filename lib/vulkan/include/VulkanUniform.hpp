@@ -4,7 +4,6 @@
 
 #include "Vectors.hpp"
 
-
 namespace ve {
 
 static_assert(sizeof(mat4) == 64 && "mat4 type size has to be 64B");
