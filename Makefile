@@ -6,7 +6,7 @@ MODE            ?= default
 
 BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror
 DEFAULT_FLAGS   :=
-DEBUG_FLAGS     := -O0 -g -fsanitize=address,undefined -fno-omit-frame-pointer
+DEBUG_FLAGS     := -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
 RELEASE_FLAGS   := -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops
 DEPS_FLAGS      := -MMD -MP -MF
 

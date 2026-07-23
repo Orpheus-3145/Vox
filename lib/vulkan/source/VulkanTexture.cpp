@@ -100,7 +100,7 @@ VulkanTexture::~VulkanTexture()
 	{
 		free((const_cast<unsigned char*>(imageInfo->imageData)));
 	}
-	if (fontInfo && fontInfo->fontData)
+	if (fontInfo != nullptr && fontInfo->fontData != nullptr)
 	{
 		delete [] fontInfo->fontData;
 	}
@@ -308,7 +308,7 @@ void VulkanTexture::createTextureImage()
 	}
 	else if (type == TEXTURE_FONT)
 	{
-		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels * static_cast<VkDeviceSize>(VulkanTexture::sizeOfPixel));
+		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels);
 	}
 	stagingBuffer.flush();
 
