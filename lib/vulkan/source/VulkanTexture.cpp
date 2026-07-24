@@ -43,6 +43,7 @@ VulkanTexture::VulkanTexture(VulkanDevice& device, const std::string& filePath, 
 		info.extent.width = static_cast<uint32_t>(imageInfo->width);
 		info.extent.height = static_cast<uint32_t>(imageInfo->height);
 		nPixels = info.extent.width * info.extent.height;
+		sizeOfPixel = sizeof(int32_t);
 	}
 	else if (type == TEXTURE_CUBEMAP)
 	{
@@ -62,6 +63,7 @@ VulkanTexture::VulkanTexture(VulkanDevice& device, const std::string& filePath, 
 			info.extent.height = info.extent.width;
 		}
 		nPixels = info.extent.width * info.extent.height * 6;
+		sizeOfPixel = sizeof(int32_t);
 	}
 	else if (type == TEXTURE_FONT)
 	{
@@ -71,6 +73,7 @@ VulkanTexture::VulkanTexture(VulkanDevice& device, const std::string& filePath, 
 		info.extent.width = static_cast<uint32_t>(fontInfo->width);
 		info.extent.height = static_cast<uint32_t>(fontInfo->height);
 		nPixels = info.extent.width * info.extent.height;
+		sizeOfPixel = sizeof(int8_t);
 	}
 
 	createTextureImage();
@@ -246,7 +249,7 @@ void VulkanTexture::createTextureImage()
 {
 	VulkanBuffer	stagingBuffer(
 		device,
-		VulkanTexture::sizeOfPixel,
+		sizeOfPixel,
 		nPixels,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
 		BUFFER_RAW
@@ -255,7 +258,7 @@ void VulkanTexture::createTextureImage()
 
 	if (type == TEXTURE_PLAIN)
 	{
-		stagingBuffer.writeToBuffer(imageInfo->imageData, nPixels * static_cast<VkDeviceSize>(VulkanTexture::sizeOfPixel));
+		stagingBuffer.writeToBuffer(imageInfo->imageData, nPixels * static_cast<VkDeviceSize>(sizeOfPixel));
 	}
 	else if (type == TEXTURE_CUBEMAP)
 	{
@@ -271,9 +274,9 @@ void VulkanTexture::createTextureImage()
 			vec2ui{1 * faceWidth, 1 * faceHeight},	// front
 		};
 
-		uint32_t faceWidthBytes = faceWidth * VulkanTexture::sizeOfPixel;
-		uint32_t faceSizeBytes  = faceWidth * faceHeight * VulkanTexture::sizeOfPixel;
-		uint32_t textureWidthBytes = imageInfo->width * VulkanTexture::sizeOfPixel;
+		uint32_t faceWidthBytes = faceWidth * sizeOfPixel;
+		uint32_t faceSizeBytes  = faceWidth * faceHeight * sizeOfPixel;
+		uint32_t textureWidthBytes = imageInfo->width * sizeOfPixel;
 
 		for (uint32_t face = 0; face < 6; face++)
 		{
@@ -285,7 +288,7 @@ void VulkanTexture::createTextureImage()
 				if (!rotate180)
 				{
 					stagingBuffer.writeToBuffer(
-						imageInfo->imageData + (h + y) * textureWidthBytes + x * VulkanTexture::sizeOfPixel,
+						imageInfo->imageData + (h + y) * textureWidthBytes + x * sizeOfPixel,
 						faceWidthBytes,
 						face * faceSizeBytes + h * faceWidthBytes
 					);
@@ -297,9 +300,9 @@ void VulkanTexture::createTextureImage()
 					{
 						uint32_t srcW = faceWidth - 1 - w;
 						stagingBuffer.writeToBuffer(
-							imageInfo->imageData + (srcH + y) * textureWidthBytes + (x + srcW) * VulkanTexture::sizeOfPixel,
-							VulkanTexture::sizeOfPixel,
-							face * faceSizeBytes + h * faceWidthBytes + w * VulkanTexture::sizeOfPixel
+							imageInfo->imageData + (srcH + y) * textureWidthBytes + (x + srcW) * sizeOfPixel,
+							sizeOfPixel,
+							face * faceSizeBytes + h * faceWidthBytes + w * sizeOfPixel
 						);
 					}
 				}
@@ -308,7 +311,7 @@ void VulkanTexture::createTextureImage()
 	}
 	else if (type == TEXTURE_FONT)
 	{
-		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels);
+		stagingBuffer.writeToBuffer(fontInfo->fontData, nPixels * static_cast<VkDeviceSize>(sizeOfPixel));
 	}
 	stagingBuffer.flush();
 
@@ -426,8 +429,8 @@ std::unique_ptr<FontInfo> loadFont(const std::string& fontPath, float fontSize, 
 	fontInfo->fontData = new unsigned char[fontInfo->width * fontInfo->height];
 
 	int32_t count = 2;
-	std::vector<unsigned char> fileContent = readFile(fontPath);
-	while (stbtt_BakeFontBitmap(fileContent.data(), 0, fontSize, fontInfo->fontData, fontInfo->width, fontInfo->height, 0, 128, fontInfo->cdata) <= 0)
+	fontInfo->fileContent = readFile(fontPath);
+	while (stbtt_BakeFontBitmap(fontInfo->fileContent.data(), 0, fontSize, fontInfo->fontData, fontInfo->width, fontInfo->height, 0, 128, fontInfo->cdata) <= 0)
 	{
 		delete [] fontInfo->fontData;
 		if (count < 0)
@@ -443,7 +446,7 @@ std::unique_ptr<FontInfo> loadFont(const std::string& fontPath, float fontSize, 
 	int32_t whitePixelX = fontInfo->width - 1;
 	int32_t whitePixelY = fontInfo->height - 1;
 	fontInfo->fontData[whitePixelY * fontInfo->width + whitePixelX] = 255;
-	if (!stbtt_InitFont(&fontInfo->basicFontInfo, fileContent.data(), stbtt_GetFontOffsetForIndex(fileContent.data(), 0)))
+	if (!stbtt_InitFont(&fontInfo->basicFontInfo, fontInfo->fileContent.data(), stbtt_GetFontOffsetForIndex(fontInfo->fileContent.data(), 0)))
 	{
 		delete [] fontInfo->fontData;
 		fontInfo->fontData = nullptr;

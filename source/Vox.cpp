@@ -193,9 +193,9 @@ void Vox::setupVulkanDescSets( void )
 
 	ve::VulkanBindingSet textureSetBindings;
 	// normal textures
-	textureSetBindings.addSamplerArrayBinding(0, VK_SHADER_STAGE_FRAGMENT_BIT, texturePaths, textureTypes);
+	textureSetBindings.addSamplerArrayBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, texturePaths, textureTypes);
 	// cubemap texture
-	textureSetBindings.addSamplerBinding(1, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
+	textureSetBindings.addSamplerBinding(1U, VK_SHADER_STAGE_FRAGMENT_BIT, Config::textureSkyboxPath, ve::TextureType::TEXTURE_CUBEMAP);
 	this->textureDescriptorSet = this->vulkanSetFactory.createDescriptorSet(textureSetBindings);
 
 	ve::VulkanBindingSet fontSetBindings;
