@@ -14,13 +14,15 @@ vec3i	VoxelChunk::paddedDimensions = vec3i::zero();
 ui32	VoxelChunk::paddedSize = 0;
 ui32	VoxelChunk::chunkSize = 0;
 
-VoxelChunk::VoxelChunk(vec2i loc) :
+VoxelChunk::VoxelChunk(vec2i loc, VertexVector* terrainVertexes, VertexVector* undergroundVertexes) :
 	location(loc),
-	generator{Config::worldSeed, Config::minimumViewingDistance * 2}
+	generator{Config::worldSeed, Config::minimumViewingDistance * 2},
+	terrainVertexes(terrainVertexes),
+	undergroundVertexes(undergroundVertexes)
 {
 	map.assign(static_cast<size_t>(paddedSize), VoxelType::Padding);
-	terrainVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
-	undergroundVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	terrainVertexes->reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	undergroundVertexes->reserve(chunkDimensions.x * chunkDimensions.z * 8);
 
 	worldPosition = vec3i(chunkDimensions.x * location.width, 0, chunkDimensions.z * location.depth);
 }
@@ -153,8 +155,8 @@ void	VoxelChunk::setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChu
 
 void	VoxelChunk::generateVertexes()
 {
-	terrainVertexes.clear();
-	undergroundVertexes.clear();
+	terrainVertexes->clear();
+	undergroundVertexes->clear();
 
 	const i32 widthMax = paddedDimensions.x - 1;
 	const i32 dimY = paddedDimensions.y - 1;
@@ -220,7 +222,7 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 		switch (map[voxelIndex])
 		{
 			case VoxelType::Dirt:
-				terrainVertexes.emplace_back
+				terrainVertexes->emplace_back
 				(
 					ve::VulkanModel::Vertex
 					{
@@ -237,7 +239,7 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 				break;
 
 			case VoxelType::Stone:
-				undergroundVertexes.emplace_back
+				undergroundVertexes->emplace_back
 				(
 					ve::VulkanModel::Vertex
 					{

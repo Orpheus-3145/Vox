@@ -14,9 +14,7 @@
 
 namespace vox {
 
-inline constexpr ui32	VERTEX_PER_VOXEL = 24U;		// number of vertexes per voxel
-inline constexpr ui32	INDEX_PER_VOXEL = 36U;		// number of vertex indexes per voxel
-inline constexpr float		VOXEL_SIZE = 1.0f;		// length of a voxel edge
+inline constexpr float	VOXEL_SIZE = 1.0f;		// length of a voxel edge
 
 enum VertexFaces : size_t
 {
@@ -29,7 +27,7 @@ enum VertexFaces : size_t
 };
 
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
-inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES{
+inline constexpr std::array<ve::VulkanModel::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES{
 	// face FRONT (z = 1)
 	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }, 0U},
 	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }, 0U},
@@ -67,7 +65,7 @@ static constexpr float W = 1.0f / 4.0f;  // width of a tile
 static constexpr float H = 1.0f / 3.0f;  // height of a tile
 static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
-inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
+inline constexpr std::array<ve::VulkanModel::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
 	// face FRONT (z = 1)
 	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ W + padding, 3 * H - padding }, 0U},
 	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::forward(), vec2{ 2 * W - padding, 3 * H - padding }, 0U},
@@ -100,25 +98,9 @@ inline constexpr std::array<ve::VulkanModel::Vertex,VERTEX_PER_VOXEL> VOXEL_VERT
 	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }, 0U}
 };
 
-// hard-coded face indexes of a voxel
-inline constexpr std::array<ui32, INDEX_PER_VOXEL> VOXEL_VERTEX_INDEXES{
-	0U, 1U, 2U, 		// front face
-	0U, 2U, 3U, 		// front face
-	4U, 5U, 6U, 		// back face
-	4U, 6U, 7U, 		// back face
-	8U, 9U, 10U, 		// left face
-	8U, 10U, 11U, 		// left face
-	12U, 13U, 14U, 		// right face
-	12U, 14U, 15U, 		// right face
-	16U, 17U, 18U, 		// top face
-	16U, 18U, 19U, 		// top face
-	20U, 21U, 22U, 		// bottom face
-	20U, 22U, 23U		// bottom face
-};
-
-std::vector<ve::VulkanModel::Vertex>		getVertexRelative( vec3 const& relativeOrigin = vec3(0.0f) );
-std::vector<ve::VulkanModel::Vertex>		getVertexAtlasRelative( vec3 const& relativeOrigin = vec3(0.0f) );
-IndexVector									getIndexRelative( ui32 = 0U );
+VertexVector	getVertexRelative( vec3 const& relativeOrigin = vec3(0.0f) );
+VertexVector	getVertexAtlasRelative( vec3 const& relativeOrigin = vec3(0.0f) );
+IndexVector		getIndexRelative( ui32 = 0U );
 
 std::unique_ptr<ve::VulkanModel>	 		createVoxelModel( ve::VulkanDevice& vulkanDevice, vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );
 std::unique_ptr<ve::VulkanModel>	 		createVoxelAtlasModel( ve::VulkanDevice& vulkanDevice, vec3 const& = vec3{-0.5f, -0.5f, -0.5f} );

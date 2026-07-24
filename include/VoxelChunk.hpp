@@ -25,7 +25,7 @@ class VoxelChunk
 	public:
 
 		VoxelChunk() = delete;
-		VoxelChunk(vec2i loc);
+		VoxelChunk(vec2i loc, VertexVector* terrainVertexes, VertexVector* undergroundVertexes);
 		~VoxelChunk() = default;
 		VoxelChunk(const VoxelChunk&) = delete;
 		VoxelChunk(VoxelChunk&&) noexcept = default;
@@ -40,16 +40,11 @@ class VoxelChunk
 		void	generateMap();
 		void	generateVertexes();
 
-		const VertexVector&	getVertexTerrainData() const noexcept { return terrainVertexes; }
-		const VertexVector&	getVertexUndergroundData() const noexcept { return undergroundVertexes; }
-
 		const vec3i& getWorldPos() const noexcept { return this->worldPosition; }
 		
 		void	setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChunk* south, VoxelChunk* west) noexcept;
 		void	setLocation(vec2i loc);
 
-		size_t	getVertexTerrainSize() const noexcept { return terrainVertexes.size(); }
-		size_t	getVertexUndergroundSize() const noexcept { return undergroundVertexes.size(); }
 		i32		index(i32 x, i32 y, i32 z) const noexcept { return ((z * paddedDimensions.x) + x) * paddedDimensions.y + y; }
 		VoxelType	at(i32 x, i32 y, i32 z) const noexcept { return map[index(x, y, z)]; }
 		VoxelType	at(i32 index) const noexcept { return map[index]; }
@@ -66,8 +61,8 @@ class VoxelChunk
 		NoiseGenerator	generator;
 
 		std::vector<VoxelType>		map;
-		VertexVector				terrainVertexes;
-		VertexVector				undergroundVertexes;
+		VertexVector*				terrainVertexes{nullptr};
+		VertexVector*				undergroundVertexes{nullptr};
 		std::array<VoxelChunk*, 4>	adjacentChunks{};
 };
 

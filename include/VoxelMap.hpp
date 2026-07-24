@@ -42,26 +42,19 @@ class VoxelMap
 		static inline	std::mutex	lock;
 		
 	private:
-		std::vector<VoxelChunk>	map;
-		
+		std::vector<VoxelChunk>		map;
+		std::vector<VertexVector>	terrainVertexes;
+		std::vector<VertexVector>	undergroundVertexes;
+	
 		i32 	squareSize;
 		vec2i	minPositions;
 		vec2i	maxPositions;
 		vec2i	playerOnChunk;
 		
-		VertexVector	terrainVertexes;
-		IndexVector		terrainIndexes;
-		
-		VertexVector	undergroundVertexes;
-		IndexVector		undergroundIndexes;
-		
 		ThreadManager&	threadManager;
 		
 		std::vector<bool> scheduledChanges;
 		
-		void	regenerateTerrainBuffer();
-		void	regenerateUndergroundBuffer();
-
 		vec2i	voxelToChunkPosition(const vec3& position) const noexcept;
 
 		void	moveMap(const vec2i& delta);
