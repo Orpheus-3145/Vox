@@ -8,6 +8,11 @@ BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror
 DEFAULT_FLAGS   :=
 DEBUG_FLAGS     := -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
 RELEASE_FLAGS   := -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops
+# -flto				--> apply optimizations between different .o files
+# -fno-math-errno	--> do not update errno variable if cmath functions fail
+# -fno-plt 			--> optimize calls to linked libs functions
+# -ffast-math		-->	approximation math for floating points
+# -funroll-loops	-->	unpack loops
 DEPS_FLAGS      := -MMD -MP -MF
 
 GLSLC           := $(shell which glslc)
