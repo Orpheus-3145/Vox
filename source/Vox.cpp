@@ -38,6 +38,97 @@ Vox::Vox( void ) :
 	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 }
 
+void Vox::run( void )
+{
+	Stopwatch			fpsTimer, printTimer;
+	std::future<bool>	mapUpdateResult;
+	ui32				currentFrame = 0U;
+	i32					fps = 0;
+	std::string			UItext = "FPS: 0";
+	VkCommandBuffer		commandBuffer = VK_NULL_HANDLE;
+
+	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(this->vulkanDevice));
+	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(this->vulkanDevice));
+	this->skyboxObject->setModel(createVoxelAtlasModel(this->vulkanDevice));
+	
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::backgroundColor), 0U);
+	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::fontColor), 1U);
+
+	printTimer.start();
+	while (vulkanWindow.shouldClose() == false)
+	{
+		fpsTimer.start();
+		glfwPollEvents();
+
+		this->moveCamera(fpsTimer.elapsed(Unit::Seconds));
+		this->updateMap(mapUpdateResult);
+
+		commandBuffer = this->vulkanRenderer.beginFrame();
+		if (commandBuffer != nullptr)
+		{
+			this->vulkanRenderer.beginSwapChainRenderPass(commandBuffer);
+			currentFrame = this->vulkanRenderer.getCurrentFrameIndex();
+
+			if (this->countFramesToUpdate > 0)
+			{
+				this->updateUniforms(currentFrame);
+			}
+
+			this->drawTerrain(commandBuffer, currentFrame);
+			this->drawSkybox(commandBuffer, currentFrame);
+
+			printTimer.stop();
+			if (printTimer.elapsed(Unit::Seconds) > 0.5)
+			{
+				fps = static_cast<int> (1.0f / fpsTimer.elapsed(Unit::Seconds));
+				UItext = "FPS: " + std::to_string(fps);
+				printTimer.reset();
+			}
+			this->drawText(commandBuffer, currentFrame, UItext);
+
+			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
+			this->vulkanRenderer.endFrame();
+		}
+
+		this->inputHandler.reset();
+		fpsTimer.stop();
+	}
+	vkDeviceWaitIdle(vulkanDevice.device());
+}
+
+void Vox::rotateCameraFromCursorPos( vec2 const& currPos )	
+{
+	vec2 const& oldPos = this->inputHandler.getCursorPos();
+
+	float yaw = (currPos.x - oldPos.x) * CameraSettings::cameraSensitivity;
+	float pitch = (oldPos.y - currPos.y) * CameraSettings::cameraSensitivity;  // reversed since y-coordinates range from bottom to top
+	this->camera.rotate(pitch, yaw, 0.0f);
+
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Vox::resizeWindow( ui32 width, ui32 height )
+{
+	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
+	this->vulkanRenderer.recreateSwapChain();
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
+
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
+
+void Vox::toggleFullscreen( void )
+{
+	this->vulkanWindow.toggleFullscreen();
+	this->vulkanRenderer.recreateSwapChain();
+
+	WindowSize size = this->vulkanWindow.getWindowSize();
+	this->camera.updateWindowSize(size.width, size.height);
+
+	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+}
+
 void Vox::setupVulkanBuffers( void )
 {
 	// uniform buffer for view and projection matrixes
@@ -172,95 +263,6 @@ void Vox::setupVulkanPipelines( void )
 	);
 }
 
-void Vox::run( void )
-{
-	vec3				playerPos;
-	Stopwatch			fpsTimer, printTimer;
- 	float				deltaTime = 0.0f;
-	ui32				currentFrame = 0U;
-	i32					fps = 0;
-	std::string			UItext = "FPS: 0";
-
-	VkCommandBuffer		commandBuffer = VK_NULL_HANDLE;
-	std::future<bool>	mapUpdateResult;
-
-	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(this->vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(this->vulkanDevice));
-	this->skyboxObject->setModel(createVoxelAtlasModel(this->vulkanDevice));
-	
-	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::backgroundColor), 0U);
-	this->fontDescriptorSet->updateDescriptor(0U, static_cast<const void*>(&Config::fontColor), 1U);
-
-	printTimer.start();
-	while (vulkanWindow.shouldClose() == false)
-	{
-		fpsTimer.start();
-		glfwPollEvents();
-
-		deltaTime = fpsTimer.elapsed(Unit::Seconds);
-		this->moveCamera(deltaTime);
-
-		playerPos = this->camera.getCameraPos();
-		this->inputHandler.reset();
-
-		if (mapUpdateResult.valid() == false)
-		{
-			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-				return voxelMap.update(playerPos);
-			});
-		}
-		else
-		{
-			const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
-		
-			if (status == std::future_status::ready)
-			{
-				const bool changed = mapUpdateResult.get(); // consumes future; now invalid
-		
-				if (changed == true)
-				{
-					this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-					this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice)); // main thread
-				}
-				mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-					return voxelMap.update(playerPos);
-				});
-			}
-		}
-
-		commandBuffer = this->vulkanRenderer.beginFrame();
-		if (commandBuffer != nullptr)
-		{
-			this->vulkanRenderer.beginSwapChainRenderPass(commandBuffer);
-			currentFrame = this->vulkanRenderer.getCurrentFrameIndex();
-
-			if (this->countFramesToUpdate > 0)
-			{
-				this->updateUniforms(currentFrame);
-			}
-
-			this->drawTerrain(commandBuffer, currentFrame);
-			this->drawSkybox(commandBuffer, currentFrame);
-
-			printTimer.stop();
-			if (printTimer.elapsed(Unit::Seconds) > 0.5)
-			{
-				fps = static_cast<int> (1.0f / fpsTimer.elapsed(Unit::Seconds));
-				UItext = "FPS: " + std::to_string(fps);
-				printTimer.reset();
-			}
-			this->drawText(commandBuffer, currentFrame, UItext);
-
-			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
-			this->vulkanRenderer.endFrame();
-		}
-
-		this->inputHandler.reset();
-		fpsTimer.stop();
-	}
-	vkDeviceWaitIdle(vulkanDevice.device());
-}
-
 void Vox::moveCamera( float deltaTime )
 {
 	vec3	moveDirection = vec3::zero();
@@ -295,37 +297,34 @@ void Vox::moveCamera( float deltaTime )
 	}
 }
 
-void Vox::rotateCameraFromCursorPos( vec2 const& currPos )	
+void Vox::updateMap( std::future<bool>& mapUpdateResult )
 {
-	vec2 const& oldPos = this->inputHandler.getCursorPos();
+	vec3	playerPos = this->camera.getCameraPos();
 
-	float yaw = (currPos.x - oldPos.x) * CameraSettings::cameraSensitivity;
-	float pitch = (oldPos.y - currPos.y) * CameraSettings::cameraSensitivity;  // reversed since y-coordinates range from bottom to top
-	this->camera.rotate(pitch, yaw, 0.0f);
+	if (mapUpdateResult.valid() == false)
+	{
+		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+			return voxelMap.update(playerPos);
+		});
+	}
+	else
+	{
+		const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+	
+		if (status == std::future_status::ready)
+		{
+			const bool changed = mapUpdateResult.get(); // consumes future; now invalid
 
-	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-}
-
-void Vox::resizeWindow( ui32 width, ui32 height )
-{
-	this->vulkanWindow.resetWindowSize(static_cast<i32>(width), static_cast<i32>(height));
-	this->vulkanRenderer.recreateSwapChain();
-
-	WindowSize size = this->vulkanWindow.getWindowSize();
-	this->camera.updateWindowSize(size.width, size.height);
-
-	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
-}
-
-void Vox::toggleFullscreen( void )
-{
-	this->vulkanWindow.toggleFullscreen();
-	this->vulkanRenderer.recreateSwapChain();
-
-	WindowSize size = this->vulkanWindow.getWindowSize();
-	this->camera.updateWindowSize(size.width, size.height);
-
-	this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
+			if (changed == true)
+			{
+				this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+				this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
+			}
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				return voxelMap.update(playerPos);
+			});
+		}
+	}
 }
 
 void Vox::updateUniforms(ui32 currentFrame)
