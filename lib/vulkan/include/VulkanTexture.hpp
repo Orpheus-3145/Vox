@@ -17,11 +17,12 @@ struct ImageInfo
 
 struct FontInfo
 {
-	unsigned char*	fontData;
-	int32_t			width;
-	int32_t			height;
-	stbtt_bakedchar cdata[128];
-	stbtt_fontinfo	basicFontInfo;
+	unsigned char*				fontData;
+	std::vector<unsigned char>	fileContent;
+	int32_t						width;
+	int32_t						height;
+	stbtt_bakedchar 			cdata[128];
+	stbtt_fontinfo				basicFontInfo;
 };
 
 struct FontModel
@@ -47,7 +48,6 @@ class VulkanTexture
 	VkDescriptorImageInfo	getDescriptorImageInfo() const noexcept;
 	FontModel				getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned = false) const noexcept;
 
-	static constexpr uint32_t sizeOfPixel = sizeof(int32_t);
 	static constexpr uint32_t defaultSizeFont = 32U;
 	static constexpr VkExtent2D defaultSizeFontTexture = VkExtent2D{512U, 512U};
 	static constexpr uint32_t fontPadding = 5U;
@@ -64,7 +64,8 @@ class VulkanTexture
 	std::unique_ptr<ImageInfo>	imageInfo;
 	std::unique_ptr<FontInfo>	fontInfo;
 	VkImageCreateInfo			info{};
-	VkDeviceSize				nPixels{0U};
+	VkDeviceSize				nPixels{0UL};
+	VkDeviceSize				sizeOfPixel{STBTT_UNICODE_EID_UNICODE_2_0_FULL};
 
 	VkImage			textureImage{VK_NULL_HANDLE};
 	VkDeviceMemory	textureImageMemory{VK_NULL_HANDLE};

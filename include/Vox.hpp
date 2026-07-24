@@ -27,15 +27,17 @@ class Vox
 
 		void run( void );
 
-		void moveCamera( float );
+	private:
 		void rotateCameraFromCursorPos( vec2 const& );
 		void resizeWindow( ui32, ui32 );
 		void toggleFullscreen( void );
 
-	private:
 		void setupVulkanBuffers( void );
 		void setupVulkanDescSets( void );
 		void setupVulkanPipelines( void );
+
+		void moveCamera( float );
+		void updateMap( std::future<bool>& mapUpdateResult );
 
 		void updateUniforms(ui32 currentFrame);
 		void drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame);
@@ -60,6 +62,7 @@ class Vox
 
 		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;
 		std::unique_ptr<ve::MeshUniform>		materialsUbo;
+		std::unique_ptr<ve::TextUniform>		textDataUbo;
 
 		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;
@@ -70,6 +73,8 @@ class Vox
 		std::unique_ptr<ve::VulkanPipeline> fpsCounterPipeline;
 	
 		i32	countFramesToUpdate{0};
+
+		bool walkFast{false};
 };
 
 }	// namespace vox

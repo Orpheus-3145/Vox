@@ -14,13 +14,15 @@ vec3i	VoxelChunk::paddedDimensions = vec3i::zero();
 ui32	VoxelChunk::paddedSize = 0;
 ui32	VoxelChunk::chunkSize = 0;
 
-VoxelChunk::VoxelChunk(vec2i loc) :
+VoxelChunk::VoxelChunk(vec2i loc, VertexVector* terrainVertexes, VertexVector* undergroundVertexes) :
 	location(loc),
-	generator{Config::worldSeed, Config::minimumViewingDistance * 2}
+	generator{Config::worldSeed, Config::minimumViewingDistance * 2},
+	terrainVertexes(terrainVertexes),
+	undergroundVertexes(undergroundVertexes)
 {
 	map.assign(static_cast<size_t>(paddedSize), VoxelType::Padding);
-	terrainVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
-	undergroundVertexes.reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	terrainVertexes->reserve(chunkDimensions.x * chunkDimensions.z * 8);
+	undergroundVertexes->reserve(chunkDimensions.x * chunkDimensions.z * 8);
 
 	worldPosition = vec3i(chunkDimensions.x * location.width, 0, chunkDimensions.z * location.depth);
 }
@@ -153,8 +155,8 @@ void	VoxelChunk::setAdjacentChunks(VoxelChunk* north, VoxelChunk* east, VoxelChu
 
 void	VoxelChunk::generateVertexes()
 {
-	terrainVertexes.clear();
-	undergroundVertexes.clear();
+	terrainVertexes->clear();
+	undergroundVertexes->clear();
 
 	const i32 widthMax = paddedDimensions.x - 1;
 	const i32 dimY = paddedDimensions.y - 1;
@@ -220,24 +222,45 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 		switch (map[voxelIndex])
 		{
 			case VoxelType::Dirt:
-				terrainVertexes.emplace_back
-				(
-					ve::VulkanModel::Vertex
-					{
-						vec3
+				if (textureIndex == 0)
+				{
+					terrainVertexes->emplace_back
+					(
+						ve::VulkanModel::Vertex
 						{
-							VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
-							VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
-							VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
-						},
-					VOXEL_VERTEXES_ATLAS[i].normal,
-					VOXEL_VERTEXES_ATLAS[i].textureUv,
-					textureIndex
-				});
+							vec3
+							{
+								VOXEL_VERTEXES_ATLAS[i].pos.x + location.x,
+								VOXEL_VERTEXES_ATLAS[i].pos.y + location.y,
+								VOXEL_VERTEXES_ATLAS[i].pos.z + location.z
+							},
+						VOXEL_VERTEXES_ATLAS[i].normal,
+						VOXEL_VERTEXES_ATLAS[i].textureUv,
+						textureIndex
+					});
+				}
+				else
+				{
+					terrainVertexes->emplace_back
+					(
+						ve::VulkanModel::Vertex
+						{
+							vec3
+							{
+								VOXEL_VERTEXES[i].pos.x + location.x,
+								VOXEL_VERTEXES[i].pos.y + location.y,
+								VOXEL_VERTEXES[i].pos.z + location.z
+							},
+						VOXEL_VERTEXES[i].normal,
+						VOXEL_VERTEXES[i].textureUv,
+						textureIndex
+					});
+
+				}
 				break;
 
 			case VoxelType::Stone:
-				undergroundVertexes.emplace_back
+				undergroundVertexes->emplace_back
 				(
 					ve::VulkanModel::Vertex
 					{

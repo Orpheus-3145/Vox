@@ -219,8 +219,6 @@ bool	VoxelMap::update(const vec3& newPosition)
 		}
 	}
 	threadManager.waitIdle();
-	threadManager.enqueue([this] { regenerateTerrainBuffer(); });
-	threadManager.enqueue([this] { regenerateUndergroundBuffer(); });
 	threadManager.waitIdle();
 	assert(minPositions.x + squareSize - 1 == maxPositions.x && "Error: min/max X don't line up");
 	assert(minPositions.y + squareSize - 1 == maxPositions.y && "Error: min/max Y don't line up");

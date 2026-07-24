@@ -5,6 +5,7 @@
 
 #include <cstdint>
 
+
 namespace ve {
 
 class VulkanWindow
@@ -13,8 +14,10 @@ class VulkanWindow
 
 	VulkanWindow() = delete;
 	VulkanWindow(const char* title, bool fullScreen = false, int32_t width = 800, int32_t height = 600);
-	VulkanWindow(const VulkanWindow&) = delete;
-	VulkanWindow& operator=(const VulkanWindow&) = delete;
+	VulkanWindow(const VulkanWindow& other) = delete;
+	VulkanWindow(VulkanWindow&& other);
+	VulkanWindow& operator=(const VulkanWindow& other) = delete;
+	VulkanWindow& operator=(VulkanWindow&& other) = delete;
 	~VulkanWindow();
 
 	GLFWwindow*	getGLFWwindow() const noexcept { return window; }
@@ -33,9 +36,9 @@ class VulkanWindow
 	int32_t	xPosNotFullscreen;
 	int32_t	yPosNotFullscreen;
 
-	GLFWmonitor*		monitor;
+	GLFWmonitor*		monitor{nullptr};
 	const GLFWvidmode*	monitorInfo;
-	GLFWwindow*			window;
+	GLFWwindow*			window{nullptr};
 };
 
 }
