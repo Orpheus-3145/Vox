@@ -56,27 +56,30 @@ VulkanWindow::VulkanWindow(const char* title, bool fullScreen, int32_t width, in
 	}
 }
 
+VulkanWindow::VulkanWindow(VulkanWindow&& other) :
+	monitor{other.monitor},
+	monitorInfo{other.monitorInfo},
+	window{other.window}
+{
+	other.window = nullptr;
+	other.monitor = nullptr;
+}
+
 VulkanWindow::~VulkanWindow()
 {
-	glfwDestroyWindow(window);
-	glfwTerminate();
+	if (window)
+	{
+		glfwDestroyWindow(window);
+		glfwTerminate();
+	}
 }
 
 VkExtent2D	VulkanWindow::getWindowSize() const noexcept
 {
-	VkExtent2D size;
-	if (isFullscreenWindow())
-	{
-		size.width = static_cast<uint32_t>(monitorInfo->width); 
-		size.height = static_cast<uint32_t>(monitorInfo->height); 
-	}
-	else
-	{
-		size.width = static_cast<uint32_t>(widthNotFullscreen); 
-		size.height = static_cast<uint32_t>(heightNotFullscreen); 
-	}
+	int32_t w, h;
+	glfwGetWindowSize(this->window, &w, &h);
 
-	return size;
+	return VkExtent2D{static_cast<uint32_t>(w), static_cast<uint32_t>(h)};
 }
 
 void	VulkanWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR* surface) const
