@@ -294,10 +294,10 @@ void Vox::moveCamera( float deltaTime )
 	}
 	if (moveDirection != vec3::zero())
 	{
-		vec3 relativeMoveDirection = this->camera.getRelativeMoveDirection(moveDirection);
-		vec3 location = this->camera.getCameraPos();
-		vec3 movement = this->voxelMap.detectCollision(location, relativeMoveDirection);
-
+		vec3 movement = this->camera.getRelativeMoveDirection(moveDirection);
+		// wall collision: doesn't always work
+		// vec3 location = this->camera.getCameraPos();
+		// vec3 collidedMovement = this->voxelMap.detectCollision(location, relativeMoveDirection);
 		this->camera.move(movement);
 		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
