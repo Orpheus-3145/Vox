@@ -337,6 +337,7 @@ void Vox::updateUniforms(ui32 currentFrame)
 {
 	this->matrixUbo->updateView(this->camera.getViewMatrix());
 	this->matrixUbo->updateProjection(this->camera.getProjectionMatrix());
+	this->matrixUbo->updateOrthographic(this->camera.getOrthographicMatrix());
 	this->uboDescriptorSet[currentFrame]->updateDescriptor(0U, this->matrixUbo->getData());
 
 	this->materialsUbo->updateNormalMatrix(0U, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
