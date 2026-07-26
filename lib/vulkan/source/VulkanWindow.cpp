@@ -38,9 +38,13 @@ VulkanWindow::VulkanWindow(const char* title, bool fullScreen, int32_t width, in
 		glfwWindowHint(GLFW_GREEN_BITS, monitorInfo->greenBits);
 		glfwWindowHint(GLFW_BLUE_BITS, monitorInfo->blueBits);
 		glfwWindowHint(GLFW_REFRESH_RATE, monitorInfo->refreshRate);
+		window = glfwCreateWindow(monitorInfo->width, monitorInfo->height, title, monitor, nullptr);
+	}
+	else
+	{
+		window = glfwCreateWindow(widthNotFullscreen, heightNotFullscreen, title, nullptr, nullptr);
 	}
 
-	window = glfwCreateWindow(widthNotFullscreen, heightNotFullscreen, title, nullptr, nullptr);
 	if (window == nullptr)
 	{
 		throw std::runtime_error("failed to create GLFW window");
