@@ -1,41 +1,41 @@
-LIB_NAME	:= libvectors.a
-CC			:= c++
-RM			:= rm -rf
-AR			:= ar
+LIB_NAME	    := libvectors.a
+CC			    := c++
+RM			    := rm -rf
+AR			    := ar
 
-MODE		?= default
+MODE		    ?= default
 
 BASE_FLAGS		:= -std=c++2b -Wall -Wextra -Werror
 DEFAULT_FLAGS	:=
 DEBUG_FLAGS		:= -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
-RELEASE_FLAGS	:= -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops
+RELEASE_FLAGS	:= -O2 -DNDEBUG -march=native -flto=auto -fno-math-errno -fno-plt -ffast-math -funroll-loops
 DEPS_FLAGS		:= -MMD -MP -MF
 
-SRC_DIR		:= source
-BUILD_ROOT	:= build/$(MODE)
-OBJ_DIR		:= $(BUILD_ROOT)/obj
-DEPS_DIR	:= $(BUILD_ROOT)/deps
-TARGET		:= $(BUILD_ROOT)/$(LIB_NAME)
+SRC_DIR		    := source
+BUILD_DIR       := build
+DEPS_DIR         = $(BUILD_DIR)/$(MODE)/deps
+OBJ_DIR          = $(BUILD_DIR)/$(MODE)/obj
+TARGET		     = $(BUILD_DIR)/$(MODE)/$(LIB_NAME)
 
-SOURCES		:= $(shell find $(SRC_DIR) -maxdepth 1 -type f -name '*.cpp')
-OBJECTS		:= $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
-DEPS		:= $(patsubst $(SRC_DIR)/%.cpp,$(DEPS_DIR)/%.d,$(SOURCES))
+SOURCES		     = $(shell find $(SRC_DIR) -maxdepth 1 -type f -name '*.cpp')
+OBJECTS		     = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCES))
+DEPS		     = $(patsubst $(SRC_DIR)/%.cpp,$(DEPS_DIR)/%.d,$(SOURCES))
 
-INCLUDE		:= -Iinclude
-PLATFORM	:= $(shell uname -s)
+INCLUDE		    := -Iinclude
+PLATFORM         = $(shell uname -s)
 
 ifeq ($(PLATFORM),Darwin)
-INCLUDE += -isystem /opt/homebrew/include -isystem /usr/local/include
+	INCLUDE += -isystem /opt/homebrew/include -isystem /usr/local/include
 endif
 
 ifeq ($(MODE),default)
-MODE_FLAGS := $(DEFAULT_FLAGS)
+	MODE_FLAGS := $(DEFAULT_FLAGS)
 else ifeq ($(MODE),debug)
-MODE_FLAGS := $(DEBUG_FLAGS)
+	MODE_FLAGS := $(DEBUG_FLAGS)
 else ifeq ($(MODE),release)
-MODE_FLAGS := $(RELEASE_FLAGS)
+	MODE_FLAGS := $(RELEASE_FLAGS)
 else
-$(error Unknown MODE='$(MODE)'. Use MODE=default|debug|release)
+	$(error Unknown MODE='$(MODE)'. Use MODE=default|debug|release)
 endif
 
 CPP_FLAGS := $(BASE_FLAGS) $(MODE_FLAGS)
@@ -63,12 +63,14 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 -include $(DEPS)
 
 clean:
-	$(RM) build
+	$(RM) $(BUILD_DIR)
 
 fclean: clean
 
 re: fclean all
+
 re-debug: fclean debug
+
 re-release: fclean release
 
 .PHONY: all debug release default clean fclean re re-debug re-release
