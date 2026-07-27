@@ -37,14 +37,14 @@ struct Config
 	static constexpr float fastSpeed = 20.0f;
 	static constexpr float lookSpeed = 75.0f;
 
-	static constexpr char skyboxVertShaderPath[] = "build/skybox.vert.spv";
-	static constexpr char skyboxFragShaderPath[] = "build/skybox.frag.spv";
-	static constexpr char terrainVertShaderPath[] = "build/terrain.vert.spv";
-	static constexpr char terrainFragShaderPath[] = "build/terrain.frag.spv";
-	static constexpr char terrainNoLightVertShaderPath[] = "build/terrainNoLight.vert.spv";
-	static constexpr char terrainNoLightFragShaderPath[] = "build/terrainNoLight.frag.spv";
-	static constexpr char textVertShaderPath[] = "build/text.vert.spv";
-	static constexpr char textFragShaderPath[] = "build/text.frag.spv";
+	static constexpr char skyboxVertShaderPath[] = "build/shaders/skybox.vert.spv";
+	static constexpr char skyboxFragShaderPath[] = "build/shaders/skybox.frag.spv";
+	static constexpr char terrainVertShaderPath[] = "build/shaders/terrain.vert.spv";
+	static constexpr char terrainFragShaderPath[] = "build/shaders/terrain.frag.spv";
+	static constexpr char terrainNoLightVertShaderPath[] = "build/shaders/terrainNoLight.vert.spv";
+	static constexpr char terrainNoLightFragShaderPath[] = "build/shaders/terrainNoLight.frag.spv";
+	static constexpr char textVertShaderPath[] = "build/shaders/text.vert.spv";
+	static constexpr char textFragShaderPath[] = "build/shaders/text.frag.spv";
 
 	static constexpr char textureStone1Path[] = "textures/texture_stone_mono_1.jpeg";
 	static constexpr char textureStone2Path[] = "textures/texture_stone_mono_2.jpeg";
