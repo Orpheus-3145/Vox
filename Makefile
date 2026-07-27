@@ -44,7 +44,7 @@ SYS_LIBS        := -lvulkan
 PLATFORM        := $(shell uname -s)
 
 ifeq ($(PLATFORM),Linux)
-SYS_LIBS += -lGL -lX11 -lpthread -lXrandr -lXi $(shell pkg-config --static --libs glfw3)
+	SYS_LIBS += -lGL -lX11 -lpthread -lXrandr -lXi 
 else ifeq ($(PLATFORM),Darwin)
 INCLUDE  += -isystem /opt/homebrew/include -isystem /usr/local/include
 SYS_LIBS += -L/opt/homebrew/lib -Wl,-rpath,/usr/local/lib -framework Cocoa -framework IOKit -framework OpenGL -lglfw3
