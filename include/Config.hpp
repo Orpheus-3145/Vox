@@ -14,7 +14,7 @@ struct Config
 	static constexpr ui32 defaultWindowHeight = 1080;
 	static constexpr ui32 minimumViewingDistance = 160;
 
-	static constexpr ui32 worldSeed = 0U;
+	static constexpr ui32 worldSeed = 314159263U;
 
 	static constexpr vec3 cameraStartPos{0.0f, 225.0f, 0.0f};
 	static constexpr vec3 cameraForward{20.0f, 0.0f, 20.0f};		// camera has weird pitch rotations if y is not 0

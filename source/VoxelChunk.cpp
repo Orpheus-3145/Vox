@@ -54,7 +54,7 @@ void	VoxelChunk::generateMap(void)
 
 			const float worldX = static_cast<float>(worldPosition.width + x - 1);
 			const float worldZ = static_cast<float>(worldPosition.depth + z - 1);
-			float perlinTerrain = this->generator.perlinValue2D(worldX, worldZ);
+			float perlinTerrain = this->generator.octavePerlin2D(worldX, worldZ);
 
 			i32 heightValue = static_cast<i32>(perlinTerrain * static_cast<float>(height)) - 3;
 
@@ -62,7 +62,7 @@ void	VoxelChunk::generateMap(void)
 
 			for (y = 1; y < heightValue; y++)
 			{
-				float perlinCave = this->generator.perlinValue3D(worldX, static_cast<float>(y), worldZ);
+				float perlinCave = this->generator.octavePerlin3D(worldX, static_cast<float>(y), worldZ);
 				float t = static_cast<float>(y) / static_cast<float>(height);
 				float factor = t * t * (3 - 2 * t);
 				float treshold = 0.65f + 0.2f * factor;
