@@ -35,7 +35,7 @@ DEPS            := $(patsubst $(SRC_DIR)/%.cpp,$(DEPS_DIR)/%.d,$(SOURCES))
 SHADERS_SRC     := $(shell find $(SHADERS_DIR) -type f)
 SHADERS_OBJ     := $(patsubst $(SHADERS_DIR)/%,$(SHADERS_OUT_DIR)/%.spv,$(SHADERS_SRC))
 
-INCLUDE         := -Iinclude -I$(VECTOR_DIR)/include -I$(VULKAN_DIR)/include
+INCLUDE         := -Iinclude -I$(VECTOR_DIR)/include -I$(VULKAN_DIR)/include -I$(VULKAN_DIR)/include/external
 
 LIBS            :=	$(VULKAN_DIR)/build/$(MODE)/libvk.a \
 					$(VECTOR_DIR)/build/$(MODE)/libvectors.a
