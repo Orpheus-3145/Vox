@@ -60,12 +60,14 @@ void	VoxelChunk::generateMap(void)
 
 			assert(heightValue <= chunkDimensions.height && "height value out of range");
 
-			for (y = 1; y < heightValue; y++)
+			map[index] = VoxelType::Dirt;
+			index++;
+			for (y = 2; y < heightValue; y++)
 			{
 				float perlinCave = this->generator.octavePerlin3D(worldX, static_cast<float>(y), worldZ);
 				float t = static_cast<float>(y) / static_cast<float>(height);
 				float factor = t * t * (3 - 2 * t);
-				float treshold = 0.65f + 0.2f * factor;
+				float treshold = 0.575f + 0.2f * factor;
 				if (perlinCave > treshold)	// create cave
 				{
 					map[index] = VoxelType::Air;
