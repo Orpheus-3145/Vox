@@ -8,21 +8,6 @@ namespace ve {
 
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
-	const Builder& builder,
-	uint32_t binding,
-	MeshLayout layout
-) :
-	vulkanDevice{device}, binding{binding}, layout{layout}
-{
-	this->createVertexBuffer(builder.vertices);
-	if (builder.indices.size() > 2U)
-	{
-		this->createIndexBuffer(builder.indices);
-	}
-}
-
-VulkanModel::VulkanModel(
-	VulkanDevice& device,
 	const std::vector<Vertex>& vertices,
 	const std::vector<uint32_t>& indices,
 	uint32_t binding,
@@ -71,23 +56,6 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	{
 		vkCmdDraw(commandBuffer, this->vertexCount, 1, 0, 0);
 	}
-}
-
-
-void	VulkanModel::setBoundingBox(const std::vector<Vertex>& vertices) noexcept
-{
-	this->boundingBox.min.x = std::min_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.x < b.pos.x; })->pos.x;
-	this->boundingBox.max.x = std::max_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.x < b.pos.x; })->pos.x;
-	this->boundingBox.min.y = std::min_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.y < b.pos.y; })->pos.y;
-	this->boundingBox.max.y = std::max_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.y < b.pos.y; })->pos.y;
-	this->boundingBox.min.z = std::min_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.z < b.pos.z; })->pos.z;
-	this->boundingBox.max.z = std::max_element(vertices.begin(), vertices.end(),
-		[](const Vertex& a, const Vertex& b) { return a.pos.z < b.pos.z; })->pos.z;
 }
 
 void	VulkanModel::createVertexBuffer(const std::vector<Vertex>& vertices)
@@ -327,23 +295,6 @@ void	VulkanModel::createVertexIndexBuffer(const std::vector<std::vector<Vertex>>
 	this->isIndexed = true;
 }
 
-void	VulkanModel::setObjectCenter() noexcept
-{
-	this->boundingCenter = (this->boundingBox.min + this->boundingBox.max) / 2.0f;
-}
-
-vec3	VulkanModel::calculateVertexCenter(const std::vector<Vertex>& vertices) noexcept
-{
-	vec3	center{};
-
-	for (const Vertex& vertex : vertices)
-	{
-		center += vertex.pos;
-	}
-	center /= static_cast<float>(vertices.size());
-	return center;
-}
-
 MeshLayoutDescription	VulkanModel::getModelLayout(uint32_t binding, MeshLayout layout) noexcept
 {
 	MeshLayoutDescription data{};
@@ -383,12 +334,6 @@ MeshLayoutDescription	VulkanModel::getModelLayout(uint32_t binding, MeshLayout l
 	}
 	data.bindingConfig[0].stride = offset;
 	return data;
-}
-
-
-void	VulkanModel::Builder::emptyData( void ) noexcept {
-	this->vertices.clear();
-	this->indices.clear();
 }
 
 }	// namespace ve

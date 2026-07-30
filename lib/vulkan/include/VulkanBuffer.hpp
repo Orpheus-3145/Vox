@@ -61,9 +61,10 @@ class VulkanBuffer
 	static VkDeviceSize getAlignment(VkDeviceSize instanceSize, VkDeviceSize minOffsetAlignment) noexcept;
 
 	VulkanDevice&	vulkanDevice;
-	void*			mapped = nullptr;
-	VkBuffer		buffer = VK_NULL_HANDLE;
-	VkDeviceMemory	memory = VK_NULL_HANDLE;
+
+	void*			mapped{nullptr};
+	VkBuffer		buffer{VK_NULL_HANDLE};
+	VkDeviceMemory	memory{VK_NULL_HANDLE};
 
 	VkDeviceSize	bufferSize;
 	VkDeviceSize	instanceSize;

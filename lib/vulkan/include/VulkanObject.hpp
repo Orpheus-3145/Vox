@@ -85,7 +85,7 @@ class VulkanObject
 		bool	transformationApplied{false};
 		bool	uniformScale{true};
 
-		static uint32_t		currentID;
+		static uint32_t		currentID;		// NB bad in case of buffer creation in different threads
 };
 
 std::ostream&	operator<<(std::ostream& os, const ObjInfo& obj);

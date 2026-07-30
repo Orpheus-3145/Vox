@@ -250,4 +250,4 @@ VkResult	VulkanBuffer::invalidateIndex(int32_t index) noexcept
 	return invalidate(alignmentSize, index * alignmentSize);
 }
 
-}	// namespace lve
+}	// namespace ve

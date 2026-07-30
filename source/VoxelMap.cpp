@@ -42,7 +42,7 @@ std::unique_ptr<ve::VulkanModel> VoxelMap::createNewTerrainModel(ve::VulkanDevic
 	return std::make_unique<ve::VulkanModel>(device, terrainVertexes, ve::MeshType::FACE, binding);
 }
 
-//	what happens if no underground by chance?
+// NB what happens if no underground by chance?
 std::unique_ptr<ve::VulkanModel> VoxelMap::createNewUndergroundModel(ve::VulkanDevice& device, ui32 binding)
 {
 	return std::make_unique<ve::VulkanModel>(device, undergroundVertexes, ve::MeshType::FACE, binding);

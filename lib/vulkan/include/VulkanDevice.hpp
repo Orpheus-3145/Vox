@@ -134,7 +134,7 @@ class VulkanDevice
 
 	VkInstance					instance;
 	VkDebugUtilsMessengerEXT	debugMessenger;
-	VkPhysicalDevice			physicalDevice = VK_NULL_HANDLE;
+	VkPhysicalDevice			physicalDevice{VK_NULL_HANDLE};
 	VulkanWindow&				window;
 	VkCommandPool				commandPool;
 

@@ -36,36 +36,6 @@ static vec3i roundyRound(const vec3& voxel)
 	};
 }
 
-// VoxelType	VoxelMap::getVoxelAt(const vec3i& worldVoxel) const noexcept
-// {
-// 	if (worldVoxel.y <= 0 || worldVoxel.y >= VoxelChunk::chunkDimensions.y)
-// 	{
-// 		return VoxelType::Air;
-// 	}
-// 	vec2i chunk = voxelToChunk(worldVoxel);
-
-// 	i32 index = (chunk.x - minPositions.x) * squareSize + (chunk.y - minPositions.y);
-// 	if (index < 0 || static_cast<size_t>(index) >= map.size())
-// 	{
-// 		return VoxelType::Air;
-// 	}
-
-// 	vec3i chunkWorld = map[index].getWorldPos();
-
-// 	/*	Add one to account for padding	*/
-// 	i32 localX = (worldVoxel.x - chunkWorld.x) + 1;
-// 	i32 localY = (worldVoxel.y - chunkWorld.y) + 1;
-// 	i32 localZ = (worldVoxel.z - chunkWorld.z) + 1;
-
-// 	if (localX < 1 || localX > VoxelChunk::chunkDimensions.x ||
-// 		localY < 1 || localY > VoxelChunk::chunkDimensions.y ||
-// 		localZ < 1 || localZ > VoxelChunk::chunkDimensions.z)
-// 	{
-// 		return VoxelType::Air;
-// 	}
-// 	return map[index].at(localX, localY, localZ);
-// }
-
 vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 {
 	return vec3{origin.x, 255, origin.z};

@@ -36,12 +36,6 @@ inline constexpr std::array<ui32, ve::INDEX_PER_FACE> FACE_INDEXES{
 	0U, 2U, 3U	 		// front face
 };
 
-struct	BoundingBox
-{
-	vec3	min;
-	vec3	max;
-};
-
 enum class MeshLayout : uint32_t
 {
 	VERTEX = 1 << 0,
@@ -110,18 +104,7 @@ class VulkanModel
 		}
 	};
 
-	struct Builder
-	{
-		public:
-			std::vector<Vertex>		vertices{};
-			std::vector<uint32_t>	indices{};
-
-			void loadModel(const std::string& filepath);
-			void emptyData( void ) noexcept;
-	};
-
 	VulkanModel() = delete;
-	VulkanModel(VulkanDevice& device, const Builder& builder, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
 	VulkanModel(VulkanDevice& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
 	VulkanModel(VulkanDevice& device, const std::vector<std::vector<Vertex>>& vertices, MeshType type, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
 	~VulkanModel(void) noexcept = default;
@@ -134,17 +117,10 @@ class VulkanModel
 	void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
 	void	draw(VkCommandBuffer commandBuffer) const noexcept;
 	
-	void					setName(const std::string& name) { this->name = name; }
-	const vec3&				getVertexCenter() const noexcept { return this->vertexCenter; }
-	const vec3&				getBoundingCenter() const noexcept { return this->boundingCenter; }
-	const BoundingBox&		getBoundingBox() const noexcept { return this->boundingBox; }
-	void					setBoundingBox(const std::vector<Vertex>& vertices) noexcept;
-
 	static MeshLayoutDescription	getModelLayout(uint32_t binding = 0U, MeshLayout type = DEFAULT_MODEL_LAYOUT) noexcept;
 
 	private:
 
-	std::string		name;
 	VulkanDevice&	vulkanDevice;
 	uint32_t		binding;
 	MeshLayout		layout;
@@ -156,17 +132,9 @@ class VulkanModel
 	std::unique_ptr<VulkanBuffer>	vertexBuffer;
 	std::unique_ptr<VulkanBuffer>	indexBuffer;
 
-	vec3			vertexCenter{};
-	vec3			boundingCenter{};
-	BoundingBox		boundingBox{};
-
 	void	createVertexBuffer(const std::vector<Vertex>& vertices);
 	void	createIndexBuffer(const std::vector<uint32_t>& indices);
 	void	createVertexIndexBuffer(const std::vector<std::vector<Vertex>>& vertexes, MeshType type);
-
-	void	setObjectCenter() noexcept;
-	
-	static vec3	calculateVertexCenter(const std::vector<Vertex>& vertices) noexcept;
 };
 
 }	// namespace ve
