@@ -42,7 +42,7 @@
 
 .vscode
 build
-ft_vox
+vox
 
 # external libraries (stb_*.h) are forbidden, must be downloaded each time
 external
