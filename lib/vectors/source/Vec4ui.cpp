@@ -1,6 +1,7 @@
+#include <cmath>
+
 #include "Vec4ui.hpp"
 
-#include <cmath>
 
 vec4ui&	vec4ui::operator=(const vec4ui& other)
 {

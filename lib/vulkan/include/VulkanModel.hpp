@@ -1,11 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "VulkanBuffer.hpp"
 #include "VulkanDevice.hpp"
 #include "VulkanUtils.hpp"
-
-#include <memory>
-#include <unordered_map>
 
 
 namespace ve {

@@ -4,6 +4,7 @@
 
 #include "Vec3.hpp"
 
+
 class vec3;
 
 class vec4

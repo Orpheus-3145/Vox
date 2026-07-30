@@ -1,6 +1,6 @@
-#include "Vec2ui.hpp"
-
 #include <algorithm>
+
+#include "Vec2ui.hpp"
 
 
 bool	vec2ui::operator<(const vec2ui& other) const noexcept

@@ -1,11 +1,12 @@
+#include <iostream>
+#include <cassert>
+#include <future>
+
 #include "Vox.hpp"
 #include "Stopwatch.hpp"
 #include "Utils.hpp"
 #include "World.hpp"
 
-#include <iostream>
-#include <cassert>
-#include <future>
 
 namespace vox {
 

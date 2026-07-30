@@ -1,10 +1,10 @@
 #pragma once
 
+#include <functional>
+
 #include "KeyboardInput.hpp"
 #include "MouseInput.hpp"
 #include "TypeAliases.hpp"
-
-#include <functional>
 
 
 namespace vox {

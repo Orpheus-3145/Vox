@@ -1,10 +1,10 @@
+#include <cmath>
+#include <cstring>
+
 #include "Mat3.hpp"
 #include "Mat4.hpp"
 #include "Vec3.hpp"
 #include "Vec4.hpp"
-
-#include <cmath>
-#include <cstring>
 
 
 mat4	mat4::idMat( void )

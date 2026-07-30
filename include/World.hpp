@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include "ThreadManager.hpp"
 #include "Vulkan.hpp"
 #include "Vectors.hpp"
@@ -7,9 +9,6 @@
 #include "VoxelMap.hpp"
 #include "Config.hpp"
 #include "TypeAliases.hpp"
-
-#include <unordered_map>
-#include <array>
 
 
 namespace vox {

@@ -1,8 +1,9 @@
-#include "Utils.hpp"
-
 #include <sstream>
 #include <iomanip>
 #include <cassert>
+
+#include "Utils.hpp"
+
 
 namespace vox {
 

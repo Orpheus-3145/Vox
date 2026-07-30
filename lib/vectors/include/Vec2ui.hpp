@@ -3,6 +3,7 @@
 #include <ostream>
 #include <cstdint>
 
+
 class vec2ui
 {
 	public:

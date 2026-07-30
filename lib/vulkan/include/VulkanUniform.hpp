@@ -1,8 +1,10 @@
 #pragma once
+
 #include <cstdint>
 #include <vector>
 
 #include "Vectors.hpp"
+
 
 namespace ve {
 

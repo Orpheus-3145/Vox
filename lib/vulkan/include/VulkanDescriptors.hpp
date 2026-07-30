@@ -1,12 +1,12 @@
 #pragma once
 
-#include "VulkanDevice.hpp"
-#include "VulkanPipeline.hpp"
-#include "VulkanBuffer.hpp"
-
 #include <memory>
 #include <vector>
 #include <map>
+
+#include "VulkanDevice.hpp"
+#include "VulkanPipeline.hpp"
+#include "VulkanBuffer.hpp"
 
 
 namespace ve {

@@ -1,7 +1,8 @@
+#include <iostream>
+
 #include "Stopwatch.hpp"
 #include "TypeAliases.hpp"
 
-#include <iostream>
 
 namespace vox {
 

@@ -1,5 +1,7 @@
-#include "VulkanUniform.hpp"
 #include <cassert>
+
+#include "VulkanUniform.hpp"
+
 
 namespace ve {
 

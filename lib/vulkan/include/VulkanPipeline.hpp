@@ -1,11 +1,11 @@
 #pragma once
 
+#include <vector>
+
 #include "VulkanDevice.hpp"
 #include "VulkanModel.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanUniform.hpp"
-
-#include <vector>
 
 
 namespace ve {

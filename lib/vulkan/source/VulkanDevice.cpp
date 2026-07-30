@@ -1,12 +1,12 @@
-#include "VulkanDevice.hpp"
-#include "Vectors.hpp"
-
-// std headers
 #include <cstring>
 #include <cassert>
 #include <iostream>
 #include <set>
 #include <unordered_set>
+
+#include "VulkanDevice.hpp"
+#include "Vectors.hpp"
+
 
 namespace ve {
 

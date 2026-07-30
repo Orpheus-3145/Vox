@@ -1,9 +1,10 @@
-#include "Vox.hpp"
-
 #include <iostream>
 #include <stdexcept>
 #include <thread>
 #include <cmath>
+
+#include "Vox.hpp"
+
 
 i32	main( void )
 {

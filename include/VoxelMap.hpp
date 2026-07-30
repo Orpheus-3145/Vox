@@ -1,12 +1,13 @@
 #pragma once
 
+#include <mutex>
+
 #include "ThreadManager.hpp"
 #include "Vectors.hpp"
 #include "VoxelChunk.hpp"
 #include "World.hpp"
 #include "TypeAliases.hpp"
 
-#include <mutex>
 
 namespace vox {
 

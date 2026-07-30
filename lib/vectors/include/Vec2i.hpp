@@ -3,6 +3,7 @@
 #include <ostream>
 #include <cstdint>
 
+
 using i32 = int32_t;
 
 class vec2i

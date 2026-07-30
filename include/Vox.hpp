@@ -1,5 +1,9 @@
 #pragma once
 
+#include <array>
+#include <memory>
+#include <vector>
+
 #include "Vulkan.hpp"
 #include "Camera.hpp"
 #include "Config.hpp"
@@ -7,10 +11,6 @@
 #include "ThreadManager.hpp"
 #include "VoxelMap.hpp"
 #include "TypeAliases.hpp"
-
-#include <array>
-#include <memory>
-#include <vector>
 
 
 namespace vox {

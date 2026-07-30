@@ -1,6 +1,6 @@
-#include "VulkanObject.hpp"
-
 #include <cassert>
+
+#include "VulkanObject.hpp"
 
 
 namespace ve {

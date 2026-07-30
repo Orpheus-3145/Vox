@@ -3,6 +3,7 @@
 #include <ostream>
 #include <cstdint>
 
+
 using ui32 = uint32_t;
 
 class vec3ui

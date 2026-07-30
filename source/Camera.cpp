@@ -1,7 +1,8 @@
-#include "Camera.hpp"
-
 #include <cassert>
 #include <cmath>
+
+#include "Camera.hpp"
+
 
 namespace vox {
 

@@ -1,3 +1,7 @@
+#include <iostream>
+#include <cstring>
+#include <limits>
+
 #include "VulkanTexture.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -5,10 +9,6 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "stb_truetype.h"
-
-#include <iostream>
-#include <cstring>
-#include <limits>
 
 
 namespace ve {

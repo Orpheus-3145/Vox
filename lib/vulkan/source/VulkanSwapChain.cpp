@@ -1,5 +1,3 @@
-#include "VulkanSwapChain.hpp"
-
 #include <array>
 #include <cassert>
 #include <cstdlib>
@@ -8,6 +6,9 @@
 #include <limits>
 #include <set>
 #include <stdexcept>
+
+#include "VulkanSwapChain.hpp"
+
 
 namespace ve {
 

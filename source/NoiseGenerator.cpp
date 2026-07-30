@@ -1,7 +1,7 @@
-#include <cassert>
-
 #include "NoiseGenerator.hpp"
 #include "Utils.hpp"
+
+#include <cassert>
 
 
 namespace vox {

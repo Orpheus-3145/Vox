@@ -1,6 +1,6 @@
-#include "VoxelMap.hpp"
-
 #include <iostream>
+
+#include "VoxelMap.hpp"
 
 
 namespace vox {

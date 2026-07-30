@@ -1,16 +1,17 @@
 #pragma once
 
-#include "VulkanDevice.hpp"
-#include "VulkanModel.hpp"
-#include "VulkanSwapChain.hpp"
-#include "VulkanWindow.hpp"
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <array>
 #include <cassert>
 #include <memory>
 #include <vector>
+
+#include "VulkanDevice.hpp"
+#include "VulkanModel.hpp"
+#include "VulkanSwapChain.hpp"
+#include "VulkanWindow.hpp"
+
 
 namespace ve {
 

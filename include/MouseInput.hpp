@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Vectors.hpp"
-
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <array>
 
+#include "Vectors.hpp"
 #include "TypeAliases.hpp"
 
 

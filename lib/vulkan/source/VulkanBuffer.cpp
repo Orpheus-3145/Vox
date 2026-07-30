@@ -1,7 +1,7 @@
-#include "VulkanBuffer.hpp"
-
 #include <cassert>
 #include <cstring>
+
+#include "VulkanBuffer.hpp"
 
 
 namespace ve {

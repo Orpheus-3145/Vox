@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cmath>
 
+
 using i32 = int32_t;
 
 class vec3i

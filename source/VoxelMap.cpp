@@ -1,13 +1,13 @@
-#include "VoxelMap.hpp"
-#include "Config.hpp"
-#include "Utils.hpp"
-#include "World.hpp"
-
 #include <iostream>
 #include <algorithm>
 #include <stdexcept>
 #include <cassert>
 #include <functional>
+
+#include "VoxelMap.hpp"
+#include "Config.hpp"
+#include "Utils.hpp"
+#include "World.hpp"
 
 
 namespace vox {

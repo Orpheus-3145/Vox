@@ -1,6 +1,8 @@
+#include <cstring>
+
 #include "Mat3.hpp"
 #include "Vec3.hpp"
-#include <cstring>
+
 
 mat3	mat3::idMat( void )
 {

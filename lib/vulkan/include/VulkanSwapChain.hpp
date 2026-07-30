@@ -1,11 +1,11 @@
 #pragma once
 
-#include "VulkanDevice.hpp"
-
-// std lib headers
 #include <string>
 #include <memory>
 #include <vector>
+
+#include "VulkanDevice.hpp"
+
 
 namespace ve {
 

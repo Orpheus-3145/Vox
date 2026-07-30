@@ -3,6 +3,7 @@
 #include <cmath>
 #include <ostream>
 
+
 float	fastInverseSqrt(float number) noexcept;
 float	radiansToDegrees(float radians) noexcept;
 

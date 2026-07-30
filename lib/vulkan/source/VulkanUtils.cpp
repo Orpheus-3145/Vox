@@ -1,8 +1,8 @@
-#include "VulkanUtils.hpp"
-
 #include <fstream>
 #include <string>
 #include <cassert>
+
+#include "VulkanUtils.hpp"
 
 
 namespace ve {

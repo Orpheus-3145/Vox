@@ -3,6 +3,7 @@
 #include <array>
 #include <ostream>
 
+
 class vec3;
 class vec4;
 class mat3;

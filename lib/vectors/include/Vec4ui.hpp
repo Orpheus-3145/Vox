@@ -1,7 +1,9 @@
 #pragma once
 
 #include <ostream>
+
 #include "Vec3ui.hpp"
+
 
 using ui32 = uint32_t;
 

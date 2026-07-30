@@ -1,6 +1,7 @@
-#include "VulkanWindow.hpp"
 #include <iostream>
 #include <cassert>
+
+#include "VulkanWindow.hpp"
 
 
 namespace ve {

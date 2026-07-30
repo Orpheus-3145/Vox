@@ -1,7 +1,7 @@
+#include <cassert>
+
 #include "VulkanDescriptors.hpp"
 #include "VulkanTexture.hpp"
-
-#include <cassert>
 
 
 namespace ve {

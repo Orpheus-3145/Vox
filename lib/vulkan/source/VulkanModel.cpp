@@ -1,7 +1,7 @@
+#include <cassert>
+
 #include "VulkanModel.hpp"
 #include "VulkanObject.hpp"
-
-#include <cassert>
 
 
 namespace ve {

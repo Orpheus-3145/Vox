@@ -1,6 +1,6 @@
-#include "ThreadManager.hpp"
-
 #include <iostream>
+
+#include "ThreadManager.hpp"
 
 
 namespace vox {

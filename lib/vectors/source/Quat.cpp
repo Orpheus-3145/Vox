@@ -1,5 +1,6 @@
 #include "Quat.hpp"
 
+
 quat::quat(float angle, const vec3& v3)
 {
 	w = std::cos(angle);

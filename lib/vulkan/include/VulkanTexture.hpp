@@ -1,7 +1,6 @@
 #pragma once
 
 #include "VulkanObject.hpp"
-
 #include "stb_truetype.h"
 
 

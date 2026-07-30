@@ -1,10 +1,11 @@
 #pragma once
 
+#include <algorithm>
+#include <ostream>
+
 #include "Vec2.hpp"
 #include "Quat.hpp"
 
-#include <algorithm>
-#include <ostream>
 
 class vec2;
 class vec4;

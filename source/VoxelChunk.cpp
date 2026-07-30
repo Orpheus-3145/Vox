@@ -1,10 +1,10 @@
-#include "VoxelChunk.hpp"
-#include "Config.hpp"
-#include "World.hpp"
-
 #include <cassert>
 #include <cstring>
 #include <iostream>
+
+#include "VoxelChunk.hpp"
+#include "Config.hpp"
+#include "World.hpp"
 
 
 namespace vox {
