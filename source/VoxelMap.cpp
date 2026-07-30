@@ -31,7 +31,6 @@ VoxelMap::VoxelMap(ThreadManager& threadManager) :
 	minPositions = vec2i{playerOnChunk.x - (squareSize - 1) / 2, playerOnChunk.y - (squareSize - 1) / 2};
 	maxPositions = vec2i{minPositions.x + squareSize - 1, minPositions.y + squareSize - 1};
 
-	std::cout << "Map ranges from: " << minPositions << " to: " << maxPositions << std::endl;
 	playerOnChunk = vec2i{minPositions.x + squareSize / 2, minPositions.y + squareSize / 2};
 	VoxelChunk::paddedDimensions = VoxelChunk::chunkDimensions + vec3i{2, 2, 2};
 	scheduledChanges.resize(visibleChunks);
@@ -122,7 +121,6 @@ void	VoxelMap::init()
 	setAdjacentPointers();
 	threadManager.waitIdle();
 	timer.stop();
-	std::cout << "Initial chunk generation complete in: " << timer << std::endl;
 	timer.reset();
 	timer.start();
 	for (size_t i = 0; i < map.size(); i++)
@@ -133,7 +131,6 @@ void	VoxelMap::init()
 	}
 	threadManager.waitIdle();
 	timer.stop();
-	std::cout << "Initial voxel map generation took: " << timer << std::endl;
 }
 
 vec2i	VoxelMap::voxelToChunkPosition(const vec3& position) const noexcept

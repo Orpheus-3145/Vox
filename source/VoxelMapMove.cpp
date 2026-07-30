@@ -72,10 +72,6 @@ bool	VoxelMap::testVoxels(const vec3& location)
 	vec2i	chunk = voxelToChunk(roundyRound(location));
 	i32		index = (chunk.x - minPositions.x) * squareSize + (chunk.y - minPositions.y);
 
-	// std::cout << "min Positions: " << minPositions << std::endl;
-	// std::cout << "chunk: " << chunk << std::endl;
-	// std::cout << "map index: " << index << std::endl;
-
 	if (index < 0 || static_cast<size_t>(index) >= map.size())
 	{
 		return false;
@@ -88,23 +84,11 @@ bool	VoxelMap::testVoxels(const vec3& location)
 	if (location.x < 0.0f) { locationOnChunk.x += static_cast<float>(VoxelChunk::chunkDimensions.x); }
 	if (location.z < 0.0f) { locationOnChunk.z += static_cast<float>(VoxelChunk::chunkDimensions.z); }
 
-	// std::cout << "location: " << location << std::endl;
-	// std::cout << "location on chunk: " << locationOnChunk << std::endl;
-
 	insertLocations(locationOnChunk, voxelsToTest);
 	VoxelMap::lock.lock();
 	const bool result = map[index].testForCollision(voxelsToTest);
 	VoxelMap::lock.unlock();
 
-	// if (result == true)
-	// {
-	// 	std::cout << "voxels tested: ";
-	// 	for (const vec3i& v : voxelsToTest)
-	// 	{
-	// 		std::cout << v << " ";
-	// 	}
-	// 	std::cout << std::endl;
-	// }
 	return result;
 }
 
@@ -120,7 +104,6 @@ vec3	VoxelMap::detectCollision(const vec3& origin, const vec3& movement)
 	const bool collided = testVoxels(origin);
 	if (collided == true)
 	{
-		std::cout << "starting inside a block, teleporting up high..." << std::endl;
 		return nearestAirVoxel(roundyRound(origin)) - origin;
 	}
 	for (moved = 0.0f; moved < steps; moved += stepSize)

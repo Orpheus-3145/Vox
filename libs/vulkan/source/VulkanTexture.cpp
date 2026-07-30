@@ -414,7 +414,6 @@ std::unique_ptr<ImageInfo> loadImage(const std::string& imagePath)
 	{
 		throw std::runtime_error("Failed to load image: " + imagePath);
 	}
-	std::cout << "Loaded image: " << imagePath << " (" << imageInfo->width << "x" << imageInfo->height << ", " << imageInfo->channels << " channels)" << std::endl;
 	return imageInfo;
 }
 
@@ -453,7 +452,6 @@ std::unique_ptr<FontInfo> loadFont(const std::string& fontPath, float fontSize, 
 		throw std::runtime_error("Failed to load font: " + fontPath);
 	}
 
-	std::cout << "Loaded font: " << fontPath << std::endl;
 	return fontInfo;
 }
 

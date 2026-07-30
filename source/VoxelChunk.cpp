@@ -297,8 +297,6 @@ bool	VoxelChunk::testForCollision(const std::vector<vec3i>& locations) const noe
 		const VoxelType voxel = this->at(loc.x + 1, loc.y + 1, loc.z + 1);
 		if (voxel != VoxelType::Air && voxel != VoxelType::Padding)
 		{
-			// std::cout << "Collision at: " << loc << std::endl;
-			// std::cout << "Voxel type: " << static_cast<int>(voxel) << std::endl;
 			return true;
 		}
 	}

@@ -15,7 +15,6 @@ ThreadManager::ThreadManager() : shouldRun(true), activeWorkers(0)
 		std::exit(EXIT_FAILURE);
 	}
 
-	std::cout << "Created " << workers << " worker threads" << std::endl;
 	workerThreads.reserve(workers);
 	for (i32 i = 0; i < workers; i++)
 	{
