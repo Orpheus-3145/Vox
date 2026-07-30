@@ -5,8 +5,6 @@
 #include "Vec3ui.hpp"
 
 
-using ui32 = uint32_t;
-
 class vec4ui
 {
 	public:

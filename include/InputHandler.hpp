@@ -4,7 +4,6 @@
 
 #include "KeyboardInput.hpp"
 #include "MouseInput.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {

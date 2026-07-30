@@ -11,7 +11,7 @@
 #include <vector>
 #include <functional>
 
-#include "TypeAliases.hpp"
+#include "Vectors.hpp"
 
 
 namespace vox {

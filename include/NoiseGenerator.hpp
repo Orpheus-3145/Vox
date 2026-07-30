@@ -1,11 +1,9 @@
 #pragma once
 
 #include <array>
-#include <cstdint>
 #include <random>
 
 #include "Vectors.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {

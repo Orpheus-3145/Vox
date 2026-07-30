@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include "Vectors.hpp"
+
 
 namespace vox {
 

@@ -27,6 +27,7 @@ union FloatIntUnion
 	int32_t	i;
 };
 
+// NB fix
 float	fastInverseSqrt(float number) noexcept;
 float	radians(float degrees) noexcept;
 float	radiansToDegrees(float radians) noexcept;

@@ -2,28 +2,15 @@
 
 #include <array>
 
-#include "ThreadManager.hpp"
 #include "Vulkan.hpp"
-#include "Vectors.hpp"
-#include "Stopwatch.hpp"
-#include "VoxelMap.hpp"
-#include "Config.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {
 
 inline constexpr float	VOXEL_SIZE = 1.0f;		// length of a voxel edge
 
-enum VertexFaces : size_t
-{
-	FRONT = 0,
-	BACK = 4,
-	LEFT = 8,
-	RIGHT = 12,
-	TOP = 16,
-	BOTTOM = 20
-};
+using VertexVector = std::vector<ve::VulkanModel::Vertex>;
+using IndexVector = std::vector<ui32>;
 
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
 inline constexpr std::array<ve::VulkanModel::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES{

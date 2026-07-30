@@ -6,18 +6,10 @@
 #include "Vectors.hpp"
 #include "VoxelChunk.hpp"
 #include "World.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {
 
-enum class Direction : ui8
-{
-	North,
-	East,
-	South,
-	West
-};
 
 class VoxelMap
 {

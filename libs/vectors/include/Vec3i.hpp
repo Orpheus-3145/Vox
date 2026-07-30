@@ -1,11 +1,10 @@
 #pragma once
 
 #include <ostream>
-#include <cstdint>
 #include <cmath>
 
+#include "Types.hpp"
 
-using i32 = int32_t;
 
 class vec3i
 {

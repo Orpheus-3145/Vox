@@ -6,7 +6,7 @@
 #include "VulkanModel.hpp"
 #include "Vectors.hpp"
 #include "NoiseGenerator.hpp"
-#include "TypeAliases.hpp"
+#include "World.hpp"
 
 
 namespace vox {
@@ -18,6 +18,24 @@ enum class VoxelType : ui8
 	Stone = 2,
 	Water = 3,
 	Padding = 255
+};
+
+enum VertexFaces : size_t
+{
+	FRONT = 0,
+	BACK = 4,
+	LEFT = 8,
+	RIGHT = 12,
+	TOP = 16,
+	BOTTOM = 20
+};
+
+enum class Direction : ui8
+{
+	North,
+	East,
+	South,
+	West
 };
 
 class VoxelChunk

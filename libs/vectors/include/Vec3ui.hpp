@@ -1,10 +1,9 @@
 #pragma once
 
 #include <ostream>
-#include <cstdint>
 
+#include "Types.hpp"
 
-using ui32 = uint32_t;
 
 class vec3ui
 {

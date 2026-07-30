@@ -10,10 +10,12 @@
 #include "InputHandler.hpp"
 #include "ThreadManager.hpp"
 #include "VoxelMap.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {
+
+using DrawDataLimit = ve::VkConstants;
+using DrawDataIndex = ve::VkConstants;
 
 class Vox
 {

@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include <array>
 
-#include "TypeAliases.hpp"
+#include "Vectors.hpp"
 
 
 namespace vox {

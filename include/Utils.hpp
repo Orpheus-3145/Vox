@@ -3,7 +3,7 @@
 #include <string>
 #include <cassert>
 
-#include "TypeAliases.hpp"
+#include "Vectors.hpp"
 
 
 namespace vox {

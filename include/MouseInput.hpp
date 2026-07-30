@@ -5,7 +5,6 @@
 #include <array>
 
 #include "Vectors.hpp"
-#include "TypeAliases.hpp"
 
 
 namespace vox {

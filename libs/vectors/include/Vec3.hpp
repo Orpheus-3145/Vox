@@ -5,14 +5,13 @@
 
 #include "Vec2.hpp"
 #include "Quat.hpp"
+#include "Types.hpp"
 
 
 class vec2;
 class vec4;
 class mat4;
 class quat;
-
-using i32 = int32_t;
 
 class vec3
 {
