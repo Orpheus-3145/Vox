@@ -54,29 +54,6 @@ struct Config
 	static constexpr char textureDirt2Path[] = "textures/texture_dirt_mono.jpeg";
 	static constexpr char textureSkyboxPath[] = "textures/skybox1.png";
 	static constexpr char fontPath[] = "font/RobotoMono-Regular.ttf";
-
-	static constexpr ve::MaterialData dirtMaterial{
-		vec4(0.15f, 0.15f, 0.15f, 1.0f),
-		vec4(0.2f, 0.2f, 0.2f, 1.0f),
-		vec4(0.2f, 0.2f, 0.2f, 1.0f),
-		8.0f,
-		1.0f
-	};
-
-	static constexpr ve::MaterialData stoneMaterial{
-		vec4(0.25f, 0.22f, 0.20f, 1.0f),
-		vec4(0.55f, 0.50f, 0.46f, 1.0f),
-		vec4(0.10f, 0.10f, 0.10f, 1.0f),
-		8.0f,
-		1.0f
-	};
-
-	static constexpr ve::LightData lightMaterial{
-		vec4{0.2f, 0.2f, 0.2f, 1.0f},
-		vec4{0.6f, 0.6f, 0.6f, 1.0f},
-		vec4{0.1f, 0.1f, 0.1f, 1.0f},
-		vec4{0.0f, -300.0f, 0.0f, 0.0f}
-	};
 };
 
 } // namespace vox

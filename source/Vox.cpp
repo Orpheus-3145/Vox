@@ -134,14 +134,14 @@ void Vox::toggleFullscreen( void )
 void Vox::setupVulkanBuffers( void )
 {
 	// uniform buffer for view and projection matrixes
-	this->matrixUbo = std::make_unique<ve::ViewProjectUniform>(
+	this->matrixUbo = std::make_unique<ViewProjectUniform>(
 		this->camera.getViewMatrix(),
 		this->camera.getProjectionMatrix(),
 		this->camera.getOrthographicMatrix()
 	);
 
 	// uniform buffers for per-mesh data: model and normal matrixes, materials, lights
-	this->materialsUbo = std::make_unique<ve::MeshUniform>();
+	this->materialsUbo = std::make_unique<MeshUniform>();
 	this->materialsUbo->updateModelMatrix(0, this->terrainObject->getModelMatrix());
 	this->materialsUbo->updateModelMatrix(1, this->undergroundObject->getModelMatrix());
 	this->materialsUbo->updateModelMatrix(2, mat4::idMat());
@@ -150,11 +150,11 @@ void Vox::setupVulkanBuffers( void )
 	this->materialsUbo->updateNormalMatrix(1, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
 	this->materialsUbo->updateNormalMatrix(2, mat4::idMat());
 
-	this->materialsUbo->updateMaterial(0U, Config::dirtMaterial);
-	this->materialsUbo->updateMaterial(1U, Config::stoneMaterial);
-	this->materialsUbo->updateLight(0U, Config::lightMaterial, this->camera.getViewMatrix(false));
+	this->materialsUbo->updateMaterial(0U, DIRT_MATERIAL);
+	this->materialsUbo->updateMaterial(1U, STONE_MATERIAL);
+	this->materialsUbo->updateLight(0U, DEFAULT_LIGHT, this->camera.getViewMatrix(false));
 
-	this->textDataUbo = std::make_unique<ve::TextUniform>();
+	this->textDataUbo = std::make_unique<TextUniform>();
 	// color of the UI
 	this->textDataUbo->updateColor(0U, vec4{0.0f, 0.0f, 0.0f, 1.0f});
 	// text color
@@ -176,9 +176,9 @@ void Vox::setupVulkanDescSets( void )
 
 	ve::VulkanBindingSet uboSetBindings;
 	// UBO with matrixes equal for every mesh: view and projections
-	uboSetBindings.addBufferBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ve::ViewProjectUniform));
+	uboSetBindings.addBufferBinding(0, VK_SHADER_STAGE_VERTEX_BIT, sizeof(ViewProjectUniform));
 	// UBO with data mesh-specific data: model, normal, lights, ...
-	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::MeshUniform));
+	uboSetBindings.addBufferBinding(1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(MeshUniform));
 
 	// data inside this set changes per frame so a copy of such data is needed for every frame buffer
 	// to avoid modifyind something which is used by another frame buffer
@@ -203,7 +203,7 @@ void Vox::setupVulkanDescSets( void )
 
 	ve::VulkanBindingSet fontSetBindings;
 	// array of uniforms containing colors for the font (text, background, ...)
-	fontSetBindings.addBufferBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(ve::TextUniform));
+	fontSetBindings.addBufferBinding(0U, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(TextUniform));
 	// texture/sampler of the font used
 	fontSetBindings.addSamplerBinding(1U, VK_SHADER_STAGE_FRAGMENT_BIT, Config::fontPath, ve::TextureType::TEXTURE_FONT);
 	this->fontDescriptorSet = this->vulkanSetFactory.createDescriptorSet(fontSetBindings);
@@ -238,8 +238,7 @@ void Vox::setupVulkanPipelines( void )
 		fragmentShader,
 		ve::VulkanModel::getModelLayout(0U),
 		ve::TEXTURE_PLAIN,
-		sizeof(DrawDataLimit),
-		&ve::drawingDataLimits
+		sizeof(IndexUniforms)
 	);
 
 	// skybox rendering
@@ -251,8 +250,7 @@ void Vox::setupVulkanPipelines( void )
 		Config::skyboxFragShaderPath,
 		ve::VulkanModel::getModelLayout(0U, ve::ONLY_VERTEX_LAYOUT),
 		ve::TEXTURE_CUBEMAP,
-		sizeof(DrawDataLimit),
-		&ve::drawingDataLimits
+		sizeof(IndexUniforms)
 	);
 
 	// text/UI rendering
@@ -265,8 +263,7 @@ void Vox::setupVulkanPipelines( void )
 		Config::textFragShaderPath,
 		ve::VulkanModel::getModelLayout(0U, ve::FONT_MODEL_LAYOUT),
 		ve::TEXTURE_FONT,
-		sizeof(DrawDataLimit),
-		&ve::drawingDataLimits
+		sizeof(IndexUniforms)
 	);
 }
 
@@ -368,24 +365,24 @@ void Vox::updateUniforms(ui32 currentFrame)
 
 void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
 {
-	DrawDataIndex	indexes{};
+	IndexUniforms indexes{};
 
 	this->terrainPipeline->bindPipeline(commandBuffer);
 
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->terrainPipeline, 0U);
 	this->textureDescriptorSet->bindSet(commandBuffer, *this->terrainPipeline, 1U);
 
-	indexes.models = 0U;
-	indexes.materials = 0U;
-	indexes.textures = 0U;
+	indexes.indexModel = 0U;
+	indexes.indexMaterial = 0U;
+	indexes.indexTexture = 0U;
 	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->terrainObject->bindBuffer(commandBuffer);
 	this->terrainObject->draw(commandBuffer);
 
-	// indexes.models = 1U;
-	// indexes.materials = 1U;
-	// indexes.textures = 2U;
+	// indexes.indexModel = 1U;
+	// indexes.indexMaterial = 1U;
+	// indexes.indexTexture = 2U;
 	// this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	// this->undergroundObject->bindBuffer(commandBuffer);
@@ -394,14 +391,14 @@ void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
 
 void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
 {
-	DrawDataIndex	indexes{};
+	IndexUniforms indexes{};
 
 	this->skyboxPipeline->bindPipeline(commandBuffer);
 
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->skyboxPipeline, 0U);
 	this->textureDescriptorSet->bindSet(commandBuffer, *this->skyboxPipeline, 1U);
 
-	indexes.models = 2U;
+	indexes.indexModel = 2U;
 	this->skyboxPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->skyboxObject->bindBuffer(commandBuffer);
@@ -410,7 +407,7 @@ void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
 
 void Vox::drawTextFPS(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position)
 {
-	DrawDataIndex	indexes{};
+	IndexUniforms indexes{};
 
 	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
 
@@ -422,13 +419,13 @@ void Vox::drawTextFPS(VkCommandBuffer commandBuffer, ui32 currentFrame, std::str
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
 	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
 
-	indexes.fontColor = 0;		// background color index
+	indexes.indexFontColor = 0;		// background color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->fpsBackgroundObject->bindBuffer(commandBuffer);
 	this->fpsBackgroundObject->draw(commandBuffer);
 
-	indexes.fontColor = 1;		// text color index
+	indexes.indexFontColor = 1;		// text color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->fpsTextObject->bindBuffer(commandBuffer);
@@ -437,7 +434,7 @@ void Vox::drawTextFPS(VkCommandBuffer commandBuffer, ui32 currentFrame, std::str
 
 void Vox::drawTextMemory(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position)
 {
-	DrawDataIndex	indexes{};
+	IndexUniforms indexes{};
 
 	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
 
@@ -449,13 +446,13 @@ void Vox::drawTextMemory(VkCommandBuffer commandBuffer, ui32 currentFrame, std::
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
 	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
 
-	indexes.fontColor = 0;		// background color index
+	indexes.indexFontColor = 0;		// background color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->memoryBackgroundObject->bindBuffer(commandBuffer);
 	this->memoryBackgroundObject->draw(commandBuffer);
 
-	indexes.fontColor = 1;		// text color index
+	indexes.indexFontColor = 1;		// text color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
 	this->memoryTextObject->bindBuffer(commandBuffer);

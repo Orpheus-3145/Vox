@@ -16,4 +16,3 @@
 #include "VulkanRenderer.hpp"
 #include "VulkanTexture.hpp"
 #include "VulkanUtils.hpp"
-#include "VulkanUniform.hpp"

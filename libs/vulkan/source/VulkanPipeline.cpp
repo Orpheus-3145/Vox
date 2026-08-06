@@ -59,8 +59,8 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 	std::string const& fragmentShaderFile,
 	MeshLayoutDescription const& meshLayout,
 	TextureType textureUsed,
-	uint32_t sizePushConstants,
-	VkConstants const* constants
+	uint32_t sizePushConstants
+	// VkConstants const* constants
 )
 {
 	// vulkan push_constant max size must be 128 or 256 b
@@ -81,8 +81,8 @@ std::unique_ptr<VulkanPipeline> VulkanPipeline::createPipeline(
 		fragmentShaderFile,
 		meshLayout,
 		textureUsed,
-		sizePushConstants,
-		constants
+		sizePushConstants
+		// constants
 	);
 }
 
@@ -94,13 +94,13 @@ VulkanPipeline::VulkanPipeline(
 		std::string const& fragmentShaderFile,
 		MeshLayoutDescription const& meshLayout,
 		TextureType textureUsed,
-		uint32_t sizePushConstants,
-		VkConstants const* constants
+		uint32_t sizePushConstants
+		// VkConstants const* constants
 	) :
 	vulkanDevice{device}, sizePushConstants{sizePushConstants}
 {
 	this->setupPipelineLayout(descriptorSetLayouts);
-	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, textureUsed, renderPass, constants);
+	this->setupPipeline(vertexShaderFile, fragmentShaderFile, meshLayout, textureUsed, renderPass/* , constants */);
 }
 
 VulkanPipeline::~VulkanPipeline()
@@ -173,8 +173,9 @@ void VulkanPipeline::setupPipeline(
 	std::string const& fragmentShaderFile,
 	MeshLayoutDescription const& meshLayout,
 	TextureType textureUsed,
-	VkRenderPass renderPass,
-	VkConstants const* constants)
+	VkRenderPass renderPass
+	// VkConstants const* constants
+)
 {
 	assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
@@ -182,7 +183,7 @@ void VulkanPipeline::setupPipeline(
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_VERTEX_BIT, vertexShaderFile);
 	shaders.emplace_back(this->vulkanDevice, VK_SHADER_STAGE_FRAGMENT_BIT, fragmentShaderFile);
 
-	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout, constants, textureUsed);
+	VulkanPipelineConfig pipelineConfig = this->getPipelineConfig(shaders, meshLayout/* , constants */, textureUsed);
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -215,7 +216,7 @@ void VulkanPipeline::setupPipeline(
 	}
 }
 
-VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, TextureType textureUsed ) const noexcept
+VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout/* , VkConstants const* constants */, TextureType textureUsed ) const noexcept
 {
 	assert(this->pipelineLayout != nullptr && "Cannot create pipeline before pipeline layout");
 
@@ -230,36 +231,37 @@ VulkanPipelineConfig VulkanPipeline::getPipelineConfig( std::vector<VulkanShader
 	configInfo.vertexInputInfo.vertexAttributeDescriptionCount = configInfo.attributeVboConfig.size();
 	configInfo.vertexInputInfo.pVertexAttributeDescriptions = configInfo.attributeVboConfig.data();
 
-	if (constants != nullptr)
-	{
-		uint32_t nEntries = 5;
-		configInfo.constantEntries = std::make_unique<VkSpecializationMapEntry[]>(nEntries);
-		configInfo.constantEntries[0].constantID = 0;
-		configInfo.constantEntries[0].offset = offsetof(VkConstants, models);
-		configInfo.constantEntries[0].size = sizeof(uint32_t);
-
-		configInfo.constantEntries[1].constantID = 1;
-		configInfo.constantEntries[1].offset = offsetof(VkConstants, materials);
-		configInfo.constantEntries[1].size = sizeof(uint32_t);
-
-		configInfo.constantEntries[2].constantID = 2;
-		configInfo.constantEntries[2].offset = offsetof(VkConstants, lights);
-		configInfo.constantEntries[2].size = sizeof(uint32_t);
-
-		configInfo.constantEntries[3].constantID = 3;
-		configInfo.constantEntries[3].offset = offsetof(VkConstants, fontColor);
-		configInfo.constantEntries[3].size = sizeof(uint32_t);
-
-		configInfo.constantEntries[4].constantID = 4;
-		configInfo.constantEntries[4].offset = offsetof(VkConstants, textures);
-		configInfo.constantEntries[4].size = sizeof(uint32_t);
-
-		configInfo.constantsInfo = std::make_unique<VkSpecializationInfo>();
-		configInfo.constantsInfo->mapEntryCount = nEntries;
-		configInfo.constantsInfo->pMapEntries = configInfo.constantEntries.get();
-		configInfo.constantsInfo->dataSize = sizeof(VkConstants);
-		configInfo.constantsInfo->pData = constants;
-	}
+	// NB find a more generic way to pass constant(s) layout data
+	// if (constants != nullptr)
+	// {
+	// 	uint32_t nEntries = 5;
+	// 	configInfo.constantEntries = std::make_unique<VkSpecializationMapEntry[]>(nEntries);
+	// 	configInfo.constantEntries[0].constantID = 0;
+	// 	configInfo.constantEntries[0].offset = offsetof(IndexUniforms, models);
+	// 	configInfo.constantEntries[0].size = sizeof(uint32_t);
+	//
+	// 	configInfo.constantEntries[1].constantID = 1;
+	// 	configInfo.constantEntries[1].offset = offsetof(IndexUniforms, materials);
+	// 	configInfo.constantEntries[1].size = sizeof(uint32_t);
+	//
+	// 	configInfo.constantEntries[2].constantID = 2;
+	// 	configInfo.constantEntries[2].offset = offsetof(IndexUniforms, lights);
+	// 	configInfo.constantEntries[2].size = sizeof(uint32_t);
+	//
+	// 	configInfo.constantEntries[3].constantID = 3;
+	// 	configInfo.constantEntries[3].offset = offsetof(IndexUniforms, fontColor);
+	// 	configInfo.constantEntries[3].size = sizeof(uint32_t);
+	//
+	// 	configInfo.constantEntries[4].constantID = 4;
+	// 	configInfo.constantEntries[4].offset = offsetof(IndexUniforms, textures);
+	// 	configInfo.constantEntries[4].size = sizeof(uint32_t);
+	//
+	// 	configInfo.constantsInfo = std::make_unique<VkSpecializationInfo>();
+	// 	configInfo.constantsInfo->mapEntryCount = nEntries;
+	// 	configInfo.constantsInfo->pMapEntries = configInfo.constantEntries.get();
+	// 	configInfo.constantsInfo->dataSize = sizeof(IndexUniforms);
+	// 	configInfo.constantsInfo->pData = constants;
+	// }
 
 	configInfo.shadersConfig.resize(shaders.size());
 	for (uint32_t i = 0U; i < shaders.size(); i++)

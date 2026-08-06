@@ -11,12 +11,10 @@
 #include "ThreadManager.hpp"
 #include "VoxelMap.hpp"
 #include "World.hpp"
+#include "Uniforms.hpp"
 
 
 namespace vox {
-
-using DrawDataLimit = ve::VkConstants;
-using DrawDataIndex = ve::VkConstants;
 
 class Vox
 {
@@ -67,9 +65,9 @@ class Vox
 		std::unique_ptr<ve::VulkanObject> memoryBackgroundObject;
 		std::unique_ptr<ve::VulkanObject> memoryTextObject;
 
-		std::unique_ptr<ve::ViewProjectUniform> matrixUbo;
-		std::unique_ptr<ve::MeshUniform>		materialsUbo;
-		std::unique_ptr<ve::TextUniform>		textDataUbo;
+		std::unique_ptr<ViewProjectUniform> matrixUbo;
+		std::unique_ptr<MeshUniform>		materialsUbo;
+		std::unique_ptr<TextUniform>		textDataUbo;
 
 		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;

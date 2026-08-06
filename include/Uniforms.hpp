@@ -5,7 +5,7 @@
 #include "Vectors.hpp"
 
 
-namespace ve {
+namespace vox {
 
 static_assert(sizeof(mat4) == 64 && "mat4 type size has to be 64B");
 static_assert(sizeof(vec4) == 16 && "vec4 type size has to be 16B");
@@ -55,6 +55,22 @@ struct MaterialData
 	int32_t	illuminationModel{1};	// [not used yet, but keep it for padding] range [0-10] - 0: no lighting only texture, 1: ambient + diffuse, 2: ambient + diffuse + specular
 };
 
+inline constexpr MaterialData DIRT_MATERIAL{
+	vec4(0.15f, 0.15f, 0.15f, 1.0f),
+	vec4(0.2f, 0.2f, 0.2f, 1.0f),
+	vec4(0.2f, 0.2f, 0.2f, 1.0f),
+	8.0f,
+	1.0f
+};
+
+inline constexpr MaterialData STONE_MATERIAL{
+	vec4(0.25f, 0.22f, 0.20f, 1.0f),
+	vec4(0.55f, 0.50f, 0.46f, 1.0f),
+	vec4(0.10f, 0.10f, 0.10f, 1.0f),
+	8.0f,
+	1.0f
+};
+
 // [has to comply with std140]
 struct LightData
 {
@@ -64,16 +80,18 @@ struct LightData
 	vec4 	lightDir;
 };
 
-struct VkConstants
-{
-	uint32_t	models{0U};
-	uint32_t	materials{0U};
-	uint32_t	lights{0U};
-	uint32_t	fontColor{0U};
-	uint32_t	textures{0U};
+inline constexpr LightData DEFAULT_LIGHT{
+	vec4{0.2f, 0.2f, 0.2f, 1.0f},
+	vec4{0.6f, 0.6f, 0.6f, 1.0f},
+	vec4{0.1f, 0.1f, 0.1f, 1.0f},
+	vec4{0.0f, -300.0f, 0.0f, 0.0f}
 };
 
-inline constexpr VkConstants drawingDataLimits{8U, 8U, 1U, 2U, 2U};		// NB this values depends on the actual number of entities used, better move it to vox
+inline uint32_t constexpr MAX_MODELS = 8u;
+inline uint32_t constexpr MAX_MATERIALS = 8u;
+inline uint32_t constexpr MAX_LIGHTS = 1U;
+inline uint32_t constexpr MAX_FONTCOLORS = 2U;
+inline uint32_t constexpr MAX_TEXTURES = 2U;
 
 // [has to comply with std140]
 class MeshUniform
@@ -88,12 +106,11 @@ class MeshUniform
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
 
 	private:
-		mat4 			models[drawingDataLimits.models];
-		mat4 			normals[drawingDataLimits.models];
-		MaterialData 	materials[drawingDataLimits.materials];
-		LightData 		lights[drawingDataLimits.lights];
+		mat4 			models[MAX_MODELS];
+		mat4 			normals[MAX_MODELS];
+		MaterialData 	materials[MAX_MATERIALS];
+		LightData 		lights[MAX_LIGHTS];
 };
-
 
 // [has to comply with std140]
 class TextUniform
@@ -104,9 +121,17 @@ class TextUniform
 		const void*	getData( void ) const noexcept { return static_cast<const void*>(this); }
 
 	private:
-		vec4	color[drawingDataLimits.fontColor];
+		vec4	color[MAX_FONTCOLORS];
 };
 
-class PushConstantsData {};
+// push constants data
+struct IndexUniforms
+{
+	uint32_t	indexModel{0U};
+	uint32_t	indexMaterial{0U};
+	uint32_t	indexLight{0U};
+	uint32_t	indexFontColor{0U};
+	uint32_t	indexTexture{0U};
+};
 
 }	// namespace ve

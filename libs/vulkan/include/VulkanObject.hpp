@@ -6,7 +6,6 @@
 
 #include "Vectors.hpp"
 #include "VulkanModel.hpp"
-#include "VulkanUniform.hpp"
 
 
 namespace ve {
@@ -64,8 +63,6 @@ class VulkanObject
 		
 		void							setModel(std::shared_ptr<VulkanModel> newModel) noexcept { this->model = newModel; };
 		std::shared_ptr<VulkanModel>	getModel() const noexcept;
-		void							setMaterial(MaterialData const& material) noexcept { this->materialData = material; };
-		MaterialData const&				getMaterial() const noexcept { return this->materialData; };
 		uint32_t						getID() const noexcept { return this->id; }
 		MeshLayoutDescription			getModelLayout() const noexcept;
 
@@ -76,7 +73,6 @@ class VulkanObject
 	private:
 		uint32_t						id;
 		std::shared_ptr<VulkanModel>	model{nullptr};
-		MaterialData					materialData{};
 		
 		vec3	_translation{0.0f};
 		vec3	_scale{1.0f, 1.0f, 1.0f};

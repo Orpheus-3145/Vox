@@ -5,7 +5,6 @@
 #include "VulkanDevice.hpp"
 #include "VulkanModel.hpp"
 #include "VulkanTexture.hpp"
-#include "VulkanUniform.hpp"
 
 
 namespace ve {
@@ -65,8 +64,8 @@ class VulkanPipeline
 			std::string const& fragmentShaderFile,
 			MeshLayoutDescription const& meshLayout,
 			TextureType textureUsed,
-			uint32_t sizePushConstants,
-			VkConstants const* constants
+			uint32_t sizePushConstants
+			// VkConstants const* constants
 		);
 		~VulkanPipeline( void );
 		VulkanPipeline( VulkanPipeline const& ) = delete;
@@ -85,14 +84,14 @@ class VulkanPipeline
 			std::string const& fragmentShaderFile,
 			MeshLayoutDescription const& meshLayout,
 			TextureType textureUsed = TEXTURE_PLAIN,
-			uint32_t sizePushConstants = 0U,
-			VkConstants const* constants = nullptr
+			uint32_t sizePushConstants = 0U
+			// VkConstants const* constants = nullptr
 		);
 
 	private:
 		void					setupPipelineLayout( std::vector<VkDescriptorSetLayout> const& descriptorSetLayouts );
-		void					setupPipeline( std::string const& vertexShaderFile, std::string const& fragmentShaderFile, MeshLayoutDescription const& meshLayout, TextureType textureUsed, VkRenderPass renderPass, VkConstants const* constants );
-		VulkanPipelineConfig	getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout, VkConstants const* constants, TextureType textureUsed ) const noexcept;
+		void					setupPipeline( std::string const& vertexShaderFile, std::string const& fragmentShaderFile, MeshLayoutDescription const& meshLayout, TextureType textureUsed, VkRenderPass renderPass/* , VkConstants const* constants */ );
+		VulkanPipelineConfig	getPipelineConfig( std::vector<VulkanShader> const& shaders, MeshLayoutDescription const& meshLayout/* , VkConstants const* constants */, TextureType textureUsed ) const noexcept;
 
 		VulkanDevice&		vulkanDevice;
 		VkPipelineLayout	pipelineLayout;
