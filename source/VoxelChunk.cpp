@@ -14,7 +14,7 @@ vec3i	VoxelChunk::paddedDimensions = vec3i::zero();
 ui32	VoxelChunk::paddedSize = 0;
 ui32	VoxelChunk::chunkSize = 0;
 
-VoxelChunk::VoxelChunk(vec2i loc, VertexVector* terrainVertexes, VertexVector* undergroundVertexes) :
+VoxelChunk::VoxelChunk(vec2i loc, ve::VertexVector* terrainVertexes, ve::VertexVector* undergroundVertexes) :
 	location(loc),
 	generator{Config::worldSeed, Config::minimumViewingDistance * 2},
 	terrainVertexes(terrainVertexes),
@@ -228,7 +228,7 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 				{
 					terrainVertexes->emplace_back
 					(
-						ve::VulkanModel::Vertex
+						ve::Vertex
 						{
 							vec3
 							{
@@ -245,7 +245,7 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 				{
 					terrainVertexes->emplace_back
 					(
-						ve::VulkanModel::Vertex
+						ve::Vertex
 						{
 							vec3
 							{
@@ -264,7 +264,7 @@ void	VoxelChunk::addVoxelFace(const vec3& location, size_t min, i32 voxelIndex, 
 			case VoxelType::Stone:
 				undergroundVertexes->emplace_back
 				(
-					ve::VulkanModel::Vertex
+					ve::Vertex
 					{
 						vec3
 						{

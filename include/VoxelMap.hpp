@@ -33,9 +33,9 @@ class VoxelMap
 		static inline	std::mutex	lock;
 		
 	private:
-		std::vector<VoxelChunk>		map;
-		std::vector<VertexVector*>	terrainVertexes;
-		std::vector<VertexVector*>	undergroundVertexes;
+		std::vector<VoxelChunk>			map;
+		std::vector<ve::VertexVector*>	terrainVertexes;
+		std::vector<ve::VertexVector*>	undergroundVertexes;
 	
 		i32 	squareSize;
 		vec2i	minPositions;

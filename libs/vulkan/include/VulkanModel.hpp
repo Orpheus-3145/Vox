@@ -65,6 +65,45 @@ constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayo
 constexpr inline MeshLayout ONLY_VERTEX_LAYOUT = MeshLayout::VERTEX;
 constexpr inline MeshLayout FONT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::TEXTURE;
 
+struct Vertex
+{
+	vec3		pos{0.0f};
+	vec3		normal{0.0f};
+	vec2		textureUv{0.0f};
+	uint32_t	textureIndex{0U};		// NB remove it
+
+	constexpr Vertex( vec3 const& pos, vec3 const& normal, vec2 const& textureUv, uint32_t textureIndex ) :
+		pos{pos},
+		normal{normal},
+		textureUv{textureUv},
+		textureIndex{textureIndex} {};
+    constexpr Vertex( void ) = default;
+
+	bool operator==(Vertex const& other) const noexcept
+	{
+		return	pos == other.pos &&
+				normal == other.normal &&
+				textureUv == other.textureUv &&
+				textureIndex == other.textureIndex;
+	}
+
+	bool operator!=(Vertex const& other) const noexcept
+	{
+		return !(*this == other);
+	}
+
+	bool operator<(Vertex const& other) const noexcept
+	{
+		if (pos != other.pos)
+			return pos < other.pos;
+		if (normal != other.normal)
+			return normal < other.normal;
+		return textureUv < other.textureUv;
+	}
+};
+
+using VertexVector = std::vector<Vertex>;
+using IndexVector = std::vector<ui32>;
 
 struct MeshLayoutDescription
 {
@@ -72,53 +111,17 @@ struct MeshLayoutDescription
 	std::vector<VkVertexInputAttributeDescription>	attributeConfig;
 };
 
-
 class VulkanModel
 {
 	public:
-		struct Vertex
-		{
-			vec3		pos{0.0f};
-			vec3		normal{0.0f};
-			vec2		textureUv{0.0f};
-			uint32_t	textureIndex{0U};			// NB remove it
-
-			constexpr Vertex( vec3 const& pos, vec3 const& normal, vec2 const& textureUv, uint32_t textureIndex ) :
-				pos{pos},
-				normal{normal},
-				textureUv{textureUv},
-				textureIndex{textureIndex} {};
-			constexpr Vertex( void ) = default;
-
-			bool operator==(const Vertex& other) const noexcept
-			{
-				return	pos == other.pos &&
-						normal == other.normal &&
-						textureUv == other.textureUv &&
-						textureIndex == other.textureIndex;
-			}
-			bool operator!=(const Vertex& other) const noexcept
-			{
-				return !(*this == other);
-			}
-			bool operator<(const Vertex& other) const noexcept
-			{
-				if (pos != other.pos)
-					return pos < other.pos;
-				if (normal != other.normal)
-					return normal < other.normal;
-				return textureUv < other.textureUv;
-			}
-		};
-
 		VulkanModel() = delete;
-		VulkanModel(VulkanDevice& device, const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
-		VulkanModel(VulkanDevice& device, const std::vector<std::vector<Vertex>*>& vertices, MeshType type, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& indices, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, MeshType type, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
 		~VulkanModel(void) noexcept = default;
 
-		VulkanModel(const VulkanModel&) = delete;
+		VulkanModel(VulkanModel const&) = delete;
 		VulkanModel(VulkanModel&&) = default;
-		VulkanModel& operator=(const VulkanModel&) = delete;
+		VulkanModel& operator=(VulkanModel const&) = delete;
 		VulkanModel& operator=(VulkanModel&&) = delete;
 		
 		void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
@@ -138,9 +141,9 @@ class VulkanModel
 		std::unique_ptr<VulkanBuffer>	vertexBuffer;
 		std::unique_ptr<VulkanBuffer>	indexBuffer;
 
-		void	createVertexBuffer(const std::vector<Vertex>& vertices);
-		void	createIndexBuffer(const std::vector<uint32_t>& indices);
-		void	createVertexIndexBuffer(const std::vector<std::vector<Vertex>*>& vertexes, MeshType type);
+		void	createVertexBuffer(VertexVector const& vertices);
+		void	createIndexBuffer(IndexVector const& indices);
+		void	createVertexIndexBuffer(std::vector<VertexVector*> const& vertexes, MeshType type);
 };
 
 }	// namespace ve

@@ -142,7 +142,7 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 {
 	assert(type == TEXTURE_FONT && "Texture doesn't represent a font");
 
-	std::vector<VulkanModel::Vertex> textVertexes, bgVertexes;
+	VertexVector textVertexes, bgVertexes;
 	textVertexes.resize(6 * text.size());
 
 	uint32_t fontSize = VulkanTexture::defaultSizeFont;
@@ -216,14 +216,14 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 	lineTop -= fontPadding;
 	lineBottom += fontPadding;
 
-	bgVertexes = std::vector<VulkanModel::Vertex>{
-		VulkanModel::Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		VulkanModel::Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		VulkanModel::Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+	bgVertexes = VertexVector{
+		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
 
-		VulkanModel::Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		VulkanModel::Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
-		VulkanModel::Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
 	};
 
 	return FontModel
@@ -231,14 +231,14 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 		std::make_shared<ve::VulkanModel>(
 			device,
 			bgVertexes,
-			std::vector<uint32_t>(),
+			IndexVector(),
 			0U,
 			ve::FONT_MODEL_LAYOUT
 		),
 		std::make_shared<ve::VulkanModel>(
 			device,
 			textVertexes,
-			std::vector<uint32_t>(),
+			IndexVector(),
 			0U,
 			ve::FONT_MODEL_LAYOUT
 		)

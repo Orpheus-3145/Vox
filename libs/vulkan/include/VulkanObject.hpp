@@ -26,9 +26,9 @@ struct Material
 
 struct ObjComponent
 {
-	std::vector<std::vector<uint32_t>>	faceIndices;
-	std::vector<std::vector<uint32_t>>	textureIndices;
-	std::vector<std::vector<uint32_t>>	normalIndices;
+	std::vector<IndexVector>	faceIndices;
+	std::vector<IndexVector>	textureIndices;
+	std::vector<IndexVector>	normalIndices;
 	std::string							matName;
 };
 

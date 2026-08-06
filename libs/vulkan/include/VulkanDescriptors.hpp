@@ -42,14 +42,14 @@ class UniformBindInfo : public BindInfo
 			this->bufferSizes.push_back(bufferSize);
 		}
 
-		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, std::vector<uint32_t> const& bufferSizes, BufferType bufferType) noexcept
+		UniformBindInfo( VkDescriptorSetLayoutBinding const& vkInfo, IndexVector const& bufferSizes, BufferType bufferType) noexcept
 			:	BindInfo(vkInfo), bufferSizes{bufferSizes}, bufferType{bufferType} {}
 
-		std::vector<uint32_t> const&	getBufferSizes( void ) const noexcept { return bufferSizes; }
+		IndexVector const&	getBufferSizes( void ) const noexcept { return bufferSizes; }
 		BufferType						getBufferType( void ) const noexcept { return bufferType; }
 
 	private:
-		std::vector<uint32_t>		bufferSizes;
+		IndexVector		bufferSizes;
 		BufferType					bufferType;
 };
 
@@ -86,7 +86,7 @@ class VulkanBindingSet
 		VulkanBindingSet&	addBufferBinding( uint32_t binding, VkShaderStageFlags stage, uint32_t bufferSize, BufferType bufferType = BUFFER_UNIFORM );
 		VulkanBindingSet&	addSamplerBinding( uint32_t binding, VkShaderStageFlags stage, std::string const& texturePath, TextureType textureInfo = TEXTURE_PLAIN );
 
-		VulkanBindingSet&	addBufferArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<uint32_t> const& sizes, BufferType bufferType = BUFFER_UNIFORM );
+		VulkanBindingSet&	addBufferArrayBinding( uint32_t binding, VkShaderStageFlags stage, IndexVector const& sizes, BufferType bufferType = BUFFER_UNIFORM );
 		VulkanBindingSet&	addSamplerArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<std::string> const& texturePaths, std::vector<TextureType> types );
 
 		uint32_t										getId( void ) const noexcept { return this->id; }

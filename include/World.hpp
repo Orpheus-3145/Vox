@@ -37,37 +37,37 @@ enum class Direction : ui8		// NB remove it
 };
 
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
-inline constexpr std::array<ve::VulkanModel::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES{
+inline constexpr std::array<ve::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES{
 	// FRONT
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }, 1U},
 	// BACK
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }, 1U},
 	// LEFT
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }, 1U},
 	// RIGHT
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }, 1U},
 	// TOP
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }, 1U},
 	// BOTTOM
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }, 1U}
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }, 1U}
 };
 
 // it assumes the cubemap has this shape
@@ -82,49 +82,46 @@ static constexpr float W = 1.0f / 4.0f;  // width of a tile
 static constexpr float H = 1.0f / 3.0f;  // height of a tile
 static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
-inline constexpr std::array<ve::VulkanModel::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
+inline constexpr std::array<ve::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
 	// FRONT
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }, 0U},
 	// BACK
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ W + padding, padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ W + padding, H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ W + padding, padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ W + padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }, 0U},
 	// LEFT
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }, 0U},
 	// RIGHT
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }, 0U},
 	// TOP
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, H + padding }, 0U},
 	// BOTTOM
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }, 0U},
-	ve::VulkanModel::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }, 0U}
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }, 0U}
 };
 
-using VertexVector = std::vector<ve::VulkanModel::Vertex>;
-using IndexVector = std::vector<ui32>;
+ve::VertexVector	voxelVertexes( vec3 const& relativeOrigin = vec3(0.0f) );
+ve::VertexVector	voxelAtlasVertexes( vec3 const& relativeOrigin = vec3(0.0f) );
+ve::VertexVector	voxelFaceVertexes( vec3 const& relativeOrigin = vec3(0.0f), VoxelFace face = VoxelFace::FRONT );
+ve::VertexVector	voxelFaceAtlasVertexes( vec3 const& relativeOrigin = vec3(0.0f), VoxelFace face = VoxelFace::FRONT );
 
-VertexVector	voxelVertexes( vec3 const& relativeOrigin = vec3(0.0f) );
-VertexVector	voxelAtlasVertexes( vec3 const& relativeOrigin = vec3(0.0f) );
-VertexVector	voxelFaceVertexes( vec3 const& relativeOrigin = vec3(0.0f), VoxelFace face = VoxelFace::FRONT );
-VertexVector	voxelFaceAtlasVertexes( vec3 const& relativeOrigin = vec3(0.0f), VoxelFace face = VoxelFace::FRONT );
-
-IndexVector		voxelIndexes( ui32 start = 0U );
-IndexVector		voxelFaceIndexes( ui32 start = 0U );
+ve::IndexVector		voxelIndexes( ui32 start = 0U );
+ve::IndexVector		voxelFaceIndexes( ui32 start = 0U );
 
 
 class WorldNavigator;
@@ -139,8 +136,9 @@ class World {
 		World& operator=( World const& other ) = delete;
 		World& operator=( World&& other ) = delete;
 
-		void 			createMap( void );
-		VertexVector	createVertexes( void );
+		void 				createMap( void );
+		ve::VertexVector	createVertexes( void );
+
 		VoxelType		getVoxelType( vec3ui const& index ) const;
 		VoxelType		getVoxelType( ui32 x, ui32 y, ui32 z ) const;
 		vec3			getRealWorldPos( ui32 x, ui32 y, ui32 z ) const noexcept;
@@ -153,8 +151,8 @@ class World {
 		vec3ui		indexToPos3D( ui32 index ) const noexcept;
 
 	private:
-		void	addVoxelVertexes(VertexVector& vertexes, VoxelType type, vec3 const& relativePos);
-		void	addFaceVertexes(VertexVector& vertexes, VoxelType type, vec3 const& relativePos, VoxelFace face = VoxelFace::FRONT);		// NB pass the face to insert, not directly the vertex index start, NB#2 move this method outside of the class, NB#3 make getVertexRelative behave at the same way
+		void	addVoxelVertexes(ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos);
+		void	addFaceVertexes(ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos, VoxelFace face = VoxelFace::FRONT);		// NB pass the face to insert, not directly the vertex index start, NB#2 move this method outside of the class, NB#3 make getVertexRelative behave at the same way
 
 		vec2i const				indexWorld;
 		vec3ui const			worldSize;
@@ -204,9 +202,9 @@ class WorldNavigator {
 		vec2i	currentWorldPos{-1000};
 		bool	updateModel{false};
 		size_t	currentVRAM{0UL};
-
-		std::unordered_map<vec2i,World>			worlds;
-		std::unordered_map<vec2i,VertexVector>	vertexes;
+		
+		std::unordered_map<vec2i,World>				worlds;
+		std::unordered_map<vec2i,ve::VertexVector>	vertexes;
 };
 
 }	// namespace vox

@@ -40,7 +40,7 @@ VulkanBindingSet&	VulkanBindingSet::addSamplerBinding( uint32_t binding, VkShade
 	return *this;
 }
 
-VulkanBindingSet&	VulkanBindingSet::addBufferArrayBinding( uint32_t binding, VkShaderStageFlags stage, std::vector<uint32_t> const& sizes, BufferType bufferType )
+VulkanBindingSet&	VulkanBindingSet::addBufferArrayBinding( uint32_t binding, VkShaderStageFlags stage, IndexVector const& sizes, BufferType bufferType )
 {
 	if (bufferType != BUFFER_UNIFORM and bufferType != BUFFER_STORAGE)
 	{
@@ -394,7 +394,7 @@ VulkanSamplerDescriptor const* VulkanDescriptorSet::getSamplerDescriptor(uint32_
 VulkanBufferDescriptor::VulkanBufferDescriptor(UniformBindInfo const& binding, VulkanDevice& vulkanDevice, VkDescriptorSet descriptorSet)
 	: VulkanDescriptor(binding)
 {
-	std::vector<uint32_t> const&	bufferSizes = binding.getBufferSizes();
+	IndexVector const&	bufferSizes = binding.getBufferSizes();
 	BufferType						bufferType = binding.getBufferType();
 	uint32_t 						nBuffers = binding.getNitems();
 

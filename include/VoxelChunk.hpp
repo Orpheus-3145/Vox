@@ -43,7 +43,7 @@ class VoxelChunk
 	public:
 
 		VoxelChunk() = delete;
-		VoxelChunk(vec2i loc, VertexVector* terrainVertexes, VertexVector* undergroundVertexes);
+		VoxelChunk(vec2i loc, ve::VertexVector* terrainVertexes, ve::VertexVector* undergroundVertexes);
 		~VoxelChunk() = default;
 		VoxelChunk(const VoxelChunk&) = delete;
 		VoxelChunk(VoxelChunk&&) noexcept = default;
@@ -79,8 +79,8 @@ class VoxelChunk
 		NoiseGenerator	generator;
 
 		std::vector<VoxelType>		map;
-		VertexVector*				terrainVertexes{nullptr};
-		VertexVector*				undergroundVertexes{nullptr};
+		ve::VertexVector*			terrainVertexes{nullptr};
+		ve::VertexVector*			undergroundVertexes{nullptr};
 		std::array<VoxelChunk*, 4>	adjacentChunks{};
 };
 
