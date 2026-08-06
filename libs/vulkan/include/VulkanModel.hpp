@@ -10,34 +10,7 @@
 
 namespace ve {
 
-inline constexpr uint32_t	VERTEX_PER_VOXEL = 24U;	// number of vertexes per voxel		NB move inside World.hpp
-inline constexpr uint32_t	INDEX_PER_VOXEL = 36U;	// number of vertex indexes per voxel
-inline constexpr uint32_t	VERTEX_PER_FACE = 4U;	// number of vertexes per face (of a voxel)
-inline constexpr uint32_t	INDEX_PER_FACE = 6U;	// number of vertex indexes per voxel
-
-// hard-coded indexes of a voxel
-inline constexpr std::array<ui32, ve::INDEX_PER_VOXEL> VOXEL_INDEXES{		// NB move to world.hpp
-	0U, 2U, 1U, 		// front face
-	0U, 3U, 2U, 		// front face
-	4U, 6U, 5U, 		// back face
-	4U, 7U, 6U, 		// back face
-	8U, 10U, 9U, 		// left face
-	8U, 11U, 10U, 		// left face
-	12U, 14U, 13U, 		// right face
-	12U, 15U, 14U, 		// right face
-	16U, 18U, 17U, 		// top face
-	16U, 19U, 18U, 		// top face
-	20U, 22U, 21U, 		// bottom face
-	20U, 23U, 22U		// bottom face
-};
-
-// hard-coded indexes of a face
-inline constexpr std::array<ui32, ve::INDEX_PER_FACE> FACE_INDEXES{
-	0U, 2U, 1U, 		// front face
-	0U, 3U, 2U	 		// front face
-};
-
-enum class MeshLayout : uint32_t
+enum class MeshLayout : uint32_t		// NB change name
 {
 	VERTEX = 1 << 0,
 	NORMAL = 1 << 1,
@@ -116,7 +89,7 @@ class VulkanModel
 	public:
 		VulkanModel() = delete;
 		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& indices, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
-		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, MeshType type, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, IndexVector const& instanceIndices, size_t nInstances, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
 		~VulkanModel(void) noexcept = default;
 
 		VulkanModel(VulkanModel const&) = delete;
@@ -135,15 +108,15 @@ class VulkanModel
 		MeshLayout		layout;
 		bool			isIndexed{false};
 
-		uint32_t		vertexCount{0U};
-		uint32_t		indexCount{0U};
+		size_t			vertexCount{0UL};
+		size_t			indexCount{0UL};
 
 		std::unique_ptr<VulkanBuffer>	vertexBuffer;
 		std::unique_ptr<VulkanBuffer>	indexBuffer;
 
 		void	createVertexBuffer(VertexVector const& vertices);
 		void	createIndexBuffer(IndexVector const& indices);
-		void	createVertexIndexBuffer(std::vector<VertexVector*> const& vertexes, MeshType type);
+		void	createVertexIndexBuffer(std::vector<VertexVector*> const& vertexes, IndexVector const& instanceIndices, size_t nInstances);
 };
 
 }	// namespace ve

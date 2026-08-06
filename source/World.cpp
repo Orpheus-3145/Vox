@@ -11,7 +11,7 @@ ve::VertexVector voxelVertexes( vec3 const& relativeOrigin )
 {
 	ve::VertexVector vertexes{VOXEL_VERTEXES.begin(), VOXEL_VERTEXES.end()};
 
-	for (ui32 i = 0U; i < ve::VERTEX_PER_VOXEL; i++)
+	for (size_t i = 0U; i < VERTEX_PER_VOXEL; i++)
 	{
 		vertexes[i].pos += relativeOrigin;
 	}
@@ -22,7 +22,7 @@ ve::VertexVector voxelAtlasVertexes( vec3 const& relativeOrigin )
 {
 	ve::VertexVector vertexes{VOXEL_VERTEXES_ATLAS.begin(), VOXEL_VERTEXES_ATLAS.end()};
 
-	for (ui32 i = 0U; i < ve::VERTEX_PER_VOXEL; i++)
+	for (size_t i = 0U; i < VERTEX_PER_VOXEL; i++)
 	{
 		vertexes[i].pos += relativeOrigin;
 	}
@@ -32,10 +32,10 @@ ve::VertexVector voxelAtlasVertexes( vec3 const& relativeOrigin )
 ve::VertexVector voxelFaceVertexes( vec3 const& relativeOrigin, VoxelFace face )
 {
 	auto firstFaceVertex = VOXEL_VERTEXES.begin() + static_cast<i8>(face);
-	auto lastFaceVertex = firstFaceVertex + ve::VERTEX_PER_FACE;
+	auto lastFaceVertex = firstFaceVertex + VERTEX_PER_FACE;
 	ve::VertexVector vertexes(firstFaceVertex, lastFaceVertex);
 
-	for (ui32 i = 0U; i < ve::VERTEX_PER_FACE; i++)
+	for (size_t i = 0U; i < VERTEX_PER_FACE; i++)
 	{
 		vertexes[i].pos += relativeOrigin;
 		vertexes[i].textureIndex = 1U;
@@ -46,10 +46,10 @@ ve::VertexVector voxelFaceVertexes( vec3 const& relativeOrigin, VoxelFace face )
 ve::VertexVector voxelFaceAtlasVertexes( vec3 const& relativeOrigin, VoxelFace face )
 {
 	auto firstFaceVertex = VOXEL_VERTEXES_ATLAS.begin() + static_cast<i8>(face);
-	auto lastFaceVertex = firstFaceVertex + ve::VERTEX_PER_FACE;
+	auto lastFaceVertex = firstFaceVertex + VERTEX_PER_FACE;
 	ve::VertexVector vertexes(firstFaceVertex, lastFaceVertex);
 
-	for (ui32 i = 0U; i < ve::VERTEX_PER_FACE; i++)
+	for (size_t i = 0U; i < VERTEX_PER_FACE; i++)
 	{
 		vertexes[i].pos += relativeOrigin;
 	}
@@ -58,9 +58,9 @@ ve::VertexVector voxelFaceAtlasVertexes( vec3 const& relativeOrigin, VoxelFace f
 
 ve::IndexVector voxelIndexes( ui32 start )
 {
-	ve::IndexVector indexes{ve::VOXEL_INDEXES.begin(), ve::VOXEL_INDEXES.end()};
+	ve::IndexVector indexes{VOXEL_INDEXES.begin(), VOXEL_INDEXES.end()};
 
-	for (ui32 i = 0U; i < ve::INDEX_PER_VOXEL; i++)
+	for (size_t i = 0U; i < INDEX_PER_VOXEL; i++)
 	{
 		indexes[i] += start;
 	}
@@ -69,9 +69,9 @@ ve::IndexVector voxelIndexes( ui32 start )
 
 ve::IndexVector voxelFaceIndexes( ui32 start )
 {
-	ve::IndexVector indexes{ve::FACE_INDEXES.begin(), ve::FACE_INDEXES.end()};
+	ve::IndexVector indexes{FACE_INDEXES.begin(), FACE_INDEXES.end()};
 
-	for (ui32 i = 0U; i < ve::INDEX_PER_FACE; i++)
+	for (size_t i = 0U; i < INDEX_PER_FACE; i++)
 	{
 		indexes[i] += start;
 	}
@@ -151,10 +151,24 @@ ve::VertexVector World::createVertexes( void )
 
 				for (auto const& [faceDirection, position] : surroundings)
 				{
-					if (this->navigator.getVoxelType(position) == VoxelType::Air)
+					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue ;
+
+					ve::VertexVector faceVertexes;
+					switch (voxel)
 					{
-						this->addFaceVertexes(vertexes, voxel, globalPos, faceDirection);
+						case VoxelType::Dirt:
+							faceVertexes = voxelFaceAtlasVertexes(globalPos, faceDirection);
+							break;
+
+						case VoxelType::Stone:
+							faceVertexes = voxelFaceVertexes(globalPos, faceDirection);
+							break;
+
+						default:
+							break;
 					}
+
+					vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
 				}
 			}
 		}
@@ -216,48 +230,6 @@ vec3ui World::indexToPos3D( ui32 index ) const noexcept
 	return pos3D;
 }
 
-void World::addFaceVertexes( ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos, VoxelFace face )
-{
-	ve::VertexVector faceVertexes;
-
-	switch (type)
-	{
-		case VoxelType::Dirt:
-			faceVertexes = voxelFaceAtlasVertexes(relativePos, face);
-			break;
-
-		case VoxelType::Stone:
-			faceVertexes = voxelFaceVertexes(relativePos, face);
-			break;
-
-		default:
-			break;
-	}
-
-	vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
-}
-
-void World::addVoxelVertexes( ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos )
-{
-	ve::VertexVector voxelVertexess;
-
-	switch (type)
-	{
-		case VoxelType::Dirt:
-			voxelVertexess = voxelAtlasVertexes(relativePos);
-			break;
-
-		case VoxelType::Stone:
-			voxelVertexess = voxelVertexes(relativePos);
-			break;
-
-		default:
-			break;
-	}
-
-	vertexes.insert(vertexes.end(), voxelVertexess.begin(), voxelVertexess.end());
-}
-
 
 void WorldNavigator::spawnCloseByWorlds( vec3 const& start )
 {
@@ -305,6 +277,11 @@ void WorldNavigator::spawnCloseByWorlds( vec3 const& start )
 	}
 }
 
+size_t WorldNavigator::getMemoryUsed( void ) const noexcept
+{
+	return this->nFaces * (VERTEX_PER_FACE * sizeof(ve::Vertex) + INDEX_PER_FACE * sizeof(ui32));
+}
+
 VoxelType WorldNavigator::getVoxelType( vec3 const& globalPos ) const noexcept
 {
 	vec2i	worldIndex = this->getIndexWorld(globalPos);
@@ -330,7 +307,7 @@ std::unique_ptr<ve::VulkanModel> WorldNavigator::createNewModel( ve::VulkanDevic
 	{
 		vertexes[i++] = &vertexChunk;
 	} 
-	std::unique_ptr<ve::VulkanModel> worldsModel = std::make_unique<ve::VulkanModel>(device, vertexes, ve::MeshType::FACE, binding);
+	std::unique_ptr<ve::VulkanModel> worldsModel = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), this->nFaces, binding);
 	this->updateModel = false;
 
 	return worldsModel;
@@ -348,12 +325,8 @@ void WorldNavigator::generateVertexWorld( vec2i const& worldIndex )
 {
 	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
 
-	World& world = this->worlds.at(worldIndex);
-	this->vertexes[worldIndex] = world.createVertexes();
-
-	size_t nVertexes = this->vertexes[worldIndex].size();
-	this->currentVRAM += nVertexes * sizeof(ve::Vertex);
-	this->currentVRAM += (nVertexes / ve::VERTEX_PER_FACE) * ve::INDEX_PER_FACE * sizeof(uint32_t);
+	this->vertexes[worldIndex] = this->worlds.at(worldIndex).createVertexes();
+	this->nFaces += this->vertexes.at(worldIndex).size() / VERTEX_PER_FACE;
 
 	this->updateModel = true;
 }
@@ -362,10 +335,7 @@ void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 {
 	if (this->doesWorldExist(worldToDropIndex) == false) return;
 
-	size_t nVertexes = this->vertexes[worldToDropIndex].size();
-	this->currentVRAM -= nVertexes * sizeof(ve::Vertex);
-	this->currentVRAM -= (nVertexes / ve::VERTEX_PER_FACE) * ve::INDEX_PER_FACE * sizeof(uint32_t);
-
+	this->nFaces -= this->vertexes.at(worldToDropIndex).size() / VERTEX_PER_FACE;
 	this->worlds.erase(worldToDropIndex);
 	this->vertexes.erase(worldToDropIndex);
 }

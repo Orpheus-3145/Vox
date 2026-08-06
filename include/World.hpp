@@ -36,8 +36,13 @@ enum class Direction : ui8		// NB remove it
 	West
 };
 
+inline constexpr size_t	VERTEX_PER_VOXEL = 24U;	// number of vertexes per voxe
+inline constexpr size_t	INDEX_PER_VOXEL = 36U;	// number of vertex indexes per voxel
+inline constexpr size_t	VERTEX_PER_FACE = 4U;	// number of vertexes per face (of a voxel)
+inline constexpr size_t	INDEX_PER_FACE = 6U;	// number of vertex indexes per voxel
+
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
-inline constexpr std::array<ve::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES{
+inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES{
 	// FRONT
 	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }, 1U},
 	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }, 1U},
@@ -82,7 +87,7 @@ static constexpr float W = 1.0f / 4.0f;  // width of a tile
 static constexpr float H = 1.0f / 3.0f;  // height of a tile
 static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
-inline constexpr std::array<ve::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
+inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
 	// FRONT
 	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }, 0U},
 	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }, 0U},
@@ -113,6 +118,28 @@ inline constexpr std::array<ve::Vertex,ve::VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLA
 	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }, 0U},
 	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }, 0U},
 	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }, 0U}
+};
+
+// hard-coded indexes of a voxel
+inline constexpr std::array<ui32, INDEX_PER_VOXEL> VOXEL_INDEXES{
+	0U, 2U, 1U, 		// front face
+	0U, 3U, 2U, 		// front face
+	4U, 6U, 5U, 		// back face
+	4U, 7U, 6U, 		// back face
+	8U, 10U, 9U, 		// left face
+	8U, 11U, 10U, 		// left face
+	12U, 14U, 13U, 		// right face
+	12U, 15U, 14U, 		// right face
+	16U, 18U, 17U, 		// top face
+	16U, 19U, 18U, 		// top face
+	20U, 22U, 21U, 		// bottom face
+	20U, 23U, 22U		// bottom face
+};
+
+// hard-coded indexes of a face
+inline constexpr std::array<ui32, INDEX_PER_FACE> FACE_INDEXES{
+	0U, 2U, 1U, 		// front face
+	0U, 3U, 2U	 		// front face
 };
 
 ve::VertexVector	voxelVertexes( vec3 const& relativeOrigin = vec3(0.0f) );
@@ -151,9 +178,6 @@ class World {
 		vec3ui		indexToPos3D( ui32 index ) const noexcept;
 
 	private:
-		void	addVoxelVertexes(ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos);
-		void	addFaceVertexes(ve::VertexVector& vertexes, VoxelType type, vec3 const& relativePos, VoxelFace face = VoxelFace::FRONT);		// NB pass the face to insert, not directly the vertex index start, NB#2 move this method outside of the class, NB#3 make getVertexRelative behave at the same way
-
 		vec2i const				indexWorld;
 		vec3ui const			worldSize;
 
@@ -178,7 +202,7 @@ class WorldNavigator {
 
 		void		spawnCloseByWorlds( vec3 const& start );
 		VoxelType	getVoxelType( vec3 const& globalPos ) const noexcept;
-		size_t		getMemoryUsed( void ) const noexcept { return this->currentVRAM; }
+		size_t		getMemoryUsed( void ) const noexcept;
 		bool		spawnNewModel( void ) const noexcept { return this->updateModel; }
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
@@ -201,7 +225,7 @@ class WorldNavigator {
 
 		vec2i	currentWorldPos{-1000};
 		bool	updateModel{false};
-		size_t	currentVRAM{0UL};
+		size_t	nFaces{0UL};
 		
 		std::unordered_map<vec2i,World>				worlds;
 		std::unordered_map<vec2i,ve::VertexVector>	vertexes;

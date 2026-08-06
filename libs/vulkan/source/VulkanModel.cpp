@@ -26,13 +26,14 @@ VulkanModel::VulkanModel(
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
 	std::vector<VertexVector*> const& vertices,
-	MeshType type,
+	IndexVector const& instanceIndices,
+	size_t nInstances,
 	uint32_t binding,
 	MeshLayout layout
 ) :
 	vulkanDevice{device}, binding{binding}, layout{layout}
 {
-	this->createVertexIndexBuffer(vertices, type);
+	this->createVertexIndexBuffer(vertices, instanceIndices, nInstances);
 }
 
 void	VulkanModel::bindBuffer(VkCommandBuffer commandBuffer) const noexcept
@@ -63,14 +64,14 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 void	VulkanModel::createVertexBuffer(const VertexVector& vertices)
 {
 	this->vertexCount = static_cast<uint32_t>(vertices.size());
-	assert(this->vertexCount >= 3 && "Vertex count must be at least 3");
+	assert(this->vertexCount >= 3UL && "Vertex count must be at least 3");
 
-	uint32_t	vertexSize = 0U;
+	size_t	vertexSize = 0UL;
 	if (this->layout & MeshLayout::VERTEX) vertexSize += sizeof(vec3);
 	if (this->layout & MeshLayout::NORMAL) vertexSize += sizeof(vec3);
 	if (this->layout & MeshLayout::TEXTURE) vertexSize += sizeof(vec2);
 	if (this->layout & MeshLayout::RANDOM_INDEX_TEXT) vertexSize += sizeof(uint32_t);
-	assert(vertexSize > 0U && "Empty layout for model");
+	assert(vertexSize > 0UL && "Empty layout for model");
 
 	VulkanBuffer	stagingBuffer(
 		this->vulkanDevice,
@@ -129,11 +130,9 @@ void	VulkanModel::createVertexBuffer(const VertexVector& vertices)
 void	VulkanModel::createIndexBuffer(const IndexVector& indices)
 {
 	this->indexCount = static_cast<uint32_t>(indices.size());
-	assert(this->indexCount >= 3 && "Index count must be at least 3");
+	assert(this->indexCount >= 3UL && "Index count must be at least 3");
 
-	uint32_t		indexSize = sizeof(uint32_t);
-	VkDeviceSize	bufferSize = indexSize * this->indexCount;
-
+	size_t		indexSize = sizeof(uint32_t);
 	VulkanBuffer	stagingBuffer(
 		this->vulkanDevice,
 		indexSize,
@@ -153,48 +152,29 @@ void	VulkanModel::createIndexBuffer(const IndexVector& indices)
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		BUFFER_INDEX
 	);
+
+	VkDeviceSize	bufferSize = indexSize * this->indexCount;
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->indexBuffer->getBuffer(), bufferSize);
 	this->isIndexed = true;
 }
 
-void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vertices, MeshType type)
+void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vertices, IndexVector const& instanceIndices, size_t nInstances)
 {
 	for (VertexVector* worldVertexes : vertices)
 	{
 		this->vertexCount += worldVertexes->size();
 	}
-	assert(this->vertexCount >= 3 && "Vertex count must be at least 3");
+	assert(this->vertexCount >= 3UL && "Vertex count must be at least 3");
+	assert(this->vertexCount % nInstances == 0UL && "Mismatch between vertexes and number of instances");
 
-	// depending on the type of the instances, use a 'template' set of indexes: face-> 6 indexes, cube-> 36 indexes 
-	IndexVector	instanceIndices;
-	uint32_t				nVertexForInstance = 0U, nInstances = 0U;
-	if (type == MeshType::VOXEL)
-	{
-		assert(this->vertexCount % VERTEX_PER_VOXEL == 0U && "Vertexes represent voxels but the number is not multiple of 8");
-		// a voxel has always 24 vertexes and 36 indexes, with this proportion, given
-		// an amount of voxels, the total number of indexes is: nVoxels * nIndexPerVoxel / nVertexPerVoxel
-		nVertexForInstance = VERTEX_PER_VOXEL;
-		nInstances = this->vertexCount / nVertexForInstance;
-		this->indexCount = nInstances * INDEX_PER_VOXEL;
-		instanceIndices.insert(instanceIndices.begin(), VOXEL_INDEXES.begin(), VOXEL_INDEXES.end());
-	}
-	else if (type == MeshType::FACE)
-	{
-		assert(this->vertexCount % VERTEX_PER_FACE == 0U && "Vertexes represent faces but the number is not multiple of 6");
-		// a face has always 4 vertexes and 6 indexes, with this proportion, given
-		// an amount of faces, the total number of indexes is: nFaces * nIndexPerFace / nVertexPerFace
-		nVertexForInstance = VERTEX_PER_FACE;
-		nInstances = this->vertexCount / nVertexForInstance;
-		this->indexCount = nInstances * INDEX_PER_FACE;
-		instanceIndices.insert(instanceIndices.begin(), FACE_INDEXES.begin(), FACE_INDEXES.end());
-	}
+	this->indexCount = instanceIndices.size() * nInstances;
 
-	uint32_t vertexSize = 0U;
+	size_t vertexSize = 0UL;
 	if (this->layout & MeshLayout::VERTEX) vertexSize += sizeof(vec3);
 	if (this->layout & MeshLayout::NORMAL) vertexSize += sizeof(vec3);
 	if (this->layout & MeshLayout::TEXTURE) vertexSize += sizeof(vec2);
 	if (this->layout & MeshLayout::RANDOM_INDEX_TEXT) vertexSize += sizeof(uint32_t);
-	assert(vertexSize > 0U && "Empty layout for model");
+	assert(vertexSize > 0UL && "Empty layout for model");
 
 	VulkanBuffer	stagingBufferVertex(
 		this->vulkanDevice,
@@ -205,7 +185,7 @@ void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vert
 	);
 	stagingBufferVertex.map();
 
-	uint32_t		indexSize = sizeof(uint32_t);
+	size_t			indexSize = sizeof(uint32_t);
 	VulkanBuffer	stagingBufferIndex(
 		this->vulkanDevice,
 		indexSize,
@@ -215,13 +195,11 @@ void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vert
 	);
 	stagingBufferIndex.map();
 
-	uint32_t offsetVertex = 0U;		// this is a byte offset
+	uint32_t offsetVertex = 0U;
 	for (VertexVector* chunkVertexes : vertices) {
 		// some chunks might be empty, skip them
-		if (chunkVertexes->data() == nullptr)
-		{
-			continue;
-		}
+		if (chunkVertexes->data() == nullptr) continue;
+
 		// insert vertexes of this chunk in the staging buffer
 		uint32_t nVertexes = chunkVertexes->size();
 		if (this->layout == DEFAULT_MODEL_LAYOUT)
@@ -261,6 +239,7 @@ void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vert
 	// index data doesn't 'exist' yet because the indexes depend
 	// on the vertexes already inserted, each one is manually written inside the staging buffer
 	uint32_t*	stagingIndexPtr = static_cast<uint32_t*>(stagingBufferIndex.getMappedMemory());
+	uint32_t	nVertexForInstance = this->vertexCount / nInstances;
 	for (uint32_t i = 0; i < nInstances; i++)
 	{
 		for (uint32_t index : instanceIndices)
