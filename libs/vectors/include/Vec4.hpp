@@ -1,11 +1,11 @@
 #pragma once
 
 #include <ostream>
+#include <cmath>
 
 #include "Vec3.hpp"
+#include "Utils.hpp"
 
-
-class vec3;
 
 class vec4
 {
@@ -27,9 +27,6 @@ class vec4
 	constexpr explicit vec4(float val) : x(val), y(val), z(val), w(val) {}
 	constexpr vec4(float x, float y, float z, float w) : x(x), y(y), z(z), w(w) {}
 	constexpr explicit vec4(const vec3& v3, float w = 0.0f) : x(v3.x), y(v3.y), z(v3.z), w(w) {}
-	constexpr vec4(const vec4& other) : x(other.x), y(other.y), z(other.z), w(other.w) {}
-	vec4&	operator=(const vec4& other);
-	~vec4() = default;
 
 	vec4	operator+(const vec4& other) const noexcept { return vec4(x + other.x, y + other.y, z + other.z, w + other.w); }
 	vec4	operator-(const vec4& other) const noexcept { return vec4(x - other.x, y - other.y, z - other.z, w - other.w); }
@@ -39,11 +36,17 @@ class vec4
 	vec4&	operator-=(const vec4& other) noexcept { x -= other.x; y -= other.y; z -= other.z; w -= other.w; return *this; }
 	vec4&	operator*=(float scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
 	vec4&	operator/=(float scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; w /= scalar; return *this; }
+
 	bool	operator==(const vec4& other) const noexcept { return x == other.x && y == other.y && z == other.z && w == other.w; }
 	bool	operator!=(const vec4& other) const noexcept { return !(*this == other); }
 
-	float&			operator[](int index) noexcept { return data[index]; }
-	const float&	operator[](int index) const noexcept { return data[index]; }
+	bool	operator<(const vec4& other) const noexcept;
+	bool	operator<=(const vec4& other) const noexcept { return *this < other || *this == other; }
+	bool	operator>(const vec4& other) const noexcept { return !(*this <= other); }
+	bool	operator>=(const vec4& other) const noexcept { return !(*this < other); }
+
+	float&			operator[](i32 index) noexcept { return data[index]; }
+	const float&	operator[](i32 index) const noexcept { return data[index]; }
 
 	vec4	clone() const noexcept { return vec4(x, y, z, w); }
 	float	length() const noexcept { return std::sqrt(x * x + y * y + z * z + w * w); }

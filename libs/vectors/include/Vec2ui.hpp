@@ -2,6 +2,8 @@
 
 #include <ostream>
 
+#include "Utils.hpp"
+
 
 class vec2ui
 {
@@ -9,22 +11,17 @@ class vec2ui
 
 	union
 	{
-		unsigned int	data[2];
+		ui32	data[2];
 		struct
 		{
-			unsigned int	x;
-			unsigned int	y;
+			ui32	x;
+			ui32	y;
 		};
 	};
 
 	constexpr vec2ui() : x(0), y(0) {}
-	constexpr explicit vec2ui(unsigned int val) : x(val), y(val) {}
-	constexpr vec2ui(unsigned int x, unsigned int y) : x(x), y(y) {}
-	constexpr vec2ui(const vec2ui&) noexcept = default;
-	constexpr vec2ui(vec2ui&&) noexcept = default;
-	vec2ui&	operator=(const vec2ui&) noexcept = default;
-	vec2ui&	operator=(vec2ui&&) noexcept = default;
-	~vec2ui() = default;
+	constexpr explicit vec2ui(ui32 val) : x(val), y(val) {}
+	constexpr vec2ui(ui32 x, ui32 y) : x(x), y(y) {}
 
 	vec2ui	operator+(const vec2ui& other) const noexcept { return vec2ui(x + other.x, y + other.y); }
 	vec2ui	operator-(const vec2ui& other) const noexcept { return vec2ui(x - other.x, y - other.y); }
@@ -33,13 +30,14 @@ class vec2ui
 
 	bool	operator==(const vec2ui& other) const noexcept { return x == other.x && y == other.y; }
 	bool	operator!=(const vec2ui& other) const noexcept { return !(*this == other); }
+
 	bool	operator<(const vec2ui& other) const noexcept;
 	bool	operator<=(const vec2ui& other) const noexcept { return *this < other || *this == other; }
 	bool	operator>(const vec2ui& other) const noexcept { return !(*this <= other); }
 	bool	operator>=(const vec2ui& other) const noexcept { return !(*this < other); }
 
-	unsigned int&		operator[](unsigned int index) noexcept { return data[index]; }
-	const unsigned int&	operator[](unsigned int index) const noexcept { return data[index]; }
+	ui32&		operator[](ui32 index) noexcept { return data[index]; }
+	const ui32&	operator[](ui32 index) const noexcept { return data[index]; }
 	
 	vec2ui	clone() const noexcept { return vec2ui(x, y); }
 	
@@ -59,8 +57,8 @@ struct hash<vec2ui>
 {
 	size_t operator()(const vec2ui& v) const noexcept
 	{
-		size_t h1 = hash<uint32_t>{}(v.x);
-		size_t h2 = hash<uint32_t>{}(v.y);
+		size_t h1 = hash<ui32>{}(v.x);
+		size_t h2 = hash<ui32>{}(v.y);
 		size_t seed = h1;
 
 		seed ^= h2 + 0x9e3779b9 + (seed << 6) + (seed >> 2);

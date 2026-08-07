@@ -3,16 +3,33 @@
 #include "Vec4.hpp"
 
 
-vec4&	vec4::operator=(const vec4& other)
+bool	vec4::operator<(const vec4& other) const noexcept
 {
-	if (this != &other)
+	if (x < other.x)
 	{
-		x = other.x;
-		y = other.y;
-		z = other.z;
-		w = other.w;
+		return true;
 	}
-	return *this;
+	if (x > other.x)
+	{
+		return false;	
+	}
+	if (y < other.y)
+	{
+		return true;
+	}
+	if (y > other.y)
+	{
+		return false;
+	}
+	if (z < other.z)
+	{
+		return true;
+	}
+	if (z > other.z)
+	{
+		return false;
+	}
+	return w < other.w;
 }
 
 vec4&	vec4::normalize() noexcept

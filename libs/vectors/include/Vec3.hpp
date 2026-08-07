@@ -2,14 +2,13 @@
 
 #include <algorithm>
 #include <ostream>
+#include <cmath>
 
 #include "Vec2.hpp"
-#include "Quat.hpp"
-#include "Types.hpp"
+#include "Utils.hpp"
 
 
 class vec2;
-class vec4;
 class mat4;
 class quat;
 
@@ -38,11 +37,7 @@ class vec3
 	constexpr explicit vec3(float val) : x(val), y(val), z(val) {}
 	constexpr vec3(float x, float y, float z) : x(x), y(y), z(z) {}
 	constexpr vec3(i32 x, i32 y, i32 z) : x(static_cast<float>(x)), y(static_cast<float>(y)), z(static_cast<float>(z)) {}
-	constexpr explicit vec3(const vec2& v2, float z = 0.0f) : x(v2.x), y(v2.y), z(z) {}
-	vec3(const vec4& other);
-	constexpr vec3(const vec3& other) : x(other.x), y(other.y), z(other.z) {}
-	vec3&	operator=(const vec3& other);
-	~vec3() = default;
+	constexpr explicit vec3(vec2 const& v2, float z = 0.0f) : x(v2.x), y(v2.y), z(z) {}
 
 	vec3	operator+(const vec3& other) const noexcept { return vec3(x + other.x, y + other.y, z + other.z); }
 	vec3	operator-(const vec3& other) const noexcept { return vec3(x - other.x, y - other.y, z - other.z); }
@@ -55,13 +50,14 @@ class vec3
 
 	bool	operator==(const vec3& other) const noexcept { return x == other.x && y == other.y && z == other.z; }
 	bool	operator!=(const vec3& other) const noexcept { return !(*this == other); }
+
 	bool	operator<(const vec3& other) const noexcept;
 	bool	operator<=(const vec3& other) const noexcept { return *this < other || *this == other; }
 	bool	operator>(const vec3& other) const noexcept { return !(*this <= other); }
 	bool	operator>=(const vec3& other) const noexcept { return !(*this < other); }
 
-	float&			operator[](int index) noexcept { return data[index]; }
-	const float&	operator[](int index) const noexcept { return data[index]; }
+	float&			operator[](i32 index) noexcept { return data[index]; }
+	const float&	operator[](i32 index) const noexcept { return data[index]; }
 
 	float	length() const noexcept { return std::sqrt(x * x + y * y + z * z); }
 	float	lengthSquared() const noexcept { return x * x + y * y + z * z; }

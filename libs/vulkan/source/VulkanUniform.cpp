@@ -31,7 +31,7 @@ void	MeshUniform::updateLight( uint32_t index, LightData const& newLight, mat4 c
 	assert(index < drawingDataLimits.lights && "light source index out of bounds");
 
 	this->lights[index] = newLight;
-	this->updateLightDir(index, vec3{newLight.lightDir}, viewMatrix);
+	this->updateLightDir(index, vec3{newLight.lightDir.x, newLight.lightDir.y, newLight.lightDir.z}, viewMatrix);
 }
 
 void	MeshUniform::updateLightDir( uint32_t index, vec3 const& newDir, mat4 const& viewMatrix ) noexcept

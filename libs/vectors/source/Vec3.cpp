@@ -7,18 +7,6 @@
 #include "Mat4.hpp"
 
 
-vec3::vec3(const vec4& other) : x(other.x), y(other.y), z(other.z) {}
-
-vec3&	vec3::operator=(const vec3& other)
-{
-	if (this != &other)
-	{
-		x = other.x;
-		y = other.y;
-		z = other.z;
-	}
-	return *this;
-}
 
 bool	vec3::operator<(const vec3& other) const noexcept
 {

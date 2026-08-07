@@ -1,4 +1,7 @@
-#include "Vectors.hpp"
+#include <cmath>
+
+#include "Utils.hpp"
+
 
 float	fastInverseSqrt(float number) noexcept
 {
@@ -10,7 +13,7 @@ float	fastInverseSqrt(float number) noexcept
 	return floatInt.f;
 }
 
-float	radians(float degrees) noexcept
+float	degreesToRadians(float degrees) noexcept
 {
 	return degrees * (M_PI / 180.0f);
 }

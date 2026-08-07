@@ -33,7 +33,7 @@ mat4 Camera::getProjectionMatrix( bool columnMajor ) const noexcept
 	float fov = CameraSettings::projectionFov;
 	if ( fov > M_2_PI or fov < -M_2_PI )
 	{
-		fov = radians(fov);
+		fov = degreesToRadians(fov);
 	}
 	float aspect = static_cast<float>(this->size.width) / static_cast<float>(this->size.height);
 	float near = CameraSettings::projectionNear;
@@ -180,9 +180,9 @@ void Camera::rotate( float pitch, float yaw, float roll ) noexcept
 		this->currentPitch += pitch;
 	}
 
-	yaw = radians(yaw / 2.0f);
-	pitch = radians(pitch / 2.0f);
-	roll = radians(roll / 2.0f);
+	yaw = degreesToRadians(yaw / 2.0f);
+	pitch = degreesToRadians(pitch / 2.0f);
+	roll = degreesToRadians(roll / 2.0f);
 
 	quat qYaw(-yaw, this->_up);
 	quat qPitch(pitch, this->cameraRight);

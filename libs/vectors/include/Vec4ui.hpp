@@ -2,6 +2,7 @@
 
 #include <ostream>
 
+#include "Utils.hpp"
 #include "Vec3ui.hpp"
 
 
@@ -32,9 +33,6 @@ class vec4ui
 	vec4ui(ui32 val) : x(val), y(val), z(val), w(val) {}
 	vec4ui(ui32 x, ui32 y, ui32 z, ui32 w) : x(x), y(y), z(z), w(w) {}
 	vec4ui(const vec3ui& vec3, ui32 w) : x(vec3.width), y(vec3.height), z(vec3.depth), w(w) {}
-	vec4ui(const vec4ui& other) : x(other.x), y(other.y), z(other.z), w(other.w) {}
-	vec4ui&	operator=(const vec4ui& other);
-	~vec4ui() = default;
 
 	vec4ui	operator+(const vec4ui& other) const noexcept { return vec4ui(x + other.x, y + other.y, z + other.z, w + other.w); }
 	vec4ui	operator-(const vec4ui& other) const noexcept { return vec4ui(x - other.x, y - other.y, z - other.z, w - other.w); }
@@ -44,9 +42,17 @@ class vec4ui
 	vec4ui&	operator-=(const vec4ui& other) noexcept { x -= other.x; y -= other.y; z -= other.z; w -= other.w; return *this; }
 	vec4ui&	operator*=(ui32 scalar) noexcept { x *= scalar; y *= scalar; z *= scalar; w *= scalar; return *this; }
 	vec4ui&	operator/=(ui32 scalar) noexcept { x /= scalar; y /= scalar; z /= scalar; w /= scalar; return *this; }
+
 	bool	operator==(const vec4ui& other) const noexcept { return x == other.x && y == other.y && z == other.z && w == other.w; }
 	bool	operator!=(const vec4ui& other) const noexcept { return !(*this == other); }
 
-	ui32&		operator[](int index) noexcept { return data[index]; }
-	const ui32&	operator[](int index) const noexcept { return data[index]; }
+	bool	operator<(const vec4ui& other) const noexcept;
+	bool	operator<=(const vec4ui& other) const noexcept { return *this < other || *this == other; }
+	bool	operator>(const vec4ui& other) const noexcept { return !(*this <= other); }
+	bool	operator>=(const vec4ui& other) const noexcept { return !(*this < other); }
+
+	ui32&		operator[](i32 index) noexcept { return data[index]; }
+	const ui32&	operator[](i32 index) const noexcept { return data[index]; }
 };
+
+std::ostream&	operator<<(std::ostream& os, const vec4ui& v);

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <array>
 #include <ostream>
 
+#include "Vec3.hpp"
+#include "Vec4.hpp"
 
-class vec3;
-class vec4;
+
 class mat3;
 
 class mat4
@@ -40,8 +40,8 @@ class mat4
 	mat4&	rotate(float angleRadians, const vec3& axis) noexcept;
 	mat4	rotated(float angleRadians, const vec3& axis) const noexcept;
 
-	float*			operator[](int row) noexcept { return data[row]; }
-	const float*	operator[](int row) const noexcept { return data[row]; }
+	float*			operator[](i32 row) noexcept { return data[row]; }
+	const float*	operator[](i32 row) const noexcept { return data[row]; }
 
 	float	data[4][4];	
 };

@@ -3,12 +3,8 @@
 #include <algorithm>
 #include <ostream>
 
-#include "Vec3.hpp"
-#include "Mat4.hpp"
 #include "Mat3.hpp"
 
-
-class vec3;
 
 class quat
 {
@@ -43,8 +39,8 @@ class quat
 	quat&	operator=(const quat& other);
 	~quat() = default;
 
-	float&			operator[](int index) noexcept { return data[index]; }
-	const float&	operator[](int index) const noexcept { return data[index]; }
+	float&			operator[](i32 index) noexcept { return data[index]; }
+	const float&	operator[](i32 index) const noexcept { return data[index]; }
 
 	vec3	vector() const noexcept;
 	quat	clone() const noexcept;

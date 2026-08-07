@@ -1,12 +1,10 @@
 #pragma once
 
-#include <array>
 #include <ostream>
 
+#include "Vec3.hpp"
+#include "Mat4.hpp"
 
-class vec3;
-
-class mat4;
 
 class mat3
 {
@@ -28,8 +26,8 @@ class mat3
 	mat3	operator*(const mat3& other) const;
 	mat3&	operator*=(const mat3& other) {	*this = *this * other; return *this;}
 
-	float*			operator[](int row) noexcept { return data[row]; }
-	const float*	operator[](int row) const noexcept { return data[row]; }
+	float*			operator[](i32 row) noexcept { return data[row]; }
+	const float*	operator[](i32 row) const noexcept { return data[row]; }
 
 	float	data[3][3];
 

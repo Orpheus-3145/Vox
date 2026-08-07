@@ -3,16 +3,6 @@
 #include "Vec2.hpp"
 
 
-vec2&	vec2::operator=(const vec2& other)
-{
-	if (this != &other)
-	{
-		x = other.x;
-		y = other.y;
-	}
-	return *this;
-}
-
 bool	vec2::operator<(const vec2& other) const noexcept
 {
 	if (x < other.x)

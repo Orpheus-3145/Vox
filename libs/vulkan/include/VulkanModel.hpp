@@ -78,10 +78,10 @@ class VulkanModel
 
 	struct Vertex
 	{
-		vec3		pos;
-		vec3		normal;
-		vec2		textureUv;
-		uint32_t	textureIndex;
+		vec3		pos{0.0f};
+		vec3		normal{0.0f};
+		vec2		textureUv{0.0f};
+		uint32_t	textureIndex{0U};			// NB remove it
 
 		bool operator==(const Vertex& other) const noexcept
 		{

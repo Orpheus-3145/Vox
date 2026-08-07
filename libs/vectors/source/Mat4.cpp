@@ -68,9 +68,9 @@ mat4::mat4()
 
 mat4::mat4(float value)
 {
-	for (int i = 0; i < 4; i++)
+	for (i32 i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (i32 j = 0; j < 4; j++)
 		{
 			if (i == j)
 			{
@@ -86,9 +86,9 @@ mat4::mat4(float value)
 
 mat4::mat4(const mat3& matrix3x3)
 {
-	for (int i = 0; i < 3; i++)
+	for (i32 i = 0; i < 3; i++)
 	{
-		for (int j = 0; j < 3; j++)
+		for (i32 j = 0; j < 3; j++)
 		{
 			data[i][j] = matrix3x3[i][j];
 		}
@@ -115,8 +115,8 @@ mat4::mat4(const vec4& row0,
 
 mat4::mat4(std::initializer_list<std::initializer_list<float>> rows)
 {
-	int	i = 0;
-	int	j;
+	i32	i = 0;
+	i32	j;
 
 	for (const std::initializer_list<float>& row : rows)
 	{
@@ -135,9 +135,9 @@ mat4::mat4(std::initializer_list<std::initializer_list<float>> rows)
 
 mat4::mat4(const mat4& other)
 {
-	for (int i = 0; i < 4; i++)
+	for (i32 i = 0; i < 4; i++)
 	{
-		for (int j = 0; j < 4; j++)
+		for (i32 j = 0; j < 4; j++)
 		{
 			data[j][i] = other.data[j][i];
 		}
@@ -148,9 +148,9 @@ mat4&	mat4::operator=(const mat4& other)
 {
 	if (this != &other)
 	{
-		for (int i = 0; i < 4; i++)
+		for (i32 i = 0; i < 4; i++)
 		{
-			for (int j = 0; j < 4; j++)
+			for (i32 j = 0; j < 4; j++)
 			{
 				data[j][i] = other.data[j][i];
 			}
@@ -163,11 +163,11 @@ mat4	mat4::operator*(const mat4& other) const
 {
 	mat4	result(0.0f);
 
-	for (int row = 0; row < 4; row++)
+	for (i32 row = 0; row < 4; row++)
 	{
-		for (int col = 0; col < 4; col++)
+		for (i32 col = 0; col < 4; col++)
 		{
-			for (int k = 0; k < 4; k++)
+			for (i32 k = 0; k < 4; k++)
 			{
 				result.data[row][col] += data[k][col] * other.data[row][k];
 			}
@@ -192,8 +192,8 @@ vec4	mat4::operator*( vec4 const& v ) const {
 }
 
 mat4&	mat4::transpose() noexcept {
-	for (int row = 0; row < 4; row++) {
-		for (int col = row + 1; col < 4; col++)
+	for (i32 row = 0; row < 4; row++) {
+		for (i32 col = row + 1; col < 4; col++)
 			std::swap((*this)[row][col], (*this)[col][row]);
 	}
 	return *this;
@@ -229,10 +229,10 @@ mat4	mat4::rotated(float angleRadians, const vec3& axis) const noexcept
 
 std::ostream&	operator<<(std::ostream& os, const mat4& matrix)
 {
-	for (int row = 0; row < 4; row++)
+	for (i32 row = 0; row < 4; row++)
 	{
 		os << "[";
-		for (int col = 0; col < 4; col++)
+		for (i32 col = 0; col < 4; col++)
 		{
 			os << matrix.data[row][col] << "]";
 			if (col < 3)

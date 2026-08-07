@@ -30,9 +30,9 @@ mat3::mat3(const vec3& row0, const vec3& row1, const vec3& row2)
 
 mat3::mat3(const mat4& matrix4x4)
 {
-	for (int i = 0; i < 2; i++)
+	for (i32 i = 0; i < 2; i++)
 	{
-		for (int j = 0; j < 2; j++)
+		for (i32 j = 0; j < 2; j++)
 		{
 			data[i][j] = matrix4x4[i][j];
 		}
@@ -41,10 +41,10 @@ mat3::mat3(const mat4& matrix4x4)
 
 mat3::mat3(std::initializer_list<std::initializer_list<float>> rows)
 {
-	int i = 0;
+	i32 i = 0;
 	for (const std::initializer_list<float>& row : rows)
 	{
-		int j = 0;
+		i32 j = 0;
 		for (float val : row)
 		{
 			if (i < 3 && j < 3)
@@ -61,11 +61,11 @@ mat3	mat3::operator*(const mat3& other) const
 {
 	mat3	result(0.0f);
 	
-	for (int col = 0; col < 3; col++)
+	for (i32 col = 0; col < 3; col++)
 	{
-		for (int row = 0; row < 3; row++)
+		for (i32 row = 0; row < 3; row++)
 		{
-			for (int k = 0; k < 3; k++)
+			for (i32 k = 0; k < 3; k++)
 			{
 				result.data[row][col] += data[k][col] * other.data[row][k];
 			}
@@ -76,10 +76,10 @@ mat3	mat3::operator*(const mat3& other) const
 
 std::ostream&	operator<<(std::ostream& os, const mat3& matrix)
 {
-	for (int row = 0; row < 3; row++)
+	for (i32 row = 0; row < 3; row++)
 	{
 		os << "[";
-		for (int col = 0; col < 3; col++)
+		for (i32 col = 0; col < 3; col++)
 		{
 			os << matrix.data[row][col] << "]";
 			if (col < 2)

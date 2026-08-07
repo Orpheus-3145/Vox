@@ -3,14 +3,37 @@
 #include "Vec4ui.hpp"
 
 
-vec4ui&	vec4ui::operator=(const vec4ui& other)
+bool	vec4ui::operator<(const vec4ui& other) const noexcept
 {
-	if (this != &other)
+	if (x < other.x)
 	{
-		x = other.x;
-		y = other.y;
-		z = other.z;
-		w = other.w;
+		return true;
 	}
-	return *this;
+	if (x > other.x)
+	{
+		return false;	
+	}
+	if (y < other.y)
+	{
+		return true;
+	}
+	if (y > other.y)
+	{
+		return false;
+	}
+	if (z < other.z)
+	{
+		return true;
+	}
+	if (z > other.z)
+	{
+		return false;
+	}
+	return w < other.w;
+}
+
+std::ostream&	operator<<(std::ostream& os, const vec4ui& v)
+{
+	os << "vec4ui(" << v.x << ", " << v.y << ", " << v.z << ", " << v.w << ")";
+	return os;
 }

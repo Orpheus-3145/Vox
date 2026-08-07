@@ -1,11 +1,10 @@
 #pragma once
 
-#include <cmath>
 #include <ostream>
+#include <cmath>
 
+#include "Utils.hpp"
 
-float	fastInverseSqrt(float number) noexcept;
-float	radiansToDegrees(float radians) noexcept;
 
 class vec2
 {
@@ -24,9 +23,6 @@ class vec2
 	constexpr vec2() : x(0.0f), y(0.0f) {}
 	constexpr explicit vec2(float val) : x(val), y(val) {}
 	constexpr vec2(float x, float y) : x(x), y(y) {}
-	constexpr vec2(const vec2& other) : x(other.x), y(other.y) {}
-	vec2&	operator=(const vec2& other);
-	~vec2() = default;
 
 	vec2	operator+(const vec2& other) const noexcept { return vec2(x + other.x, y + other.y); }
 	vec2	operator-(const vec2& other) const noexcept { return vec2(x - other.x, y - other.y); }
@@ -39,12 +35,13 @@ class vec2
 
 	bool	operator==(const vec2& other) const noexcept { return x == other.x && y == other.y; }
 	bool	operator!=(const vec2& other) const noexcept { return !(*this == other); }
+
 	bool	operator<(const vec2& other) const noexcept;
 	bool	operator<=(const vec2& other) const noexcept { return *this < other || *this == other; }
 	bool	operator>(const vec2& other) const noexcept { return !(*this <= other); }
 	bool	operator>=(const vec2& other) const noexcept { return !(*this < other); }
 
-	float&	operator[](int index) noexcept { return data[index]; }
+	float&	operator[](i32 index) noexcept { return data[index]; }
 	vec2	clone() const noexcept { return vec2(x, y); }
 	float	length() const noexcept { return std::sqrt(x * x + y * y); }
 	vec2&	normalize() noexcept;
