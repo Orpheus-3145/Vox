@@ -35,8 +35,8 @@ struct Config
 	static constexpr i32 chunkLength = 16U;		// NB remove
 	static constexpr i32 chunkHeight = 256U;	// NB remove
 
-	static constexpr float normalSpeed = 1.0f;
-	static constexpr float fastSpeed = 20.0f;
+	static constexpr float normalSpeed = 20.0f;
+	static constexpr float fastSpeed = 100.0f;
 	static constexpr float lookSpeed = 75.0f;
 
 	static constexpr char skyboxVertShaderPath[] = "build/shaders/skybox.vert.spv";

@@ -80,7 +80,7 @@ ve::IndexVector voxelFaceIndexes( ui32 start )
 
 
 World::World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, ui32 seed ) :
-	indexWorld(indexWorld),			// NB fetch values from config or pass them through constructor?
+	indexWorld(indexWorld),
 	worldSize(worldSize),
 	navigator(navigator),
 	generator(seed)

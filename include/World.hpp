@@ -18,7 +18,7 @@ enum class VoxelType : ui8
 	Padding = 255		// NB remove it
 };
 
-enum VoxelFace : size_t		// NB set it as ui8
+enum VoxelFace : ui8
 {
 	FRONT = 0,
 	BACK = 4,
@@ -182,7 +182,7 @@ class World {
 		vec3ui const			worldSize;
 
 		WorldNavigator&			navigator;
-		NoiseGenerator			generator;
+		NoiseGenerator			generator;		// NB have a single shared instance instead of multiples?
 
 		std::vector<VoxelType>	map;
 

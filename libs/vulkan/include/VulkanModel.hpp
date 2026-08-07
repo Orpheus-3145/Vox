@@ -10,7 +10,7 @@
 
 namespace ve {
 
-enum class MeshLayout : uint32_t		// NB change name
+enum class VertexLayout : uint32_t
 {
 	VERTEX = 1 << 0,
 	NORMAL = 1 << 1,
@@ -18,25 +18,19 @@ enum class MeshLayout : uint32_t		// NB change name
 	RANDOM_INDEX_TEXT = 1 << 3
 };
 
-constexpr MeshLayout operator|(MeshLayout a, MeshLayout b) {
-	return static_cast<MeshLayout>(
+constexpr VertexLayout operator|(VertexLayout a, VertexLayout b) {
+	return static_cast<VertexLayout>(
 		static_cast<uint32_t>(a) | static_cast<uint32_t>(b)
 	);
 }
 
-constexpr bool operator&(MeshLayout a, MeshLayout b) {
+constexpr bool operator&(VertexLayout a, VertexLayout b) {
 	return static_cast<uint32_t>(a) & static_cast<uint32_t>(b);
 }
 
-enum class MeshType : uint8_t
-{
-	VOXEL,
-	FACE
-};
-
-constexpr inline MeshLayout DEFAULT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::NORMAL | MeshLayout::TEXTURE | MeshLayout::RANDOM_INDEX_TEXT;
-constexpr inline MeshLayout ONLY_VERTEX_LAYOUT = MeshLayout::VERTEX;
-constexpr inline MeshLayout FONT_MODEL_LAYOUT = MeshLayout::VERTEX | MeshLayout::TEXTURE;
+constexpr inline VertexLayout DEFAULT_MODEL_LAYOUT = VertexLayout::VERTEX | VertexLayout::NORMAL | VertexLayout::TEXTURE | VertexLayout::RANDOM_INDEX_TEXT;
+constexpr inline VertexLayout ONLY_VERTEX_LAYOUT = VertexLayout::VERTEX;
+constexpr inline VertexLayout FONT_MODEL_LAYOUT = VertexLayout::VERTEX | VertexLayout::TEXTURE;
 
 struct Vertex
 {
@@ -88,8 +82,8 @@ class VulkanModel
 {
 	public:
 		VulkanModel() = delete;
-		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& indices, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
-		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, IndexVector const& instanceIndices, size_t nInstances, uint32_t binding = 0U, MeshLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& indices, uint32_t binding = 0U, VertexLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, IndexVector const& instanceIndices, size_t nInstances, uint32_t binding = 0U, VertexLayout layout = DEFAULT_MODEL_LAYOUT);
 		~VulkanModel(void) noexcept = default;
 
 		VulkanModel(VulkanModel const&) = delete;
@@ -100,12 +94,12 @@ class VulkanModel
 		void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
 		void	draw(VkCommandBuffer commandBuffer) const noexcept;
 		
-		static MeshLayoutDescription	getModelLayout(uint32_t binding = 0U, MeshLayout type = DEFAULT_MODEL_LAYOUT) noexcept;
+		static MeshLayoutDescription	getModelLayout(uint32_t binding = 0U, VertexLayout type = DEFAULT_MODEL_LAYOUT) noexcept;
 
 	private:
 		VulkanDevice&	vulkanDevice;
 		uint32_t		binding;
-		MeshLayout		layout;
+		VertexLayout		layout;
 		bool			isIndexed{false};
 
 		size_t			vertexCount{0UL};
