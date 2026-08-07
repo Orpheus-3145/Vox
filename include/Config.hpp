@@ -32,9 +32,6 @@ struct Config
 	static constexpr vec4 backgroundColor{0.0f, 0.0f, 0.0f, 1.0f};
 	static constexpr vec4 fontColor{0.0f, 1.0f, 0.0f, 1.0f};
 
-	static constexpr i32 chunkLength = 16U;		// NB remove
-	static constexpr i32 chunkHeight = 256U;	// NB remove
-
 	static constexpr float normalSpeed = 20.0f;
 	static constexpr float fastSpeed = 100.0f;
 	static constexpr float lookSpeed = 75.0f;

@@ -9,7 +9,6 @@
 #include "Config.hpp"
 #include "InputHandler.hpp"
 #include "ThreadManager.hpp"
-#include "VoxelMap.hpp"
 #include "World.hpp"
 #include "Uniforms.hpp"
 

@@ -5,7 +5,6 @@
 #include "Vox.hpp"
 #include "Stopwatch.hpp"
 #include "Utils.hpp"
-#include "World.hpp"
 
 
 namespace vox {
@@ -277,7 +276,7 @@ void Vox::moveCamera( float deltaTime )
 	float	movementSpeed = (this->walkFast) ? Config::fastSpeed : Config::normalSpeed;
 	vec3	moveDirection = vec3::zero();
 	vec3	rotation = vec3::zero();
-	float	moveScalar = std::min(deltaTime * movementSpeed, static_cast<float>(Config::chunkLength));
+	float	moveScalar = deltaTime * movementSpeed;
 	float	rotationScalar = deltaTime * Config::lookSpeed;
 
 	if (this->inputHandler.isKeyPressed(GLFW_KEY_W)) { moveDirection.z -= moveScalar; }

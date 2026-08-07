@@ -15,8 +15,6 @@ enum class VoxelType : ui8
 	Air = 0,
 	Dirt = 1,
 	Stone = 2,
-	Water = 3,		// NB remove it
-	Padding = 255		// NB remove it
 };
 
 enum VoxelFace : ui8
@@ -27,14 +25,6 @@ enum VoxelFace : ui8
 	RIGHT = 12,
 	TOP = 16,
 	BOTTOM = 20
-};
-
-enum class Direction : ui8		// NB remove it
-{
-	North,
-	East,
-	South,
-	West
 };
 
 inline constexpr size_t	VERTEX_PER_VOXEL = 24U;	// number of vertexes per voxe
