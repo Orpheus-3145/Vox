@@ -347,9 +347,7 @@ vec2i WorldNavigator::findFurthestWorld( void ) noexcept
 	for (auto const& [pos, world] : this->worlds)
 	{
 		float deltaSpace = vec2i::distance(pos, this->currentWorldPos);
-
-		std::chrono::_V2::system_clock::time_point now = std::chrono::high_resolution_clock::now();		// NB use StopWatch
-		uint32_t deltaTime = std::chrono::duration<float, std::chrono::seconds::period>(now - world.getLastAccess()).count();
+		float deltaTime = world.getLastAccess();
 
 		float distance = WorldNavigator::ALPHA * deltaSpace + WorldNavigator::BETA * deltaTime;
 		if (distance > furthestDist)

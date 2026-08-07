@@ -5,6 +5,7 @@
 
 #include "Vulkan.hpp"
 #include "NoiseGenerator.hpp"
+#include "Stopwatch.hpp"
 
 
 namespace vox {
@@ -166,16 +167,17 @@ class World {
 		void 				createMap( void );
 		ve::VertexVector	createVertexes( void );
 
-		VoxelType		getVoxelType( vec3ui const& index ) const;
-		VoxelType		getVoxelType( ui32 x, ui32 y, ui32 z ) const;
-		vec3			getRealWorldPos( ui32 x, ui32 y, ui32 z ) const noexcept;
-		vec3			getRealWorldPos( vec3ui const& worldPos ) const noexcept;
-		void												setLastAccess( void ) noexcept { this->lastAccess = std::chrono::high_resolution_clock::now(); }
-		std::chrono::_V2::system_clock::time_point const&	getLastAccess( void ) const noexcept { return this->lastAccess; }
+		VoxelType	getVoxelType( vec3ui const& index ) const;
+		VoxelType	getVoxelType( ui32 x, ui32 y, ui32 z ) const;
+		vec3		getRealWorldPos( ui32 x, ui32 y, ui32 z ) const noexcept;
+		vec3		getRealWorldPos( vec3ui const& worldPos ) const noexcept;
 
-		ui32		pos3DtoIndex( ui32 x, ui32 y, ui32 z ) const noexcept;
-		ui32		pos3DtoIndex( vec3ui const& pos ) const noexcept;
-		vec3ui		indexToPos3D( ui32 index ) const noexcept;
+		void	setLastAccess( void ) noexcept { this->lastAccess.start(); }
+		float	getLastAccess( void ) const noexcept { return this->lastAccess.getTime(Unit::Milliseconds); }
+
+		ui32	pos3DtoIndex( ui32 x, ui32 y, ui32 z ) const noexcept;
+		ui32	pos3DtoIndex( vec3ui const& pos ) const noexcept;
+		vec3ui	indexToPos3D( ui32 index ) const noexcept;
 
 	private:
 		vec2i const				indexWorld;
@@ -186,7 +188,7 @@ class World {
 
 		std::vector<VoxelType>	map;
 
-		std::chrono::_V2::system_clock::time_point	lastAccess;		// NB use StopWatch
+		Stopwatch	lastAccess;
 };
 
 class WorldNavigator {

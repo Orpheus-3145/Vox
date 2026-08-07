@@ -22,30 +22,24 @@ enum class Unit
 class Stopwatch
 {
 	public:
-		Stopwatch() noexcept : startTime(Clock::now()) {};
-		~Stopwatch() noexcept = default;
-		Stopwatch(const Stopwatch& other) = delete;
-		Stopwatch(Stopwatch&& other) = delete;
-		Stopwatch& operator=(const Stopwatch& other) = delete;
-		Stopwatch& operator=(Stopwatch&& other) = delete;
+		Stopwatch() noexcept : startTime(Clock::now()) {}
 
-		void	start() noexcept { startTime = now(); }
-		void	stop() noexcept { endTime = now(); elapsedTime = endTime - startTime; }
+		void	start() noexcept { startTime = Clock::now(); }
+		void	stop() noexcept { endTime = Clock::now(); elapsedTime = endTime - startTime; }
 		void	reset() noexcept;
 
+		Duration	getTime() const noexcept { return Clock::now() - startTime; }
+		float		getTime(Unit type) const noexcept { return formatTime(Clock::now() - startTime, type); }
+
 		Duration	elapsed() const noexcept { return elapsedTime; }
-		double		elapsed(Unit type) const noexcept;
-		
+		float		elapsed(Unit type) const noexcept { return formatTime(elapsedTime, type); }
+
 	private:
-		Time		startTime{};
+		Time		startTime{Clock::now()};
 		Time		endTime{};
 		Duration	elapsedTime{};
 		
-		Time	now() const noexcept { return Clock::now(); }
-		double	ns() const noexcept { return std::chrono::duration<double, std::nano>(elapsedTime).count(); }
-		double	us() const noexcept { return std::chrono::duration<double, std::micro>(elapsedTime).count(); }
-		double	ms() const noexcept { return std::chrono::duration<double, std::milli>(elapsedTime).count(); }
-		double	s() const noexcept { return std::chrono::duration<double>(elapsedTime).count(); }
+		float	formatTime(const Duration& delta, Unit type) const noexcept;
 };
 
 std::ostream&	operator<<(std::ostream& os, const Stopwatch& stopwatch);

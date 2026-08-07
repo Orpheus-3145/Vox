@@ -5,18 +5,18 @@
 
 namespace vox {
 
-double	Stopwatch::elapsed(Unit type) const noexcept
+float	Stopwatch::formatTime(const Duration& delta, Unit type) const noexcept
 {
 	switch (type)
 	{
 		case Unit::Nanoseconds:
-			return ns();
+			return std::chrono::duration<float,std::nano>(delta).count();
 		case Unit::Microseconds:
-			return us();
+			return std::chrono::duration<float,std::micro>(delta).count();
 		case Unit::Milliseconds:
-			return ms();
+			return std::chrono::duration<float,std::milli>(delta).count();
 		case Unit::Seconds:
-			return s();
+			return std::chrono::duration<float>(delta).count();
 		default:
 			return 0.0;
 	}
@@ -24,7 +24,7 @@ double	Stopwatch::elapsed(Unit type) const noexcept
 
 void	Stopwatch::reset() noexcept
 {
-	startTime = now();
+	startTime = Clock::now();
 	endTime = startTime;
 	elapsedTime = Duration::zero();
 }
@@ -32,7 +32,7 @@ void	Stopwatch::reset() noexcept
 std::ostream&	operator<<(std::ostream& os, const Stopwatch& stopwatch)
 {
 	Duration elapsed = stopwatch.elapsed();
-	i64 elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count();
+	size_t elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count();
 
 	if (elapsedTime < 1000)
 	{
