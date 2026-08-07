@@ -35,35 +35,35 @@ inline constexpr size_t	INDEX_PER_FACE = 6U;	// number of vertex indexes per vox
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
 inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES{
 	// FRONT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }},
 	// BACK
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }},
 	// LEFT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }},
 	// RIGHT
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }},
 	// TOP
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }, 1U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }},
 	// BOTTOM
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }, 1U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }, 1U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }, 1U}
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }}
 };
 
 // it assumes the cubemap has this shape
@@ -80,35 +80,35 @@ static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
 inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
 	// FRONT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }},
 	// BACK
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ W + padding, padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ W + padding, H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ W + padding, padding }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ W + padding, H - padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }},
 	// LEFT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }},
 	// RIGHT
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }},
 	// TOP
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, H + padding }, 0U},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }},
+	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, H + padding }},
 	// BOTTOM
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }, 0U},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }, 0U},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }, 0U}
+	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }}
 };
 
 // hard-coded indexes of a voxel
@@ -155,7 +155,8 @@ class World {
 		World& operator=( World&& other ) = delete;
 
 		void 				createMap( void );
-		ve::VertexVector	createVertexes( void );
+		ve::VertexVector	createTerrainVertexes( void );
+		ve::VertexVector	createCaveVertexes( void );
 
 		VoxelType	getVoxelType( vec3ui const& index ) const;
 		VoxelType	getVoxelType( ui32 x, ui32 y, ui32 z ) const;
@@ -195,11 +196,12 @@ class WorldNavigator {
 		void		spawnCloseByWorlds( vec3 const& start );
 		VoxelType	getVoxelType( vec3 const& globalPos ) const noexcept;
 		size_t		getMemoryUsed( void ) const noexcept;
-		bool		spawnNewModel( void ) const noexcept { return this->updateModel; }
+		bool		spawnNewModel( void ) const noexcept { return this->updateTerrainModel and this->updateCaveModel; }
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
 
-		std::unique_ptr<ve::VulkanModel>	createNewModel( ve::VulkanDevice& device, ui32 binding = 0U );
+		std::unique_ptr<ve::VulkanModel>	createTerrainModel( ve::VulkanDevice& device, ui32 binding = 0U );
+		std::unique_ptr<ve::VulkanModel>	createCaveModel( ve::VulkanDevice& device, ui32 binding = 0U );
 
 		static constexpr float ALPHA = 0.8f;	// weight for distance
 		static constexpr float BETA = 0.2f;		// weight for delta time
@@ -208,7 +210,8 @@ class WorldNavigator {
 		void	addeNewWorld( vec2i const& worldIndex );
 		void	generateVertexWorld( vec2i const& worldIndex );
 		void	dropWorld( vec2i const& worldIndex );
-		vec2i	findFurthestWorld( void ) noexcept;
+
+		vec2i	findFurthestWorld( void ) const noexcept;
 		vec2i	getIndexWorld( vec3 const& globalPos ) const noexcept;
 
 		vec3ui const	worldSize;
@@ -216,11 +219,14 @@ class WorldNavigator {
 		ui32 const		seed;
 
 		vec2i	currentWorldPos{-1000};
-		bool	updateModel{false};
+		bool	updateTerrainModel{false};
+		bool	updateCaveModel{false};
+
 		size_t	nFaces{0UL};
 		
 		std::unordered_map<vec2i,World>				worlds;
-		std::unordered_map<vec2i,ve::VertexVector>	vertexes;
+		std::unordered_map<vec2i,ve::VertexVector>	terrainVertexes;
+		std::unordered_map<vec2i,ve::VertexVector>	caveVertexes;
 };
 
 }	// namespace vox

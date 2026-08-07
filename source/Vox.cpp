@@ -25,7 +25,7 @@ Vox::Vox( void ) :
 	this->inputHandler.setCallbacks(this->vulkanWindow.getGLFWwindow());
 
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
-	this->undergroundObject = std::make_unique<ve::VulkanObject>();
+	this->caveObject = std::make_unique<ve::VulkanObject>();
 	this->skyboxObject = std::make_unique<ve::VulkanObject>();
 	this->fpsBackgroundObject = std::make_unique<ve::VulkanObject>();
 	this->fpsTextObject = std::make_unique<ve::VulkanObject>();
@@ -142,11 +142,11 @@ void Vox::setupVulkanBuffers( void )
 	// uniform buffers for per-mesh data: model and normal matrixes, materials, lights
 	this->materialsUbo = std::make_unique<MeshUniform>();
 	this->materialsUbo->updateModelMatrix(0, this->terrainObject->getModelMatrix());
-	this->materialsUbo->updateModelMatrix(1, this->undergroundObject->getModelMatrix());
+	this->materialsUbo->updateModelMatrix(1, this->caveObject->getModelMatrix());
 	this->materialsUbo->updateModelMatrix(2, mat4::idMat());
 
 	this->materialsUbo->updateNormalMatrix(0, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-	this->materialsUbo->updateNormalMatrix(1, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateNormalMatrix(1, this->caveObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
 	this->materialsUbo->updateNormalMatrix(2, mat4::idMat());
 
 	this->materialsUbo->updateMaterial(0U, DIRT_MATERIAL);
@@ -313,7 +313,8 @@ void Vox::updateMap( std::future<bool>& mapUpdateResult )
 		this->navigator.spawnCloseByWorlds(this->camera.getCameraPos());
 		if (this->navigator.spawnNewModel() == true)
 		{
-			this->terrainObject->setModel(this->navigator.createNewModel(this->vulkanDevice));
+			this->terrainObject->setModel(this->navigator.createTerrainModel(this->vulkanDevice));
+			this->caveObject->setModel(this->navigator.createCaveModel(this->vulkanDevice));
 		}
 	}
 
@@ -338,7 +339,7 @@ void Vox::updateMap( std::future<bool>& mapUpdateResult )
 	// 		if (changed == true)
 	// 		{
 	// 			this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-	// 			this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
+	// 			this->caveObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
 	// 		}
 	// 		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
 	// 			return voxelMap.update(playerPos);
@@ -355,7 +356,7 @@ void Vox::updateUniforms(ui32 currentFrame)
 	this->uboDescriptorSet[currentFrame]->updateDescriptor(0U, this->matrixUbo->getData());
 
 	this->materialsUbo->updateNormalMatrix(0U, this->terrainObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
-	this->materialsUbo->updateNormalMatrix(1U, this->undergroundObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
+	this->materialsUbo->updateNormalMatrix(1U, this->caveObject->getNormalViewMatrix(this->camera.getViewMatrixNoTranslation()));
 	this->materialsUbo->updateLightDir(0U, Config::lightDirection, this->camera.getViewMatrix(false));
 	this->uboDescriptorSet[currentFrame]->updateDescriptor(1U, this->materialsUbo->getData());
 
@@ -379,13 +380,13 @@ void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
 	this->terrainObject->bindBuffer(commandBuffer);
 	this->terrainObject->draw(commandBuffer);
 
-	// indexes.indexModel = 1U;
-	// indexes.indexMaterial = 1U;
-	// indexes.indexTexture = 2U;
-	// this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
+	indexes.indexModel = 1U;
+	indexes.indexMaterial = 1U;
+	indexes.indexTexture = 1U;
+	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	// this->undergroundObject->bindBuffer(commandBuffer);
-	// this->undergroundObject->draw(commandBuffer);
+	this->caveObject->bindBuffer(commandBuffer);
+	this->caveObject->draw(commandBuffer);
 }
 
 void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)

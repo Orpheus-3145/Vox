@@ -24,5 +24,6 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	outColor = texture(samplers[nonuniformEXT(index.texture + fragTextureIndex)], fragTextureUV);
+	outColor = texture(samplers[index.texture], fragTextureUV);
+	// outColor = texture(samplers[nonuniformEXT(index.texture + fragTextureIndex)], fragTextureUV);
 }

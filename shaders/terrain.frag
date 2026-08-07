@@ -45,7 +45,6 @@ layout(set = 1, binding = 0) uniform sampler2D samplers[MAX_TEXTURES];
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNormal;
 layout(location = 2) in vec2 fragTextureUV;
-layout(location = 3) flat in uint fragTextureIndex;
 
 layout(location = 0) out vec4 outColor;
 
@@ -53,7 +52,7 @@ void main()
 {
 	// only index thay changes between primitives, use nonuniformEXT to avoid
 	// the compiler setting statically the index value for the whole subgroup
-	vec4 diffuseColor = texture(samplers[nonuniformEXT(index.texture + fragTextureIndex)], fragTextureUV);
+	vec4 diffuseColor = texture(samplers[index.texture], fragTextureUV);
 
 	MaterialData material = meshData.material[index.material];
 	LightData light = meshData.light[index.light];

@@ -38,7 +38,6 @@ ve::VertexVector voxelFaceVertexes( vec3 const& relativeOrigin, VoxelFace face )
 	for (size_t i = 0U; i < VERTEX_PER_FACE; i++)
 	{
 		vertexes[i].pos += relativeOrigin;
-		vertexes[i].textureIndex = 1U;
 	}
 	return vertexes;
 }
@@ -124,7 +123,44 @@ void World::createMap( void )
 	}
 }
 
-ve::VertexVector World::createVertexes( void )
+ve::VertexVector World::createTerrainVertexes( void )
+{
+	ve::VertexVector vertexes;
+
+	for (ui32 x = 0U; x < this->worldSize.width; x++)
+	{
+		for (ui32 z = 0U; z < this->worldSize.depth; z++)
+		{
+			for (i32 y = this->worldSize.height - 1U; y >= 0; y--)
+			{
+				VoxelType voxel = this->getVoxelType(x, static_cast<ui32>(y), z);
+				if (voxel == VoxelType::Air) continue;
+				else if (voxel == VoxelType::Stone) break;
+
+				vec3 globalPos = this->getRealWorldPos(x, static_cast<ui32>(y), z);
+				std::map<VoxelFace,vec3> surroundings{
+					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - 1.0f, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + 1.0f, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + 1.0f}),
+					std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - 1.0f}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - 1.0f, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + 1.0f, globalPos.z})
+				};
+
+				for (auto const& [faceDirection, position] : surroundings)
+				{
+					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue ;
+
+					ve::VertexVector faceVertexes = voxelFaceAtlasVertexes(globalPos, faceDirection);
+					vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
+				}
+			}
+		}
+	}
+	return vertexes;
+}
+
+ve::VertexVector World::createCaveVertexes( void )
 {
 	ve::VertexVector vertexes;
 	// NB add config to setup vertex generation optimization, i.e. face and frustum culling
@@ -138,7 +174,8 @@ ve::VertexVector World::createVertexes( void )
 			{
 				VoxelType voxel = this->getVoxelType(x, y, z);
 				if (voxel == VoxelType::Air) continue;
-				
+				else if (voxel == VoxelType::Dirt) break;
+
 				vec3 globalPos = this->getRealWorldPos(x, y, z);
 				std::map<VoxelFace,vec3> surroundings{
 					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - 1.0f, globalPos.y, globalPos.z}),
@@ -153,21 +190,7 @@ ve::VertexVector World::createVertexes( void )
 				{
 					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue ;
 
-					ve::VertexVector faceVertexes;
-					switch (voxel)
-					{
-						case VoxelType::Dirt:
-							faceVertexes = voxelFaceAtlasVertexes(globalPos, faceDirection);
-							break;
-
-						case VoxelType::Stone:
-							faceVertexes = voxelFaceVertexes(globalPos, faceDirection);
-							break;
-
-						default:
-							break;
-					}
-
+					ve::VertexVector faceVertexes = voxelFaceVertexes(globalPos, faceDirection);
 					vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
 				}
 			}
@@ -298,19 +321,36 @@ VoxelType WorldNavigator::getVoxelType( vec3 const& globalPos ) const noexcept
 	return this->worlds.at(worldIndex).getVoxelType(worldPos);
 }
 
-std::unique_ptr<ve::VulkanModel> WorldNavigator::createNewModel( ve::VulkanDevice& device, ui32 binding )
+std::unique_ptr<ve::VulkanModel> WorldNavigator::createTerrainModel( ve::VulkanDevice& device, ui32 binding )
 {
-	std::vector<ve::VertexVector*> vertexes(this->vertexes.size());
+	std::vector<ve::VertexVector*> vertexes(this->terrainVertexes.size());
 
-	ui32 i = 0U;
-	for (auto& [_, vertexChunk] : this->vertexes)
+	ui32 i = 0U, nFaces = 0U;
+	for (auto& [_, vertexChunk] : this->terrainVertexes)
 	{
 		vertexes[i++] = &vertexChunk;
+		nFaces += vertexChunk.size() / VERTEX_PER_FACE;
 	} 
-	std::unique_ptr<ve::VulkanModel> worldsModel = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), this->nFaces, binding);
-	this->updateModel = false;
+	std::unique_ptr<ve::VulkanModel> terrain = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nFaces, binding);
+	this->updateTerrainModel = false;
 
-	return worldsModel;
+	return terrain;
+}
+
+std::unique_ptr<ve::VulkanModel> WorldNavigator::createCaveModel( ve::VulkanDevice& device, ui32 binding )
+{
+	std::vector<ve::VertexVector*> vertexes(this->caveVertexes.size());
+
+	ui32 i = 0U, nFaces = 0U;
+	for (auto& [_, vertexChunk] : this->caveVertexes)
+	{
+		vertexes[i++] = &vertexChunk;
+		nFaces += vertexChunk.size() / VERTEX_PER_FACE;
+	} 
+	std::unique_ptr<ve::VulkanModel> cave = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nFaces, binding);
+	this->updateCaveModel = false;
+
+	return cave;
 }
 
 void WorldNavigator::addeNewWorld( vec2i const& worldIndex )
@@ -325,22 +365,29 @@ void WorldNavigator::generateVertexWorld( vec2i const& worldIndex )
 {
 	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
 
-	this->vertexes[worldIndex] = this->worlds.at(worldIndex).createVertexes();
-	this->nFaces += this->vertexes.at(worldIndex).size() / VERTEX_PER_FACE;
+	this->terrainVertexes[worldIndex] = this->worlds.at(worldIndex).createTerrainVertexes();
+	this->caveVertexes[worldIndex] = this->worlds.at(worldIndex).createCaveVertexes();
 
-	this->updateModel = true;
+	this->nFaces += this->terrainVertexes.at(worldIndex).size() / VERTEX_PER_FACE;
+	this->nFaces += this->caveVertexes.at(worldIndex).size() / VERTEX_PER_FACE;
+
+	this->updateTerrainModel = true;
+	this->updateCaveModel = true;
 }
 
 void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 {
 	if (this->doesWorldExist(worldToDropIndex) == false) return;
 
-	this->nFaces -= this->vertexes.at(worldToDropIndex).size() / VERTEX_PER_FACE;
+	this->nFaces -= this->terrainVertexes.at(worldToDropIndex).size() / VERTEX_PER_FACE;
+	this->nFaces -= this->caveVertexes.at(worldToDropIndex).size() / VERTEX_PER_FACE;
+
 	this->worlds.erase(worldToDropIndex);
-	this->vertexes.erase(worldToDropIndex);
+	this->terrainVertexes.erase(worldToDropIndex);
+	this->caveVertexes.erase(worldToDropIndex);
 }
 
-vec2i WorldNavigator::findFurthestWorld( void ) noexcept
+vec2i WorldNavigator::findFurthestWorld( void ) const noexcept
 {
 	vec2i furthestWorld = this->currentWorldPos;
 	float furthestDist = 0.0f;

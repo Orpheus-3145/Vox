@@ -15,7 +15,6 @@ enum class VertexLayout : uint32_t
 	VERTEX = 1 << 0,
 	NORMAL = 1 << 1,
 	TEXTURE = 1 << 2,
-	RANDOM_INDEX_TEXT = 1 << 3
 };
 
 constexpr VertexLayout operator|(VertexLayout a, VertexLayout b) {
@@ -28,7 +27,7 @@ constexpr bool operator&(VertexLayout a, VertexLayout b) {
 	return static_cast<uint32_t>(a) & static_cast<uint32_t>(b);
 }
 
-constexpr inline VertexLayout DEFAULT_MODEL_LAYOUT = VertexLayout::VERTEX | VertexLayout::NORMAL | VertexLayout::TEXTURE | VertexLayout::RANDOM_INDEX_TEXT;
+constexpr inline VertexLayout DEFAULT_MODEL_LAYOUT = VertexLayout::VERTEX | VertexLayout::NORMAL | VertexLayout::TEXTURE;
 constexpr inline VertexLayout ONLY_VERTEX_LAYOUT = VertexLayout::VERTEX;
 constexpr inline VertexLayout FONT_MODEL_LAYOUT = VertexLayout::VERTEX | VertexLayout::TEXTURE;
 
@@ -37,21 +36,18 @@ struct Vertex
 	vec3		pos{0.0f};
 	vec3		normal{0.0f};
 	vec2		textureUv{0.0f};
-	uint32_t	textureIndex{0U};		// NB remove it
 
-	constexpr Vertex( vec3 const& pos, vec3 const& normal, vec2 const& textureUv, uint32_t textureIndex ) :
+	constexpr Vertex( vec3 const& pos, vec3 const& normal, vec2 const& textureUv ) :
 		pos{pos},
 		normal{normal},
-		textureUv{textureUv},
-		textureIndex{textureIndex} {};
+		textureUv{textureUv} {};
     constexpr Vertex( void ) = default;
 
 	bool operator==(Vertex const& other) const noexcept
 	{
 		return	pos == other.pos &&
 				normal == other.normal &&
-				textureUv == other.textureUv &&
-				textureIndex == other.textureIndex;
+				textureUv == other.textureUv;
 	}
 
 	bool operator!=(Vertex const& other) const noexcept
@@ -99,7 +95,7 @@ class VulkanModel
 	private:
 		VulkanDevice&	vulkanDevice;
 		uint32_t		binding;
-		VertexLayout		layout;
+		VertexLayout	layout;
 		bool			isIndexed{false};
 
 		size_t			vertexCount{0UL};

@@ -57,7 +57,7 @@ class Vox
 		ThreadManager	threadManager;
 		
 		std::unique_ptr<ve::VulkanObject> terrainObject;
-		std::unique_ptr<ve::VulkanObject> undergroundObject;
+		std::unique_ptr<ve::VulkanObject> caveObject;
 		std::unique_ptr<ve::VulkanObject> skyboxObject;
 		std::unique_ptr<ve::VulkanObject> fpsBackgroundObject;
 		std::unique_ptr<ve::VulkanObject> fpsTextObject;

@@ -217,13 +217,13 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 	lineBottom += fontPadding;
 
 	bgVertexes = VertexVector{
-		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
+		Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
+		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
 
-		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV, 0U},
-		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
-		Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV, 0U},
+		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
+		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
+		Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
 	};
 
 	return FontModel

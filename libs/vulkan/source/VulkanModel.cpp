@@ -70,7 +70,6 @@ void	VulkanModel::createVertexBuffer(const VertexVector& vertices)
 	if (this->layout & VertexLayout::VERTEX) vertexSize += sizeof(vec3);
 	if (this->layout & VertexLayout::NORMAL) vertexSize += sizeof(vec3);
 	if (this->layout & VertexLayout::TEXTURE) vertexSize += sizeof(vec2);
-	if (this->layout & VertexLayout::RANDOM_INDEX_TEXT) vertexSize += sizeof(uint32_t);
 	assert(vertexSize > 0UL && "Empty layout for model");
 
 	VulkanBuffer	stagingBuffer(
@@ -105,11 +104,6 @@ void	VulkanModel::createVertexBuffer(const VertexVector& vertices)
 			{
 				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.textureUv), sizeof(vec2), offset);
 				offset += sizeof(vec2);
-			}
-			if (this->layout & VertexLayout::RANDOM_INDEX_TEXT)
-			{
-				stagingBuffer.writeToBuffer(static_cast<const void*>(&vertex.textureIndex), sizeof(uint32_t), offset);
-				offset += sizeof(uint32_t);
 			}
 		}
 	}
@@ -173,7 +167,6 @@ void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vert
 	if (this->layout & VertexLayout::VERTEX) vertexSize += sizeof(vec3);
 	if (this->layout & VertexLayout::NORMAL) vertexSize += sizeof(vec3);
 	if (this->layout & VertexLayout::TEXTURE) vertexSize += sizeof(vec2);
-	if (this->layout & VertexLayout::RANDOM_INDEX_TEXT) vertexSize += sizeof(uint32_t);
 	assert(vertexSize > 0UL && "Empty layout for model");
 
 	VulkanBuffer	stagingBufferVertex(
@@ -226,11 +219,6 @@ void	VulkanModel::createVertexIndexBuffer(std::vector<VertexVector*> const& vert
 				{
 					stagingBufferVertex.writeToBuffer(static_cast<const void*>(&vertex.textureUv), sizeof(vec2), offsetVertex);
 					offsetVertex += sizeof(vec2);
-				}
-				if (this->layout & VertexLayout::RANDOM_INDEX_TEXT)
-				{
-					stagingBufferVertex.writeToBuffer(static_cast<const void*>(&vertex.textureIndex), sizeof(uint32_t), offsetVertex);
-					offsetVertex += sizeof(uint32_t);
 				}
 			}
 		}
@@ -298,13 +286,6 @@ MeshLayoutDescription	VulkanModel::getModelLayout(uint32_t binding, VertexLayout
 			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32G32_SFLOAT, offset}
 		);
 		offset += sizeof(vec2);
-	}
-	if (layout & VertexLayout::RANDOM_INDEX_TEXT)
-	{
-		data.attributeConfig.push_back(
-			VkVertexInputAttributeDescription{locationIndex++, binding, VK_FORMAT_R32_UINT, offset}
-		);
-		offset += sizeof(uint32_t);
 	}
 	data.bindingConfig[0].stride = offset;
 	return data;
