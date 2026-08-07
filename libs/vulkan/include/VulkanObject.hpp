@@ -88,7 +88,4 @@ class VulkanObject
 		static uint32_t		currentID;		// NB bad in case of buffer creation in different threads
 };
 
-std::ostream&	operator<<(std::ostream& os, const ObjInfo& obj);
-std::vector<ObjInfo>	parseOBJFile(const std::string& objFilePath);
-
 } // namespace ve

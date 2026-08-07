@@ -11,26 +11,27 @@
 namespace vox {
 
 Vox::Vox( void ) :
-	vulkanWindow{"ft_vox", Config::fullScreenMode, Config::defaultWindowWidth, Config::defaultWindowHeight},
+	vulkanWindow{"vox", Config::fullScreenMode, Config::defaultWindowWidth, Config::defaultWindowHeight},
 	vulkanDevice{vulkanWindow},
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
 	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getWindowSize()},
-	voxelMap{threadManager},
+	navigator{Config::worldLength, Config::worldHeight, Config::maxVRAM, Config::worldSeed},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
 		[this](i32 width, i32 height) { this->resizeWindow(width, height); },
 		[this](void) { this->toggleFullscreen(); }
 	}
 {
-	this->voxelMap.init();
 	this->inputHandler.setCallbacks(this->vulkanWindow.getGLFWwindow());
 
 	this->terrainObject = std::make_unique<ve::VulkanObject>();
 	this->undergroundObject = std::make_unique<ve::VulkanObject>();
 	this->skyboxObject = std::make_unique<ve::VulkanObject>();
-	this->textBackgroundObject = std::make_unique<ve::VulkanObject>();
-	this->fpsCounterObject = std::make_unique<ve::VulkanObject>();
+	this->fpsBackgroundObject = std::make_unique<ve::VulkanObject>();
+	this->fpsTextObject = std::make_unique<ve::VulkanObject>();
+	this->memoryBackgroundObject = std::make_unique<ve::VulkanObject>();
+	this->memoryTextObject = std::make_unique<ve::VulkanObject>();
 
 	this->setupVulkanBuffers();
 	this->setupVulkanDescSets();
@@ -45,13 +46,13 @@ void Vox::run( void )
 	std::future<bool>	mapUpdateResult;
 	ui32				currentFrame = 0U;
 	i32					fps = 0;
-	std::string			UItext = "FPS: 0";
+	std::string			UItext = "FPS: 0", memoryUitext = "GPU memory used: 0b";
 	VkCommandBuffer		commandBuffer = VK_NULL_HANDLE;
+	vec2i 				fpsCounterPosition{static_cast<i32>(this->vulkanWindow.getWindowSize().width), 0};
+	vec2i 				memoryPosition{static_cast<i32>(this->vulkanWindow.getWindowSize().width), 48};
 
-	this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(this->vulkanDevice));
-	this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(this->vulkanDevice));
-	this->skyboxObject->setModel(createVoxelAtlasModel(this->vulkanDevice));
-	
+	this->skyboxObject->setModel(this->createSkyboxModel());
+
 	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)
 	{
@@ -82,7 +83,10 @@ void Vox::run( void )
 				UItext = "FPS: " + std::to_string(fps);
 				printTimer.reset();
 			}
-			this->drawText(commandBuffer, currentFrame, UItext);
+			this->drawTextFPS(commandBuffer, currentFrame, UItext, fpsCounterPosition);
+
+			memoryUitext = "GPU memory used: " + formatBytes(this->navigator.getMemoryUsed());
+			this->drawTextMemory(commandBuffer, currentFrame, memoryUitext, memoryPosition);
 
 			this->vulkanRenderer.endSwapChainRenderPass(commandBuffer);
 			this->vulkanRenderer.endFrame();
@@ -162,7 +166,7 @@ void Vox::setupVulkanDescSets( void )
 	// three sets (one for uniforms *[see later], one for textures, one for fonts)
 	ui32	maxSetsToCreate = 1U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
 	ui32	nUniformDescriptors = 2U * ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT + 2U;
-	ui32	nSamplerDescriptors = 6U;	// 2 textures for dirt, 2 textures for stone, 1 for skybox, 1 for font
+	ui32	nSamplerDescriptors = 4U;	// 1 texture for dirt, 1 texture for stone, 1 for skybox, 1 for font
 
 	this->vulkanSetFactory
 		.setMaxSets(maxSetsToCreate)
@@ -186,11 +190,9 @@ void Vox::setupVulkanDescSets( void )
 
 	std::vector<std::string>	texturePaths{
 		Config::textureDirt1Path,
-		Config::textureDirt2Path,
 		Config::textureStone1Path,
-		Config::textureStone2Path
 	};
-	std::vector<ve::TextureType>	textureTypes(4, ve::TextureType::TEXTURE_PLAIN);
+	std::vector<ve::TextureType>	textureTypes(2, ve::TextureType::TEXTURE_PLAIN);
 
 	ve::VulkanBindingSet textureSetBindings;
 	// normal textures
@@ -268,6 +270,11 @@ void Vox::setupVulkanPipelines( void )
 	);
 }
 
+std::unique_ptr<ve::VulkanModel> Vox::createSkyboxModel( void ) 
+{
+	return std::make_unique<ve::VulkanModel>(this->vulkanDevice, voxelAtlasVertexes(vec3(-0.5f)), voxelIndexes(), 0U, ve::ONLY_VERTEX_LAYOUT);
+}
+
 void Vox::moveCamera( float deltaTime )
 {
 	float	movementSpeed = (this->walkFast) ? Config::fastSpeed : Config::normalSpeed;
@@ -296,9 +303,7 @@ void Vox::moveCamera( float deltaTime )
 	if (moveDirection != vec3::zero())
 	{
 		vec3 movement = this->camera.getRelativeMoveDirection(moveDirection);
-		// wall collision: doesn't always work
-		// vec3 location = this->camera.getCameraPos();
-		// vec3 collidedMovement = this->voxelMap.detectCollision(location, relativeMoveDirection);
+		// NB do wall collision
 		this->camera.move(movement);
 		this->countFramesToUpdate = ve::VulkanSwapChain::MAX_FRAMES_IN_FLIGHT;
 	}
@@ -306,32 +311,44 @@ void Vox::moveCamera( float deltaTime )
 
 void Vox::updateMap( std::future<bool>& mapUpdateResult )
 {
-	vec3	playerPos = this->camera.getCameraPos();
-
-	if (mapUpdateResult.valid() == false)
+	(void) mapUpdateResult;
+	if (this->navigator.borderCrossed(this->camera.getCameraPos()) == true)
 	{
-		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-			return voxelMap.update(playerPos);
-		});
-	}
-	else
-	{
-		const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
-	
-		if (status == std::future_status::ready)
+		this->navigator.spawnCloseByWorlds(this->camera.getCameraPos());
+		if (this->navigator.spawnNewModel() == true)
 		{
-			const bool changed = mapUpdateResult.get(); // consumes future; now invalid
-
-			if (changed == true)
-			{
-				this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-				this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
-			}
-			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-				return voxelMap.update(playerPos);
-			});
+			this->terrainObject->setModel(this->navigator.createNewModel(this->vulkanDevice));
 		}
 	}
+
+	(void) mapUpdateResult;
+	// NB add multi-threading support
+	// vec3	playerPos = this->camera.getCameraPos();
+	//
+	// if (mapUpdateResult.valid() == false)
+	// {
+	// 	mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+	// 		return voxelMap.update(playerPos);
+	// 	});
+	// }
+	// else
+	// {
+	// 	const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+	//
+	// 	if (status == std::future_status::ready)
+	// 	{
+	// 		const bool changed = mapUpdateResult.get(); // consumes future; now invalid
+	//
+	// 		if (changed == true)
+	// 		{
+	// 			this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
+	// 			this->undergroundObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
+	// 		}
+	// 		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+	// 			return voxelMap.update(playerPos);
+	// 		});
+	// 	}
+	// }
 }
 
 void Vox::updateUniforms(ui32 currentFrame)
@@ -366,13 +383,13 @@ void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
 	this->terrainObject->bindBuffer(commandBuffer);
 	this->terrainObject->draw(commandBuffer);
 
-	indexes.models = 1U;
-	indexes.materials = 1U;
-	indexes.textures = 2U;
-	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
+	// indexes.models = 1U;
+	// indexes.materials = 1U;
+	// indexes.textures = 2U;
+	// this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	this->undergroundObject->bindBuffer(commandBuffer);
-	this->undergroundObject->draw(commandBuffer);
+	// this->undergroundObject->bindBuffer(commandBuffer);
+	// this->undergroundObject->draw(commandBuffer);
 }
 
 void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
@@ -391,16 +408,15 @@ void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)
 	this->skyboxObject->draw(commandBuffer);
 }
 
-void Vox::drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text)
+void Vox::drawTextFPS(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position)
 {
 	DrawDataIndex	indexes{};
 
 	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
-	vec2i textPosition{static_cast<i32>(this->vulkanWindow.getWindowSize().width), 0};
 
-	ve::FontModel fontData = fontTexture->getModelFromText(text, textPosition, 0U, true);
-	this->textBackgroundObject->setModel(fontData.background);
-	this->fpsCounterObject->setModel(fontData.text);
+	ve::FontModel fontData = fontTexture->getModelFromText(text, position, 0U, true);
+	this->fpsBackgroundObject->setModel(fontData.background);
+	this->fpsTextObject->setModel(fontData.text);
 
 	this->fpsCounterPipeline->bindPipeline(commandBuffer);
 	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
@@ -409,14 +425,41 @@ void Vox::drawText(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string
 	indexes.fontColor = 0;		// background color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	this->textBackgroundObject->bindBuffer(commandBuffer);
-	this->textBackgroundObject->draw(commandBuffer);
+	this->fpsBackgroundObject->bindBuffer(commandBuffer);
+	this->fpsBackgroundObject->draw(commandBuffer);
 
 	indexes.fontColor = 1;		// text color index
 	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	this->fpsCounterObject->bindBuffer(commandBuffer);
-	this->fpsCounterObject->draw(commandBuffer);
+	this->fpsTextObject->bindBuffer(commandBuffer);
+	this->fpsTextObject->draw(commandBuffer);
+}
+
+void Vox::drawTextMemory(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position)
+{
+	DrawDataIndex	indexes{};
+
+	ve::VulkanSamplerDescriptor const* fontTexture = this->fontDescriptorSet->getSamplerDescriptor(1U);
+
+	ve::FontModel fontData = fontTexture->getModelFromText(text, position, 0U, true);
+	this->memoryBackgroundObject->setModel(fontData.background);
+	this->memoryTextObject->setModel(fontData.text);
+
+	this->fpsCounterPipeline->bindPipeline(commandBuffer);
+	this->uboDescriptorSet[currentFrame]->bindSet(commandBuffer, *this->fpsCounterPipeline, 0U);
+	this->fontDescriptorSet->bindSet(commandBuffer, *this->fpsCounterPipeline, 1U);
+
+	indexes.fontColor = 0;		// background color index
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->memoryBackgroundObject->bindBuffer(commandBuffer);
+	this->memoryBackgroundObject->draw(commandBuffer);
+
+	indexes.fontColor = 1;		// text color index
+	this->fpsCounterPipeline->updatePushConstants(commandBuffer, &indexes);
+
+	this->memoryTextObject->bindBuffer(commandBuffer);
+	this->memoryTextObject->draw(commandBuffer);
 }
 
 }	// namespace vox

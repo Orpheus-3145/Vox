@@ -56,7 +56,7 @@ class Camera
 		vec3		cameraRight;							// x axis of the camera
 		vec3		cameraUp;								// y axis of the camera
 
-		float	currentPitch = 0.0f;	// to avoid vertical rotations > 90° or < -90°
+		float		currentPitch{0.0f};	// to avoid vertical rotations > 90° or < -90°
 };
 
 }	// namespace vox

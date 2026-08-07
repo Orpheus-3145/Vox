@@ -126,8 +126,8 @@ void NoiseGenerator::setSeed( ui32 baseSeed ) noexcept
 
 float NoiseGenerator::_perlinValue2D( float x, float y ) const noexcept
 {
-	i32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
-	i32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
+	ui32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
+	ui32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
 
 	float xf = x - std::floor(x);
 	float yf = y - std::floor(y);
@@ -159,9 +159,9 @@ float NoiseGenerator::_perlinValue2D( float x, float y ) const noexcept
 
 float NoiseGenerator::_perlinValueSimple3D( float x, float y, float z ) const noexcept
 {
-	i32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
-	i32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
-	i32 Zi =  positiveModulo(static_cast<i32>(std::floor(z)), this->nPermutations);
+	ui32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
+	ui32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
+	ui32 Zi =  positiveModulo(static_cast<i32>(std::floor(z)), this->nPermutations);
 
 	float xf = x - std::floor(x);
 	float yf = y - std::floor(y);
@@ -212,9 +212,9 @@ float NoiseGenerator::_perlinValueSimple3D( float x, float y, float z ) const no
 
 float NoiseGenerator::_perlinValue3D( float x, float y, float z ) const noexcept
 {
-	i32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
-	i32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
-	i32 Zi =  positiveModulo(static_cast<i32>(std::floor(z)), this->nPermutations);
+	ui32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
+	ui32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
+	ui32 Zi =  positiveModulo(static_cast<i32>(std::floor(z)), this->nPermutations);
 
 	float xf = x - std::floor(x);
 	float yf = y - std::floor(y);

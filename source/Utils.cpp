@@ -27,15 +27,15 @@ std::string formatBytes( size_t bytes ) {
 	return oss.str();
 }
 
-i32	positiveModulo(i32 value, i32 modulus)
+ui32	positiveModulo(i32 value, i32 modulus)
 {
 	assert(modulus > 0 && "modulus must be positive");
 	value = value % modulus;
 	if (value < 0)
 	{
-		return value + modulus;
+		return static_cast<ui32>(value + modulus);
 	}
-	return value;
+	return static_cast<ui32>(value);
 }
 
 }	// namespace vox

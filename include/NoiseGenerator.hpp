@@ -12,7 +12,7 @@ class NoiseGenerator
 {
 	public:
 		NoiseGenerator( void ) = delete;
-		NoiseGenerator( ui32 baseSeed, ui32 permSize );
+		NoiseGenerator( ui32 baseSeed, ui32 permSize = 256U );
 
 		float	perlinValue2D( float x, float y ) const noexcept;
 		float	perlinValueSimple3D( float x, float y, float z ) const noexcept;

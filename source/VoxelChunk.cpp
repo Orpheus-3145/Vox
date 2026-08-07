@@ -188,27 +188,27 @@ void	VoxelChunk::generateVertexes()
 				uint32_t textureIndex = ve::randomUint(0U, 1U);
 				if (map[i + zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::FRONT), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::FRONT), i, textureIndex);
 				}
 				if (map[i - zStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::BACK), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::BACK), i, textureIndex);
 				}
 				if (map[i - xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::LEFT), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::LEFT), i, textureIndex);
 				}
 				if (map[i + xStride] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::RIGHT), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::RIGHT), i, textureIndex);
 				}
 				if (map[i + 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::TOP), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::TOP), i, textureIndex);
 				}
 				if (map[i - 1] == VoxelType::Air)
 				{
-					addVoxelFace(world, static_cast<size_t>(VertexFaces::BOTTOM), i, textureIndex);
+					addVoxelFace(world, static_cast<size_t>(VoxelFace::BOTTOM), i, textureIndex);
 				}
 			}
 		}

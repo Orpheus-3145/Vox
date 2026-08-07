@@ -43,7 +43,7 @@ vec3	VoxelMap::nearestAirVoxel(const vec3i& origin)
 
 static void	insertLocations(const vec3& position, std::vector<vec3i>& locations)
 {
-	static constexpr float playerRadius = 0.3f * VOXEL_SIZE;
+	static constexpr float playerRadius = 0.3f;
 	static const std::array<vec3, 8>	directions {
 		vec3{playerRadius, playerRadius, playerRadius},	// right-up-forward
 		vec3{playerRadius, playerRadius, -playerRadius},	// right-up-back

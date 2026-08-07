@@ -14,26 +14,26 @@ struct Config
 	static constexpr ui32 defaultWindowHeight = 1080;
 	static constexpr ui32 minimumViewingDistance = 160;
 
-	// static constexpr ui32 worldSeed = 314159263U;
-	static constexpr ui32 worldSeed = 0;
+	static constexpr size_t	maxVRAM = 128 * 1024 * 1024; 	// 128 MiB
+	static constexpr ui32 worldSeed = 314159263U;
+	static constexpr ui32 worldLength = 32U;
+	static constexpr ui32 worldHeight = 256U;
 
-
-	static constexpr vec3 cameraStartPos{0.0f, 225.0f, 0.0f};
-	static constexpr vec3 cameraForward{20.0f, 0.0f, 20.0f};		// camera has weird pitch rotations if y is not 0
+	static constexpr vec3 cameraStartPos{worldLength / 2.0f, 200.0f, worldLength / 2.0f};
+	static constexpr vec3 cameraForward{0.0f, 0.0f, -1.0f};		// camera has weird pitch rotations if y is not 0
 
 	static constexpr vec3 lightDirection{0.0f, -300.0f, 0.0f};
 	static constexpr vec3 lightAmbientColor{0.2f, 0.2f, 0.2f};
 	static constexpr vec3 lightColor{0.6f, 0.6f, 0.6f};
 	static constexpr vec3 lightSpecularColor{0.1f, 0.1f, 0.1f};
 
-	static constexpr vec3 startingPosition{0.0f, 225.0f, 0.0f};
+	static constexpr vec3 startingPosition{0.0f, 1.0f, 0.0f};
 
 	static constexpr vec4 backgroundColor{0.0f, 0.0f, 0.0f, 1.0f};
 	static constexpr vec4 fontColor{0.0f, 1.0f, 0.0f, 1.0f};
 
-	static constexpr i32 chunkLength = 16U;
-	static constexpr i32 chunkHeight = 256U;
-	static constexpr i32 seaLevel = 64U;
+	static constexpr i32 chunkLength = 16U;		// NB remove
+	static constexpr i32 chunkHeight = 256U;	// NB remove
 
 	static constexpr float normalSpeed = 1.0f;
 	static constexpr float fastSpeed = 20.0f;
@@ -52,7 +52,6 @@ struct Config
 	static constexpr char textureStone2Path[] = "textures/texture_stone_mono_2.jpeg";
 	static constexpr char textureDirt1Path[] = "textures/texture_dirt_atlas.jpeg";
 	static constexpr char textureDirt2Path[] = "textures/texture_dirt_mono.jpeg";
-	static constexpr char textureWaterPath[] = "textures/texture_water_mono.jpeg";
 	static constexpr char textureSkyboxPath[] = "textures/skybox1.png";
 	static constexpr char fontPath[] = "font/RobotoMono-Regular.ttf";
 

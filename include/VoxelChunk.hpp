@@ -11,32 +11,32 @@
 
 namespace vox {
 
-enum class VoxelType : ui8
-{
-	Air = 0,
-	Dirt = 1,
-	Stone = 2,
-	Water = 3,
-	Padding = 255
-};
+// enum class VoxelType : ui8
+// {
+// 	Air = 0,
+// 	Dirt = 1,
+// 	Stone = 2,
+// 	Water = 3,
+// 	Padding = 255
+// };
 
-enum VertexFaces : size_t
-{
-	FRONT = 0,
-	BACK = 4,
-	LEFT = 8,
-	RIGHT = 12,
-	TOP = 16,
-	BOTTOM = 20
-};
+// enum VertexFace : size_t
+// {
+// 	FRONT = 0,
+// 	BACK = 4,
+// 	LEFT = 8,
+// 	RIGHT = 12,
+// 	TOP = 16,
+// 	BOTTOM = 20
+// };
 
-enum class Direction : ui8
-{
-	North,
-	East,
-	South,
-	West
-};
+// enum class Direction : ui8
+// {
+// 	North,
+// 	East,
+// 	South,
+// 	West
+// };
 
 class VoxelChunk
 {

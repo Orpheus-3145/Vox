@@ -73,7 +73,7 @@ struct VkConstants
 	uint32_t	textures{0U};
 };
 
-inline constexpr VkConstants drawingDataLimits{8U, 8U, 1U, 2U, 4U};
+inline constexpr VkConstants drawingDataLimits{8U, 8U, 1U, 2U, 2U};		// NB this values depends on the actual number of entities used, better move it to vox
 
 // [has to comply with std140]
 class MeshUniform

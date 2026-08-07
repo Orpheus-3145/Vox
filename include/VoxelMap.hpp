@@ -30,14 +30,12 @@ class VoxelMap
 		vec3	getMapMiddle() const noexcept;
 		vec3	detectCollision(const vec3& origin, const vec3& movement);
 		
-		// VoxelType	getVoxelAt(const vec3i& location) const noexcept;
-
 		static inline	std::mutex	lock;
 		
 	private:
 		std::vector<VoxelChunk>		map;
-		std::vector<VertexVector>	terrainVertexes;
-		std::vector<VertexVector>	undergroundVertexes;
+		std::vector<VertexVector*>	terrainVertexes;
+		std::vector<VertexVector*>	undergroundVertexes;
 	
 		i32 	squareSize;
 		vec2i	minPositions;

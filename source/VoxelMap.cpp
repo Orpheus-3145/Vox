@@ -107,8 +107,8 @@ void	VoxelMap::init()
 	{
 		for (i32 x = 0; x < squareSize; x++)
 		{
-			VertexVector*	chunkTerrainVertexes = &terrainVertexes[z * squareSize + x];
-			VertexVector*	chunkUndergroundVertexes = &undergroundVertexes[z * squareSize + x];
+			VertexVector*	chunkTerrainVertexes = terrainVertexes[z * squareSize + x];
+			VertexVector*	chunkUndergroundVertexes = undergroundVertexes[z * squareSize + x];
 			map.emplace_back(vec2i(minPositions.x + x, minPositions.y + z), chunkTerrainVertexes, chunkUndergroundVertexes);
 		}
 	}
