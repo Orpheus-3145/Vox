@@ -199,6 +199,7 @@ class WorldNavigator {
 		bool		spawnNewModel( void ) const noexcept { return this->updateTerrainModel and this->updateCaveModel; }
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
+		vec3		checkClipping( vec3 const& startPos, vec3 const& endPos ) const noexcept;
 
 		std::unique_ptr<ve::VulkanModel>	createTerrainModel( ve::VulkanDevice& device, ui32 binding = 0U );
 		std::unique_ptr<ve::VulkanModel>	createCaveModel( ve::VulkanDevice& device, ui32 binding = 0U );
@@ -206,10 +207,14 @@ class WorldNavigator {
 		static constexpr float ALPHA = 0.8f;	// weight for distance
 		static constexpr float BETA = 0.2f;		// weight for delta time
 
+		static constexpr size_t N_STEPS = 20UL;		// steps that checks the clipping collision
+		static constexpr float RADIUS = 0.25f;
+		
 	private:
 		void	addeNewWorld( vec2i const& worldIndex );
 		void	generateVertexWorld( vec2i const& worldIndex );
 		void	dropWorld( vec2i const& worldIndex );
+		bool	checkCollisionRadius( vec3 const& position) const noexcept;
 
 		vec2i	findFurthestWorld( void ) const noexcept;
 		vec2i	getIndexWorld( vec3 const& globalPos ) const noexcept;

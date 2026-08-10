@@ -321,6 +321,36 @@ VoxelType WorldNavigator::getVoxelType( vec3 const& globalPos ) const noexcept
 	return this->worlds.at(worldIndex).getVoxelType(worldPos);
 }
 
+vec3 WorldNavigator::checkClipping( vec3 const& startPos, vec3 const& direction ) const noexcept
+{
+	const float stepSize = direction.length() / WorldNavigator::N_STEPS;
+	const vec3	movementStep = direction.normalized() * stepSize;
+	vec3		position = startPos;
+
+	for (size_t i = 0UL; i < WorldNavigator::N_STEPS; i++)
+	{
+		bool isBlocked = true;
+		if (this->checkCollisionRadius(vec3{position.x + movementStep.x, position.y, position.z}))
+		{
+			position.x += movementStep.x;
+			isBlocked = false;
+		}
+		if (this->checkCollisionRadius(vec3{position.x, position.y + movementStep.y, position.z}))
+		{
+			position.y += movementStep.y;
+			isBlocked = false;
+		}
+		if (this->checkCollisionRadius(vec3{position.x, position.y, position.z + movementStep.z}))
+		{
+			position.z += movementStep.z;
+			isBlocked = false;
+		}
+
+		if (isBlocked) break;
+	}
+	return position - startPos;
+}
+
 std::unique_ptr<ve::VulkanModel> WorldNavigator::createTerrainModel( ve::VulkanDevice& device, ui32 binding )
 {
 	std::vector<ve::VertexVector*> vertexes(this->terrainVertexes.size());
@@ -385,6 +415,36 @@ void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 	this->worlds.erase(worldToDropIndex);
 	this->terrainVertexes.erase(worldToDropIndex);
 	this->caveVertexes.erase(worldToDropIndex);
+}
+
+bool WorldNavigator::checkCollisionRadius( vec3 const& position) const noexcept
+{
+    const i32 minX = static_cast<i32>(std::floor(position.x - WorldNavigator::RADIUS));
+    const i32 maxX = static_cast<i32>(std::ceil(position.x + WorldNavigator::RADIUS));
+    const i32 minY = static_cast<i32>(std::floor(position.y - WorldNavigator::RADIUS));
+    const i32 maxY = static_cast<i32>(std::ceil(position.y + WorldNavigator::RADIUS));
+    const i32 minZ = static_cast<i32>(std::floor(position.z - WorldNavigator::RADIUS));
+    const i32 maxZ = static_cast<i32>(std::ceil(position.z + WorldNavigator::RADIUS));
+
+    for (i32 x = minX; x <= maxX; ++x)
+    {
+        for (i32 y = minY; y <= maxY; ++y)
+        {
+            for (i32 z = minZ; z <= maxZ; ++z)
+            {
+                const vec3 voxelCenter{
+                    static_cast<float>(x) + 0.5f,
+                    static_cast<float>(y) + 0.5f,
+                    static_cast<float>(z) + 0.5f
+                };
+                if (this->getVoxelType(voxelCenter) != VoxelType::Air)
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 vec2i WorldNavigator::findFurthestWorld( void ) const noexcept
