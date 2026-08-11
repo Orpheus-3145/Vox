@@ -138,22 +138,24 @@ VkDescriptorImageInfo VulkanTexture::getDescriptorImageInfo() const noexcept {
 	return imageInfo;
 }
 
-FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned) const noexcept
+UIvertexes VulkanTexture::getUIvertexes(std::string const& text, vec2i const& origin, bool isRightAligned) const noexcept
 {
 	assert(type == TEXTURE_FONT && "Texture doesn't represent a font");
 
-	VertexVector textVertexes, bgVertexes;
-	textVertexes.resize(6 * text.size());
+	UIvertexes vertexes;
+	// each letter is inside a square/rectangle -> 4 corners -> 2 triangles -> 6 vertex per letter
+	vertexes.textVertexes.resize(6 * text.size());
+	vertexes.bgVertexes.resize(6);
 
-	uint32_t fontSize = VulkanTexture::defaultSizeFont;
-	uint32_t fontPadding = VulkanTexture::fontPadding;
+	i32 fontSize = VulkanTexture::defaultSizeFont;
+	i32 fontPadding = VulkanTexture::fontPadding;
 
 	float minX = std::numeric_limits<float>::max();
 	float maxX = std::numeric_limits<float>::lowest();
 
 	stbtt_aligned_quad q;
 	float x = 0.0f, y = 0.0f;
-	for (size_t i=0; i<text.size(); i++)
+	for (size_t i = 0UL; i < text.size(); i++)
 	{
 		stbtt_GetBakedQuad(
 			this->fontInfo->cdata,
@@ -163,23 +165,23 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 			&x, &y, &q, 1
 		);
 
-		textVertexes[i * 6].pos = vec3(q.x0, q.y0, 0.0f);
-		textVertexes[i * 6].textureUv = vec2(q.s0, q.t0);
+		vertexes.textVertexes[i * 6].pos = vec3(q.x0, q.y0, 0.0f);
+		vertexes.textVertexes[i * 6].textureUv = vec2(q.s0, q.t0);
 
-		textVertexes[i * 6 + 1].pos = vec3(q.x1, q.y0, 0.0f);
-		textVertexes[i * 6 + 1].textureUv = vec2(q.s1, q.t0);
+		vertexes.textVertexes[i * 6 + 1].pos = vec3(q.x1, q.y0, 0.0f);
+		vertexes.textVertexes[i * 6 + 1].textureUv = vec2(q.s1, q.t0);
 
-		textVertexes[i * 6 + 2].pos = vec3(q.x1, q.y1, 0.0f);
-		textVertexes[i * 6 + 2].textureUv = vec2(q.s1, q.t1);
+		vertexes.textVertexes[i * 6 + 2].pos = vec3(q.x1, q.y1, 0.0f);
+		vertexes.textVertexes[i * 6 + 2].textureUv = vec2(q.s1, q.t1);
 
-		textVertexes[i * 6 + 3].pos = vec3(q.x0, q.y0, 0.0f);
-		textVertexes[i * 6 + 3].textureUv = vec2(q.s0, q.t0);
+		vertexes.textVertexes[i * 6 + 3].pos = vec3(q.x0, q.y0, 0.0f);
+		vertexes.textVertexes[i * 6 + 3].textureUv = vec2(q.s0, q.t0);
 
-		textVertexes[i * 6 + 4].pos = vec3(q.x1, q.y1, 0.0f);
-		textVertexes[i * 6 + 4].textureUv = vec2(q.s1, q.t1);
+		vertexes.textVertexes[i * 6 + 4].pos = vec3(q.x1, q.y1, 0.0f);
+		vertexes.textVertexes[i * 6 + 4].textureUv = vec2(q.s1, q.t1);
 
-		textVertexes[i * 6 + 5].pos = vec3(q.x0, q.y1, 0.0f);
-		textVertexes[i * 6 + 5].textureUv = vec2(q.s0, q.t1);
+		vertexes.textVertexes[i * 6 + 5].pos = vec3(q.x0, q.y1, 0.0f);
+		vertexes.textVertexes[i * 6 + 5].textureUv = vec2(q.s0, q.t1);
 
 		minX = std::min(minX, q.x0);
 		maxX = std::max(maxX, q.x1);
@@ -192,23 +194,18 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 	}
 	float startY = origin.y + fontSize - fontPadding;
 
-	for (size_t i=0; i<textVertexes.size(); i++)
+	for (size_t i = 0UL; i < vertexes.textVertexes.size(); i++)
 	{
-		textVertexes[i].pos.x += startX;
-		textVertexes[i].pos.y += startY;
+		vertexes.textVertexes[i].pos.x += startX;
+		vertexes.textVertexes[i].pos.y += startY;
 	}
 	float scale = stbtt_ScaleForPixelHeight(&this->fontInfo->basicFontInfo, fontSize);
 
-	int ascentRaw, descentRaw, lineGapRaw;
+	i32 ascentRaw, descentRaw, lineGapRaw;
 	stbtt_GetFontVMetrics(&this->fontInfo->basicFontInfo, &ascentRaw, &descentRaw, &lineGapRaw);
 
 	float lineTop = -ascentRaw  * scale;
 	float lineBottom = -descentRaw * scale;
-
-	vec2 whiteUV{
-		(this->fontInfo->width - 1 + 0.5f) / (float)this->fontInfo->width,
-		(this->fontInfo->height - 1 + 0.5f) / (float)this->fontInfo->height
-	};
 
 	// add padding for background
 	minX -= fontPadding;
@@ -216,33 +213,29 @@ FontModel VulkanTexture::getModelFromText(std::string const& text, vec2i const& 
 	lineTop -= fontPadding;
 	lineBottom += fontPadding;
 
-	bgVertexes = VertexVector{
-		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
-		Vertex{vec3{maxX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
-		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
-
-		Vertex{vec3{minX + startX, lineTop + startY, 0.0f}, vec3(), whiteUV},
-		Vertex{vec3{maxX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
-		Vertex{vec3{minX + startX, lineBottom + startY, 0.0f}, vec3(), whiteUV},
+	vec2 whiteUV{
+		(this->fontInfo->width - 1.0f + 0.5f) / static_cast<float>(this->fontInfo->width),
+		(this->fontInfo->height - 1.0f + 0.5f) / static_cast<float>(this->fontInfo->height)
 	};
+	vertexes.bgVertexes[0].pos = vec3{minX + startX, lineTop + startY, 0.0f};
+	vertexes.bgVertexes[0].textureUv = whiteUV;
 
-	return FontModel
-	{
-		std::make_shared<ve::VulkanModel>(
-			device,
-			bgVertexes,
-			IndexVector(),
-			0U,
-			ve::FONT_MODEL_LAYOUT
-		),
-		std::make_shared<ve::VulkanModel>(
-			device,
-			textVertexes,
-			IndexVector(),
-			0U,
-			ve::FONT_MODEL_LAYOUT
-		)
-	};
+	vertexes.bgVertexes[1].pos = vec3{maxX + startX, lineTop + startY, 0.0f};
+	vertexes.bgVertexes[1].textureUv = whiteUV;
+
+	vertexes.bgVertexes[2].pos = vec3{maxX + startX, lineBottom + startY, 0.0f};
+	vertexes.bgVertexes[2].textureUv = whiteUV;
+
+	vertexes.bgVertexes[3].pos = vec3{minX + startX, lineTop + startY, 0.0f};
+	vertexes.bgVertexes[3].textureUv = whiteUV;
+
+	vertexes.bgVertexes[4].pos = vec3{maxX + startX, lineBottom + startY, 0.0f};
+	vertexes.bgVertexes[4].textureUv = whiteUV;
+
+	vertexes.bgVertexes[5].pos = vec3{minX + startX, lineBottom + startY, 0.0f};
+	vertexes.bgVertexes[5].textureUv = whiteUV;
+
+	return vertexes;
 }
 
 void VulkanTexture::createTextureImage()

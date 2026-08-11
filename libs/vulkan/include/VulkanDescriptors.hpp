@@ -217,7 +217,7 @@ class VulkanSamplerDescriptor : public VulkanDescriptor
 
 		void	update( void const* data, uint32_t index = 0U ) noexcept override;
 
-		FontModel	getModelFromText(std::string const& text, vec2i const& origin, uint32_t index = 0U, bool isRightAligned = false) const noexcept;
+		UIvertexes	getUIvertexes(std::string const& text, vec2i const& origin, uint32_t index = 0U, bool isRightAligned = false) const noexcept;
 
 	private:
 		std::vector<std::unique_ptr<VulkanTexture>>	textures{};

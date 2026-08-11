@@ -1,5 +1,7 @@
 #include <cassert>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 #include "Camera.hpp"
 
@@ -111,6 +113,22 @@ mat4 Camera::getViewMatrixNoTranslation( bool columnMajor ) const noexcept
 vec3 const& Camera::getCameraPos( void ) const noexcept
 {
 	return this->position;
+}
+
+std::string	Camera::formatCameraPos( void ) const noexcept
+{
+	std::ostringstream ossX, ossY, ossZ;
+	
+	ossX << std::fixed << std::setprecision(2) << this->position.x;
+	std::string xPos = ossX.str();
+
+	ossY << std::fixed << std::setprecision(2) << this->position.y;
+	std::string yPos = ossY.str();
+
+	ossZ << std::fixed << std::setprecision(2) << this->position.z;
+	std::string zPos = ossZ.str();
+
+	return "x: " + xPos + " y: " + yPos + " z: " + zPos;
 }
 
 void Camera::moveForward( float delta ) noexcept

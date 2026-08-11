@@ -24,10 +24,10 @@ struct FontInfo
 	stbtt_fontinfo				basicFontInfo;
 };
 
-struct FontModel
+struct UIvertexes
 {
-	std::shared_ptr<VulkanModel> background;
-	std::shared_ptr<VulkanModel> text;
+	VertexVector textVertexes;
+	VertexVector bgVertexes;
 };
 
 std::unique_ptr<ImageInfo>		loadImage(const std::string& imagePath);
@@ -45,11 +45,11 @@ class VulkanTexture
 	VulkanTexture& operator=(const VulkanTexture& other) = delete;
 
 	VkDescriptorImageInfo	getDescriptorImageInfo() const noexcept;
-	FontModel				getModelFromText(std::string const& text, vec2i const& origin, bool isRightAligned = false) const noexcept;
+	UIvertexes				getUIvertexes(std::string const& text, vec2i const& origin, bool isRightAligned = false) const noexcept;
 
-	static constexpr uint32_t defaultSizeFont = 32U;
+	static constexpr uint32_t	defaultSizeFont = 32U;
 	static constexpr VkExtent2D defaultSizeFontTexture = VkExtent2D{512U, 512U};
-	static constexpr uint32_t fontPadding = 5U;
+	static constexpr uint32_t	fontPadding = 5U;
 
 	private:
 
@@ -70,7 +70,6 @@ class VulkanTexture
 	VkDeviceMemory	textureImageMemory{VK_NULL_HANDLE};
 	VkImageView		textureImageView{VK_NULL_HANDLE};
 	VkSampler		textureSampler{VK_NULL_HANDLE};
-
 };
 
 } // namespace ve

@@ -32,6 +32,7 @@ class Camera
 		mat4	getViewMatrixNoTranslation( bool columnMajor = true ) const noexcept;
 
 		vec3 const&	getCameraPos( void ) const noexcept;
+		std::string	formatCameraPos( void ) const noexcept;
 
 		void	moveForward( float ) noexcept;
 		void	moveBackward( float ) noexcept;

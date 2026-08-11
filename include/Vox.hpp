@@ -36,15 +36,15 @@ class Vox
 		void setupVulkanDescSets( void );
 		void setupVulkanPipelines( void );
 
-		std::unique_ptr<ve::VulkanModel> createSkyboxModel( void );
+		std::shared_ptr<ve::VulkanModel> createModel( ve::VertexVector const& vertexes, ve::IndexVector const& indexes, ui32 binding = 0U, ve::VertexLayout layout = ve::DEFAULT_MODEL_LAYOUT);
+
 		void moveCamera( float );
 		void updateMap( std::future<bool>& mapUpdateResult );
 
 		void updateUniforms(ui32 currentFrame);
 		void drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame);
 		void drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame);
-		void drawTextFPS(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position);
-		void drawTextMemory(VkCommandBuffer commandBuffer, ui32 currentFrame, std::string const& text, vec2i const& position);
+		void drawUI(VkCommandBuffer commandBuffer, ui32 currentFrame, ui32 fps);
 
 		ve::VulkanWindow				vulkanWindow;
 		ve::VulkanDevice				vulkanDevice;
@@ -55,14 +55,12 @@ class Vox
 		WorldNavigator	navigator;
 		InputHandler	inputHandler;
 		ThreadManager	threadManager;
-		
+
 		std::unique_ptr<ve::VulkanObject> terrainObject;
 		std::unique_ptr<ve::VulkanObject> caveObject;
 		std::unique_ptr<ve::VulkanObject> skyboxObject;
-		std::unique_ptr<ve::VulkanObject> fpsBackgroundObject;
-		std::unique_ptr<ve::VulkanObject> fpsTextObject;
-		std::unique_ptr<ve::VulkanObject> memoryBackgroundObject;
-		std::unique_ptr<ve::VulkanObject> memoryTextObject;
+		std::unique_ptr<ve::VulkanObject> backgroundUIObject;
+		std::unique_ptr<ve::VulkanObject> textUIObject;
 
 		std::unique_ptr<ViewProjectUniform> matrixUbo;
 		std::unique_ptr<MeshUniform>		materialsUbo;
@@ -70,11 +68,11 @@ class Vox
 
 		std::vector<std::unique_ptr<ve::VulkanDescriptorSet>>	uboDescriptorSet;
 		std::unique_ptr<ve::VulkanDescriptorSet> 				textureDescriptorSet;
-		std::unique_ptr<ve::VulkanDescriptorSet> 				fontDescriptorSet;
+		std::unique_ptr<ve::VulkanDescriptorSet> 				UIDescriptorSet;
 
 		std::unique_ptr<ve::VulkanPipeline> terrainPipeline;
 		std::unique_ptr<ve::VulkanPipeline> skyboxPipeline;
-		std::unique_ptr<ve::VulkanPipeline> fpsCounterPipeline;
+		std::unique_ptr<ve::VulkanPipeline> UIPipeline;
 	
 		i32	countFramesToUpdate{0};
 
