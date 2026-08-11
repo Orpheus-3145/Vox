@@ -96,7 +96,7 @@ void World::createMap( void )
 	{
 		for (ui32 x = 0U; x < this->worldSize.width; x++)
 		{
-			vec3	globalPos = this->getRealWorldPos(x, 0U, z);
+			vec3	globalPos = this->getRealWorldPos(x, 0U, z) / VOXEL_SIZE;
 			float	perlinValue = this->generator.octavePerlin2D(globalPos.x, globalPos.z);
 			ui32	heightValue = static_cast<ui32>(perlinValue * this->worldSize.height);
 
@@ -139,12 +139,12 @@ ve::VertexVector World::createTerrainVertexes( void )
 
 				vec3 globalPos = this->getRealWorldPos(x, static_cast<ui32>(y), z);
 				std::map<VoxelFace,vec3> surroundings{
-					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - 1.0f, globalPos.y, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + 1.0f, globalPos.y, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + 1.0f}),
-					std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - 1.0f}),
-					std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - 1.0f, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + 1.0f, globalPos.z})
+					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - VOXEL_SIZE, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + VOXEL_SIZE, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + VOXEL_SIZE}),
+					std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - VOXEL_SIZE}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - VOXEL_SIZE, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + VOXEL_SIZE, globalPos.z})
 				};
 
 				for (auto const& [faceDirection, position] : surroundings)
@@ -178,12 +178,12 @@ ve::VertexVector World::createCaveVertexes( void )
 
 				vec3 globalPos = this->getRealWorldPos(x, y, z);
 				std::map<VoxelFace,vec3> surroundings{
-					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - 1.0f, globalPos.y, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + 1.0f, globalPos.y, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + 1.0f}),
-					std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - 1.0f}),
-					std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - 1.0f, globalPos.z}),
-					std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + 1.0f, globalPos.z})
+					std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - VOXEL_SIZE, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + VOXEL_SIZE, globalPos.y, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + VOXEL_SIZE}),
+					std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - VOXEL_SIZE}),
+					std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - VOXEL_SIZE, globalPos.z}),
+					std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + VOXEL_SIZE, globalPos.z})
 				};
 
 				for (auto const& [faceDirection, position] : surroundings)
@@ -215,7 +215,7 @@ vec3 World::getRealWorldPos( ui32 x, ui32 y, ui32 z ) const noexcept
 		x + this->indexWorld.width * static_cast<float>(this->worldSize.width),
 		static_cast<float>(y),
 		z + this->indexWorld.depth * static_cast<float>(this->worldSize.depth)
-	};
+	} * VOXEL_SIZE;
 }
 
 vec3 World::getRealWorldPos( vec3ui const& worldPos ) const noexcept
@@ -308,26 +308,28 @@ size_t WorldNavigator::getMemoryUsed( void ) const noexcept
 VoxelType WorldNavigator::getVoxelType( vec3 const& globalPos ) const noexcept
 {
 	vec2i	worldIndex = this->getIndexWorld(globalPos);
-	if ((this->doesWorldExist(worldIndex) == false) or (globalPos.y < 0.0f) or (globalPos.y >= this->worldSize.height))
+	if ((this->doesWorldExist(worldIndex) == false) or 
+		(globalPos.y < 0.0f) or 
+		((globalPos.y / VOXEL_SIZE) >= this->worldSize.height))
 	{
 		return VoxelType::Air;
 	}
-	
+
 	vec3ui	worldPos{
-		positiveModulo(globalPos.x, this->worldSize.width),
-		positiveModulo(globalPos.y, this->worldSize.height),
-		positiveModulo(globalPos.z, this->worldSize.depth)
+		positiveModulo(std::floor(globalPos.x / VOXEL_SIZE), this->worldSize.width),
+		positiveModulo(std::floor(globalPos.y / VOXEL_SIZE), this->worldSize.height),
+		positiveModulo(std::floor(globalPos.z / VOXEL_SIZE), this->worldSize.depth)
 	};
 	return this->worlds.at(worldIndex).getVoxelType(worldPos);
 }
 
 vec3 WorldNavigator::checkClipping( vec3 const& startPos, vec3 const& direction ) const noexcept
 {
-	const float stepSize = direction.length() / WorldNavigator::N_STEPS;
-	const vec3	movementStep = direction.normalized() * stepSize;
+	float const lenPath = direction.length();
+	vec3 const	movementStep = direction.normalized() * WorldNavigator::STEP_SIZE;
 	vec3		position = startPos;
 
-	for (size_t i = 0UL; i < WorldNavigator::N_STEPS; i++)
+	for (float moved = 0.0f; moved < lenPath; moved += WorldNavigator::STEP_SIZE)
 	{
 		bool isBlocked = true;
 		if (this->checkCollisionRadius(vec3{position.x + movementStep.x, position.y, position.z}))
@@ -355,13 +357,13 @@ std::unique_ptr<ve::VulkanModel> WorldNavigator::createTerrainModel( ve::VulkanD
 {
 	std::vector<ve::VertexVector*> vertexes(this->terrainVertexes.size());
 
-	ui32 i = 0U, nFaces = 0U;
+	ui32 i = 0U, nInstances = 0U;
 	for (auto& [_, vertexChunk] : this->terrainVertexes)
 	{
 		vertexes[i++] = &vertexChunk;
-		nFaces += vertexChunk.size() / VERTEX_PER_FACE;
+		nInstances += vertexChunk.size() / VERTEX_PER_FACE;
 	} 
-	std::unique_ptr<ve::VulkanModel> terrain = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nFaces, binding);
+	std::unique_ptr<ve::VulkanModel> terrain = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nInstances, binding);
 	this->updateTerrainModel = false;
 
 	return terrain;
@@ -371,13 +373,13 @@ std::unique_ptr<ve::VulkanModel> WorldNavigator::createCaveModel( ve::VulkanDevi
 {
 	std::vector<ve::VertexVector*> vertexes(this->caveVertexes.size());
 
-	ui32 i = 0U, nFaces = 0U;
+	ui32 i = 0U, nInstances = 0U;
 	for (auto& [_, vertexChunk] : this->caveVertexes)
 	{
 		vertexes[i++] = &vertexChunk;
-		nFaces += vertexChunk.size() / VERTEX_PER_FACE;
+		nInstances += vertexChunk.size() / VERTEX_PER_FACE;
 	} 
-	std::unique_ptr<ve::VulkanModel> cave = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nFaces, binding);
+	std::unique_ptr<ve::VulkanModel> cave = std::make_unique<ve::VulkanModel>(device, vertexes, voxelFaceIndexes(), nInstances, binding);
 	this->updateCaveModel = false;
 
 	return cave;
@@ -417,30 +419,27 @@ void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 	this->caveVertexes.erase(worldToDropIndex);
 }
 
-bool WorldNavigator::checkCollisionRadius( vec3 const& position) const noexcept
+bool WorldNavigator::checkCollisionRadius( vec3 const& position ) const noexcept
 {
-    const i32 minX = static_cast<i32>(std::floor(position.x - WorldNavigator::RADIUS));
-    const i32 maxX = static_cast<i32>(std::ceil(position.x + WorldNavigator::RADIUS));
-    const i32 minY = static_cast<i32>(std::floor(position.y - WorldNavigator::RADIUS));
-    const i32 maxY = static_cast<i32>(std::ceil(position.y + WorldNavigator::RADIUS));
-    const i32 minZ = static_cast<i32>(std::floor(position.z - WorldNavigator::RADIUS));
-    const i32 maxZ = static_cast<i32>(std::ceil(position.z + WorldNavigator::RADIUS));
+    i32 const minX = static_cast<i32>(std::floor(position.x - WorldNavigator::RADIUS));
+    i32 const maxX = static_cast<i32>(std::ceil(position.x + WorldNavigator::RADIUS));
+    i32 const minY = static_cast<i32>(std::floor(position.y - WorldNavigator::RADIUS));
+    i32 const maxY = static_cast<i32>(std::ceil(position.y + WorldNavigator::RADIUS));
+    i32 const minZ = static_cast<i32>(std::floor(position.z - WorldNavigator::RADIUS));
+    i32 const maxZ = static_cast<i32>(std::ceil(position.z + WorldNavigator::RADIUS));
 
-    for (i32 x = minX; x <= maxX; ++x)
+    for (i32 x = minX; x < maxX; ++x)
     {
-        for (i32 y = minY; y <= maxY; ++y)
+        for (i32 y = minY; y < maxY; ++y)
         {
-            for (i32 z = minZ; z <= maxZ; ++z)
+            for (i32 z = minZ; z < maxZ; ++z)
             {
                 const vec3 voxelCenter{
-                    static_cast<float>(x) + 0.5f,
-                    static_cast<float>(y) + 0.5f,
-                    static_cast<float>(z) + 0.5f
+                    static_cast<float>(x) + VOXEL_SIZE / 2.0f,
+                    static_cast<float>(y) + VOXEL_SIZE / 2.0f,
+                    static_cast<float>(z) + VOXEL_SIZE / 2.0f
                 };
-                if (this->getVoxelType(voxelCenter) != VoxelType::Air)
-                {
-                    return false;
-                }
+                if (this->getVoxelType(voxelCenter) != VoxelType::Air) return false;
             }
         }
     }
@@ -469,8 +468,8 @@ vec2i WorldNavigator::findFurthestWorld( void ) const noexcept
 vec2i WorldNavigator::getIndexWorld( vec3 const& globalPos ) const noexcept
 {
 	return vec2i{
-		static_cast<i32>(std::floor(globalPos.x / static_cast<float>(this->worldSize.width))),
-		static_cast<i32>(std::floor(globalPos.z / static_cast<float>(this->worldSize.depth)))
+		static_cast<i32>(std::floor(globalPos.x / (this->worldSize.width * VOXEL_SIZE))),
+		static_cast<i32>(std::floor(globalPos.z / (this->worldSize.depth * VOXEL_SIZE)))
 	};
 }
 

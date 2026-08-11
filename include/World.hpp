@@ -27,6 +27,9 @@ enum VoxelFace : ui8
 	BOTTOM = 20
 };
 
+inline constexpr float VOXEL_SIZE = 1.0f;
+static_assert( VOXEL_SIZE > 0.0f and "Invalid Voxel size provided" );
+
 inline constexpr size_t	VERTEX_PER_VOXEL = 24U;	// number of vertexes per voxe
 inline constexpr size_t	INDEX_PER_VOXEL = 36U;	// number of vertex indexes per voxel
 inline constexpr size_t	VERTEX_PER_FACE = 4U;	// number of vertexes per face (of a voxel)
@@ -34,36 +37,36 @@ inline constexpr size_t	INDEX_PER_FACE = 6U;	// number of vertex indexes per vox
 
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (standard texture coordinates)
 inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES{
-	// FRONT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }},
-	// BACK
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 0.0f, 0.0f }},
-	// LEFT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ 1.0f, 1.0f }},
-	// RIGHT
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 1.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 0.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }},
-	// TOP
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 0.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ 1.0f, 1.0f }},
-	// BOTTOM
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 0.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 1.0f, 0.0f }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }}
+	// front
+	ve::Vertex{vec3{ 0.0f,       0.0f,       0.0f }, vec3::forward(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       0.0f }, vec3::forward(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::forward(), vec2{ 1.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, 0.0f }, vec3::forward(), vec2{ 0.0f, 1.0f }},
+	// back
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       VOXEL_SIZE }, vec3::backward(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f,       0.0f,       VOXEL_SIZE }, vec3::backward(), vec2{ 1.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, VOXEL_SIZE }, vec3::backward(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::backward(), vec2{ 0.0f, 0.0f }},
+	// left
+	ve::Vertex{vec3{ 0.0f, 0.0f,       0.0f }, vec3::left(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f, VOXEL_SIZE, 0.0f }, vec3::left(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ 0.0f, VOXEL_SIZE, VOXEL_SIZE }, vec3::left(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ 0.0f, 0.0f,       VOXEL_SIZE }, vec3::left(), vec2{ 1.0f, 1.0f }},
+	// right
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       VOXEL_SIZE }, vec3::right(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::right(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::right(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       0.0f }, vec3::right(), vec2{ 1.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, VOXEL_SIZE }, vec3::up(), vec2{ 0.0f, 1.0f }},
+	// up
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, 0.0f }, vec3::up(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::up(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::up(), vec2{ 1.0f, 1.0f }},
+	// down
+	ve::Vertex{vec3{ 0.0f,       0.0f, 0.0f }, vec3::down(), vec2{ 0.0f, 1.0f }},
+	ve::Vertex{vec3{ 0.0f,       0.0f, VOXEL_SIZE }, vec3::down(), vec2{ 0.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f, VOXEL_SIZE }, vec3::down(), vec2{ 1.0f, 0.0f }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f, 0.0f }, vec3::down(), vec2{ 1.0f, 1.0f }}
 };
 
 // it assumes the cubemap has this shape
@@ -80,35 +83,35 @@ static constexpr float padding = 0.004f;
 // Hard-coded VBO (vertex+normal+textureUV data) of a voxel (atlas texture coordinates)
 inline constexpr std::array<ve::Vertex,VERTEX_PER_VOXEL> VOXEL_VERTEXES_ATLAS{
 	// FRONT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ W + padding, padding }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }},
+	ve::Vertex{vec3{ 0.0f,       0.0f,       0.0f }, vec3::forward(), vec2{ W + padding, padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       0.0f }, vec3::forward(), vec2{ 2 * W - padding, padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::forward(), vec2{ 2 * W - padding, H - padding }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, 0.0f }, vec3::forward(), vec2{ W + padding, H - padding }},
 	// BACK
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, padding }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::backward(), vec2{ W + padding, padding }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ W + padding, H - padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::backward(), vec2{ 2 * W - padding, H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       VOXEL_SIZE }, vec3::backward(), vec2{ 2 * W - padding, padding }},
+	ve::Vertex{vec3{ 0.0f,       0.0f,       VOXEL_SIZE }, vec3::backward(), vec2{ W + padding, padding }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, VOXEL_SIZE }, vec3::backward(), vec2{ W + padding, H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::backward(), vec2{ 2 * W - padding, H - padding }},
 	// LEFT
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::left(), vec2{ padding, H + padding }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::left(), vec2{ W - padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::left(), vec2{ padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 0.0f, 0.0f,       0.0f }, vec3::left(), vec2{ padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f, VOXEL_SIZE, 0.0f }, vec3::left(), vec2{ W - padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f, VOXEL_SIZE, VOXEL_SIZE }, vec3::left(), vec2{ W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 0.0f, 0.0f,       VOXEL_SIZE }, vec3::left(), vec2{ padding, 2 * H - padding }},
 	// RIGHT
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       VOXEL_SIZE }, vec3::right(), vec2{ 3 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::right(), vec2{ 2 * W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::right(), vec2{ 2 * W + padding, H + padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f,       0.0f }, vec3::right(), vec2{ 3 * W - padding, H + padding }},
 	// TOP
-	ve::Vertex{vec3{ 0.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 0.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }},
-	ve::Vertex{vec3{ 1.0f, 1.0f, 1.0f }, vec3::up(), vec2{ W + padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, VOXEL_SIZE }, vec3::up(), vec2{ W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ 0.0f,       VOXEL_SIZE, 0.0f }, vec3::up(), vec2{ 2 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, 0.0f }, vec3::up(), vec2{ 2 * W - padding, H + padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE }, vec3::up(), vec2{ W + padding, H + padding }},
 	// BOTTOM
-	ve::Vertex{vec3{ 0.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }},
-	ve::Vertex{vec3{ 0.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 1.0f }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }},
-	ve::Vertex{vec3{ 1.0f, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }}
+	ve::Vertex{vec3{ 0.0f,       0.0f, 0.0f }, vec3::down(), vec2{ 3 * W + padding, H + padding }},
+	ve::Vertex{vec3{ 0.0f,       0.0f, VOXEL_SIZE }, vec3::down(), vec2{ 3 * W + padding, 2 * H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f, VOXEL_SIZE }, vec3::down(), vec2{ 4 * W - padding, 2 * H - padding }},
+	ve::Vertex{vec3{ VOXEL_SIZE, 0.0f, 0.0f }, vec3::down(), vec2{ 4 * W - padding, H + padding }}
 };
 
 // hard-coded indexes of a voxel
@@ -207,8 +210,8 @@ class WorldNavigator {
 		static constexpr float ALPHA = 0.8f;	// weight for distance
 		static constexpr float BETA = 0.2f;		// weight for delta time
 
-		static constexpr size_t N_STEPS = 20UL;		// steps that checks the clipping collision
-		static constexpr float RADIUS = 0.25f;
+		static constexpr float STEP_SIZE = VOXEL_SIZE / 10;		// steps that checks the clipping collision
+		static constexpr float RADIUS = VOXEL_SIZE / 3;			// radius of the player before touching walls
 		
 	private:
 		void	addeNewWorld( vec2i const& worldIndex );

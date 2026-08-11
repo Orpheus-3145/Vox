@@ -19,7 +19,7 @@ struct Config
 	static constexpr ui32 worldLength = 32U;
 	static constexpr ui32 worldHeight = 256U;
 
-	static constexpr vec3 cameraStartPos{worldLength / 2.0f, 200.0f, worldLength / 2.0f};
+	static constexpr vec3 cameraStartPos{worldLength / 2.0f, 156.0f, worldLength / 2.0f};
 	static constexpr vec3 cameraForward{0.0f, 0.0f, -1.0f};		// camera has weird pitch rotations if y is not 0
 
 	static constexpr vec3 lightDirection{0.0f, -300.0f, 0.0f};

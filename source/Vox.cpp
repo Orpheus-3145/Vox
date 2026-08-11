@@ -274,6 +274,8 @@ std::unique_ptr<ve::VulkanModel> Vox::createSkyboxModel( void )
 void Vox::moveCamera( float deltaTime )
 {
 	float	movementSpeed = (this->walkFast) ? Config::fastSpeed : Config::normalSpeed;
+	movementSpeed /= VOXEL_SIZE;
+
 	vec3	moveDirection = vec3::zero();
 	vec3	rotation = vec3::zero();
 	float	moveScalar = deltaTime * movementSpeed;
