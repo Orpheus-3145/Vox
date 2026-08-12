@@ -15,26 +15,19 @@ class NoiseGenerator
 		NoiseGenerator( ui32 baseSeed, ui32 permSize = 256U );
 
 		float	perlinValue2D( float x, float y ) const noexcept;
-		float	perlinValueSimple3D( float x, float y, float z ) const noexcept;
 		float	perlinValue3D( float x, float y, float z ) const noexcept;
 
 		float	octavePerlin2D( float x, float y, ui32 octaves = NoiseGenerator::N_OCTAVES) const noexcept;
-		float	octavePerlinSimple3D( float x, float y, float z, ui32 octaves = NoiseGenerator::N_OCTAVES) const noexcept;
 		float	octavePerlin3D( float x, float y, float z, ui32 octaves = NoiseGenerator::N_OCTAVES) const noexcept;
-
-		void	setSeed( ui32 baseSeed ) noexcept;
 
 	private:
 		float	_perlinValue2D( float x, float y ) const noexcept;
-		float	_perlinValueSimple3D( float x, float y, float z ) const noexcept;
 		float	_perlinValue3D( float x, float y, float z ) const noexcept;
 
-		void		setPermutations( void ) noexcept;
 		float		lerp( float t, float m1, float m2 ) const noexcept;
 		float		smooth( float t ) const noexcept;
 
 		vec2 const&	getGradient2D( i32 input ) const noexcept;
-		vec3 const&	getGradient3DSimple( i32 input ) const noexcept;
 		float		getGradient3D( ui32 hash, float x, float y, float z ) const noexcept;
 
 		static constexpr ui32	GOLDEN_RATIO_HASH = 2654435761U;

@@ -19,7 +19,7 @@ class Vox
 {
 	public:
 		Vox( void );
-		~Vox( void ) noexcept {};
+		~Vox( void ) noexcept = default;
 		Vox( Vox const& ) = delete;
 		Vox( Vox&& ) = delete;
 		Vox& operator=( Vox const& ) = delete;

@@ -78,11 +78,11 @@ ve::IndexVector voxelFaceIndexes( ui32 start )
 }
 
 
-World::World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, ui32 seed ) :
+World::World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, NoiseGenerator& generator ) :
 	indexWorld(indexWorld),
 	worldSize(worldSize),
 	navigator(navigator),
-	generator(seed)
+	generator(generator)
 {
 	this->map.resize(this->worldSize.width * this->worldSize.height * this->worldSize.depth);
 	this->setLastAccess();
@@ -149,7 +149,7 @@ ve::VertexVector World::createTerrainVertexes( void )
 
 				for (auto const& [faceDirection, position] : surroundings)
 				{
-					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue ;
+					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue;
 
 					ve::VertexVector faceVertexes = voxelFaceAtlasVertexes(globalPos, faceDirection);
 					vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
@@ -188,7 +188,7 @@ ve::VertexVector World::createCaveVertexes( void )
 
 				for (auto const& [faceDirection, position] : surroundings)
 				{
-					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue ;
+					if (this->navigator.getVoxelType(position) != VoxelType::Air) continue;
 
 					ve::VertexVector faceVertexes = voxelFaceVertexes(globalPos, faceDirection);
 					vertexes.insert(vertexes.end(), faceVertexes.begin(), faceVertexes.end());
@@ -389,7 +389,7 @@ void WorldNavigator::addeNewWorld( vec2i const& worldIndex )
 {
 	assert(this->doesWorldExist(worldIndex) == false and "world already exists");
 
-	this->worlds.emplace(worldIndex, World(worldIndex, this->worldSize, *this, this->seed));
+	this->worlds.emplace(worldIndex, World(worldIndex, this->worldSize, *this, this->generator));
 	this->worlds.at(worldIndex).createMap();
 }
 

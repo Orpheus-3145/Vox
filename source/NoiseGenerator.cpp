@@ -12,7 +12,16 @@ NoiseGenerator::NoiseGenerator( ui32 seed, ui32 mapSize )
 	this->nPermutations = mapSize;
 	this->noiseScalar = NoiseGenerator::N_FEATURES / static_cast<float>(this->nPermutations);
 
-	this->setSeed(seed);
+	this->terrainSeed = seed ^ (1 * NoiseGenerator::GOLDEN_RATIO_HASH);
+	this->cavesSeed = seed ^ (2 * NoiseGenerator::GOLDEN_RATIO_HASH);
+	this->rngSeed.seed(seed ^ (3 * NoiseGenerator::GOLDEN_RATIO_HASH));
+
+	this->permutations.resize(this->nPermutations * 2);
+	auto endSequence = this->permutations.begin() + this->nPermutations;
+
+	std::iota(this->permutations.begin(), endSequence, 0);
+	std::shuffle(this->permutations.begin(), endSequence, this->rngSeed);
+	std::copy(this->permutations.begin(), endSequence, endSequence);
 }
 
 float NoiseGenerator::perlinValue2D( float x, float y ) const noexcept
@@ -21,17 +30,6 @@ float NoiseGenerator::perlinValue2D( float x, float y ) const noexcept
 	y *= this->noiseScalar;
 
 	float perlinValue = this->_perlinValue2D(x, y);
-
-	return (perlinValue + 1.0f) * 0.5f;
-}
-
-float NoiseGenerator::perlinValueSimple3D( float x, float y, float z ) const noexcept
-{
-	x *= this->noiseScalar;
-	y *= this->noiseScalar;
-	z *= this->noiseScalar;
-
-	float perlinValue = this->_perlinValueSimple3D(x, y, z);
 
 	return (perlinValue + 1.0f) * 0.5f;
 }
@@ -69,29 +67,6 @@ float NoiseGenerator::octavePerlin2D(float x, float y, ui32 octaves) const noexc
     return (octavePerlin + 1.0f) * 0.5f;
 }
 
-float NoiseGenerator::octavePerlinSimple3D(float x, float y, float z, ui32 octaves) const noexcept
-{
-	float octavePerlin = 0.0f;
-    float amplitude = 1.0f;
-    float frequency = 1.0f;
-    float maxValue  = 0.0f;
-
-	x *= this->noiseScalar;
-	y *= this->noiseScalar;
-	z *= this->noiseScalar;
-
-    for (ui32 i = 0; i < octaves; i++)
-    {
-        octavePerlin += _perlinValueSimple3D(x * frequency, y * frequency, z * frequency) * amplitude;
-        maxValue += amplitude;
-        frequency *= NoiseGenerator::LACUNARITY;
-        amplitude *= NoiseGenerator::PERSISTANCE;
-    }
-
-	octavePerlin /= maxValue;
-    return (octavePerlin + 1.0f) * 0.5f;
-}
-
 float NoiseGenerator::octavePerlin3D(float x, float y, float z, ui32 octaves) const noexcept
 {
 	float octavePerlin = 0.0f;
@@ -113,15 +88,6 @@ float NoiseGenerator::octavePerlin3D(float x, float y, float z, ui32 octaves) co
 
 	octavePerlin /= maxValue;
     return (octavePerlin + 1.0f) * 0.5f;
-}
-
-void NoiseGenerator::setSeed( ui32 baseSeed ) noexcept
-{
-	this->terrainSeed = baseSeed ^ (1 * NoiseGenerator::GOLDEN_RATIO_HASH);
-	this->cavesSeed = baseSeed ^ (2 * NoiseGenerator::GOLDEN_RATIO_HASH);
-	this->rngSeed.seed(baseSeed ^ (3 * NoiseGenerator::GOLDEN_RATIO_HASH));
-
-	this->setPermutations();
 }
 
 float NoiseGenerator::_perlinValue2D( float x, float y ) const noexcept
@@ -154,59 +120,6 @@ float NoiseGenerator::_perlinValue2D( float x, float y ) const noexcept
 		u,
 		this->lerp(v, dotBottomLeft, dotTopLeft),
 		this->lerp(v, dotBottomRight, dotTopRight)
-	);
-}
-
-float NoiseGenerator::_perlinValueSimple3D( float x, float y, float z ) const noexcept
-{
-	ui32 Xi =  positiveModulo(static_cast<i32>(std::floor(x)), this->nPermutations);
-	ui32 Yi =  positiveModulo(static_cast<i32>(std::floor(y)), this->nPermutations);
-	ui32 Zi =  positiveModulo(static_cast<i32>(std::floor(z)), this->nPermutations);
-
-	float xf = x - std::floor(x);
-	float yf = y - std::floor(y);
-	float zf = z - std::floor(z);
-
-	vec3 c000{xf,        yf,        zf};
-	vec3 c001{xf,        yf,        zf - 1.0f};
-	vec3 c010{xf,        yf - 1.0f, zf};
-	vec3 c011{xf,        yf - 1.0f, zf - 1.0f};
-	vec3 c100{xf - 1.0f, yf,        zf};
-	vec3 c101{xf - 1.0f, yf,        zf - 1.0f};
-	vec3 c110{xf - 1.0f, yf - 1.0f, zf};
-	vec3 c111{xf - 1.0f, yf - 1.0f, zf - 1.0f};
-
-	i32 p000 = permutations[permutations[permutations[Xi]     + Yi]     + Zi];
-	i32 p001 = permutations[permutations[permutations[Xi]     + Yi]     + Zi + 1];
-	i32 p010 = permutations[permutations[permutations[Xi]     + Yi + 1] + Zi];
-	i32 p011 = permutations[permutations[permutations[Xi]     + Yi + 1] + Zi + 1];
-	i32 p100 = permutations[permutations[permutations[Xi + 1] + Yi]     + Zi];
-	i32 p101 = permutations[permutations[permutations[Xi + 1] + Yi]     + Zi + 1];
-	i32 p110 = permutations[permutations[permutations[Xi + 1] + Yi + 1] + Zi];
-	i32 p111 = permutations[permutations[permutations[Xi + 1] + Yi + 1] + Zi + 1];
-
-	float d000 = vec3::dot(c000, this->getGradient3DSimple(p000));
-	float d001 = vec3::dot(c001, this->getGradient3DSimple(p001));
-	float d010 = vec3::dot(c010, this->getGradient3DSimple(p010));
-	float d011 = vec3::dot(c011, this->getGradient3DSimple(p011));
-	float d100 = vec3::dot(c100, this->getGradient3DSimple(p100));
-	float d101 = vec3::dot(c101, this->getGradient3DSimple(p101));
-	float d110 = vec3::dot(c110, this->getGradient3DSimple(p110));
-	float d111 = vec3::dot(c111, this->getGradient3DSimple(p111));
-
-	float u = this->smooth(xf);
-	float v = this->smooth(yf);
-	float w = this->smooth(zf);
-
-	return this->lerp(u,
-		this->lerp(v,
-			this->lerp(w, d000, d001),
-			this->lerp(w, d010, d011)
-		),
-		this->lerp(v,
-			this->lerp(w, d100, d101),
-			this->lerp(w, d110, d111)
-		)
 	);
 }
 
@@ -254,16 +167,6 @@ float NoiseGenerator::_perlinValue3D( float x, float y, float z ) const noexcept
 	);
 }
 
-void NoiseGenerator::setPermutations( void ) noexcept
-{
-	this->permutations.resize(this->nPermutations * 2);
-	auto endSequence = this->permutations.begin() + this->nPermutations;
-
-	std::iota(this->permutations.begin(), endSequence, 0);
-	std::shuffle(this->permutations.begin(), endSequence, this->rngSeed);
-	std::copy(this->permutations.begin(), endSequence, endSequence);
-}
-
 float NoiseGenerator::lerp(float t, float m1, float m2) const noexcept
 {
 	return m1 + t * (m2 - m1);
@@ -277,11 +180,6 @@ float NoiseGenerator::smooth(float t) const noexcept
 vec2 const&	NoiseGenerator::getGradient2D( i32 input ) const noexcept
 {
 	return this->gradients2D[input % this->gradients2D.size()];
-}
-
-vec3 const&	NoiseGenerator::getGradient3DSimple( i32 input ) const noexcept
-{
-	return this->gradients3D[input % this->gradients3D.size()];
 }
 
 float NoiseGenerator::getGradient3D( ui32 hash, float x, float y, float z ) const noexcept

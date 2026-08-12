@@ -9,6 +9,6 @@
 namespace vox {
 
 std::string formatBytes( size_t );
-ui32	positiveModulo(i32 value, i32 modulus);
+ui32		positiveModulo(i32 value, i32 modulus);
 
 }	// namespace vox

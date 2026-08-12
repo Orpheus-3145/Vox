@@ -149,7 +149,7 @@ class WorldNavigator;
 
 class World {
 	public:
-		explicit World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, ui32 seed );
+		explicit World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, NoiseGenerator& generator );
 		World( void ) = delete;
 		~World( void ) noexcept = default;
 		World( World const& other ) = delete;
@@ -177,8 +177,8 @@ class World {
 		vec2i const				indexWorld;
 		vec3ui const			worldSize;
 
-		WorldNavigator&			navigator;
-		NoiseGenerator			generator;		// NB have a single shared instance instead of multiples?
+		WorldNavigator const&	navigator;
+		NoiseGenerator const&	generator;
 
 		std::vector<VoxelType>	map;
 
@@ -188,7 +188,7 @@ class World {
 class WorldNavigator {
 	public:
 		explicit WorldNavigator( uint32_t worldLength, uint32_t worldHeight, size_t maxVRAM, ui32 seed ) :
-			worldSize{worldLength, worldHeight, worldLength}, maxVRAM{maxVRAM}, seed{seed} {}
+			worldSize{worldLength, worldHeight, worldLength}, maxVRAM{maxVRAM}, generator{seed} {}
 		WorldNavigator( void ) = delete;
 		~WorldNavigator( void ) = default;
 		WorldNavigator( WorldNavigator const& other ) = delete;
@@ -224,7 +224,8 @@ class WorldNavigator {
 
 		vec3ui const	worldSize;
 		size_t const	maxVRAM;
-		ui32 const		seed;
+
+		NoiseGenerator generator;
 
 		vec2i	currentWorldPos{-1000};
 		bool	updateTerrainModel{false};
