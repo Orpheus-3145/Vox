@@ -229,6 +229,34 @@ void Camera::updateWindowSize( ui32 width, ui32 height ) noexcept
 	this->size.height = height;
 }
 
+FrustumBox Camera::getFrustum( void ) const noexcept
+{
+	mat4 viewProjMatrix = this->getProjectionMatrix(false) * this->getViewMatrix(false);
+	auto row = [&](int i) { return vec4{viewProjMatrix[i][0], viewProjMatrix[i][1], viewProjMatrix[i][2], viewProjMatrix[i][3]}; };
+
+	vec4 r0 = row(0), r1 = row(1), r2 = row(2), r3 = row(3);
+
+	auto makePlane = [](vec4 row) {
+		Plane p{
+			vec3{row.x, row.y, row.z},
+			row.w
+		};
+		float len = p.normal.length();
+		p.normal /= len;
+		p.distance /= len;
+		return p;
+	};
+
+	std::array<Plane, 6> planes;
+	planes[0] = makePlane(r3 + r0); // Left
+	planes[1] = makePlane(r3 - r0); // Right
+	planes[2] = makePlane(r3 + r1); // Bottom
+	planes[3] = makePlane(r3 - r1); // Top
+	planes[4] = makePlane(r2);      // Near  (Z >= 0)  <- different than OpenGL!
+	planes[5] = makePlane(r3 - r2); // Far   (Z <= W)  <- different than OpenGL!
+	return planes;
+}
+
 void Camera::updateCameraAxis( void ) noexcept
 {
 	this->cameraForward = this->forward.normalize();

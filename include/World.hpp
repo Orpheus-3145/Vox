@@ -2,10 +2,12 @@
 
 #include <array>
 #include <unordered_map>
+#include <optional>
 
 #include "Vulkan.hpp"
 #include "NoiseGenerator.hpp"
 #include "Stopwatch.hpp"
+#include "Camera.hpp"
 
 
 namespace vox {
@@ -149,7 +151,7 @@ class WorldNavigator;
 
 class World {
 	public:
-		explicit World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, NoiseGenerator& generator );
+		explicit World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& navigator, NoiseGenerator const& generator );
 		World( void ) = delete;
 		~World( void ) noexcept = default;
 		World( World const& other ) = delete;
@@ -158,8 +160,8 @@ class World {
 		World& operator=( World&& other ) = delete;
 
 		void 				createMap( void );
-		ve::VertexVector	createTerrainVertexes( void );
-		ve::VertexVector	createCaveVertexes( void );
+		ve::VertexVector	createTerrainVertexes( bool applyFaceCulling ) const;
+		ve::VertexVector	createCaveVertexes( bool applyFaceCulling ) const;
 
 		VoxelType	getVoxelType( vec3ui const& index ) const;
 		VoxelType	getVoxelType( ui32 x, ui32 y, ui32 z ) const;
@@ -187,8 +189,11 @@ class World {
 
 class WorldNavigator {
 	public:
-		explicit WorldNavigator( uint32_t worldLength, uint32_t worldHeight, size_t maxVRAM, ui32 seed ) :
-			worldSize{worldLength, worldHeight, worldLength}, maxVRAM{maxVRAM}, generator{seed} {}
+		explicit WorldNavigator( ve::VulkanDevice& vulkanDevice, uint32_t worldLength, uint32_t worldHeight, size_t maxVRAM, ui32 seed ) :
+			vulkanDevice{vulkanDevice},
+			worldSize{worldLength, worldHeight, worldLength},
+			maxVRAM{maxVRAM},
+			generator{seed} {}
 		WorldNavigator( void ) = delete;
 		~WorldNavigator( void ) = default;
 		WorldNavigator( WorldNavigator const& other ) = delete;
@@ -198,44 +203,46 @@ class WorldNavigator {
 
 		void		spawnCloseByWorlds( vec3 const& start );
 		VoxelType	getVoxelType( vec3 const& globalPos ) const noexcept;
-		size_t		getMemoryUsed( void ) const noexcept;
-		bool		spawnNewModel( void ) const noexcept { return this->updateTerrainModel and this->updateCaveModel; }
+		size_t		getMemoryUsed( void ) const noexcept { return this->currentVRAM; };
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
 		vec3		checkClipping( vec3 const& startPos, vec3 const& endPos ) const noexcept;
 
-		std::unique_ptr<ve::VulkanModel>	createTerrainModel( ve::VulkanDevice& device, ui32 binding = 0U );
-		std::unique_ptr<ve::VulkanModel>	createCaveModel( ve::VulkanDevice& device, ui32 binding = 0U );
+		void	drawTerrain( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
+		void	drawCaves( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
 
 		static constexpr float ALPHA = 0.8f;	// weight for distance
 		static constexpr float BETA = 0.2f;		// weight for delta time
 
 		static constexpr float STEP_SIZE = VOXEL_SIZE / 10;		// steps that checks the clipping collision
 		static constexpr float RADIUS = VOXEL_SIZE / 3;			// radius of the player before touching walls
-		
+
 	private:
 		void	addeNewWorld( vec2i const& worldIndex );
-		void	generateVertexWorld( vec2i const& worldIndex );
+		void	generateModelWorld( vec2i const& worldIndex );
 		void	dropWorld( vec2i const& worldIndex );
 		bool	checkCollisionRadius( vec3 const& position) const noexcept;
 
 		vec2i	findFurthestWorld( void ) const noexcept;
 		vec2i	getIndexWorld( vec3 const& globalPos ) const noexcept;
 
-		vec3ui const	worldSize;
-		size_t const	maxVRAM;
+		bool	isWorldVisible(vec2i const& worldIndex, FrustumBox const& frustum) const;
 
-		NoiseGenerator generator;
-
-		vec2i	currentWorldPos{-1000};
-		bool	updateTerrainModel{false};
-		bool	updateCaveModel{false};
-
-		size_t	nFaces{0UL};
+		ve::VulkanDevice&	vulkanDevice;
+		vec3ui const		worldSize;
+		size_t const		maxVRAM;
 		
+		NoiseGenerator generator;
+		
+		vec2i	currentWorldPos{-1000};
+		size_t	currentVRAM{0UL};
+
+		bool	applyFaceCulling{true};
+		bool	applyFrustumCulling{true};
+
 		std::unordered_map<vec2i,World>				worlds;
-		std::unordered_map<vec2i,ve::VertexVector>	terrainVertexes;
-		std::unordered_map<vec2i,ve::VertexVector>	caveVertexes;
+		std::unordered_map<vec2i,ve::VulkanObject>	terrain;
+		std::unordered_map<vec2i,ve::VulkanObject>	cave;
 };
 
 }	// namespace vox

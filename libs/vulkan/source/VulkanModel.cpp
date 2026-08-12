@@ -25,6 +25,19 @@ VulkanModel::VulkanModel(
 
 VulkanModel::VulkanModel(
 	VulkanDevice& device,
+	VertexVector const& vertices,
+	IndexVector const& instanceIndices,
+	size_t nInstances,
+	uint32_t binding,
+	VertexLayout layout
+) :
+	vulkanDevice{device}, binding{binding}, layout{layout}
+{
+	this->createVertexIndexBuffer(vertices, instanceIndices, nInstances);
+}
+
+VulkanModel::VulkanModel(
+	VulkanDevice& device,
 	std::vector<VertexVector*> const& vertices,
 	IndexVector const& instanceIndices,
 	size_t nInstances,
@@ -58,6 +71,18 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	else
 	{
 		vkCmdDraw(commandBuffer, this->vertexCount, 1, 0, 0);
+	}
+}
+
+VkDeviceSize	VulkanModel::getBufferSize(void) const noexcept
+{
+	if (this->isIndexed == true)
+	{
+		return this->vertexBuffer->getBufferSize() + this->indexBuffer->getBufferSize();
+	}
+	else
+	{
+		return this->vertexBuffer->getBufferSize();
 	}
 }
 
@@ -149,6 +174,101 @@ void	VulkanModel::createIndexBuffer(const IndexVector& indices)
 
 	VkDeviceSize	bufferSize = indexSize * this->indexCount;
 	this->vulkanDevice.copyBuffer(stagingBuffer.getBuffer(), this->indexBuffer->getBuffer(), bufferSize);
+	this->isIndexed = true;
+}
+
+void	VulkanModel::createVertexIndexBuffer(VertexVector const& vertices, IndexVector const& instanceIndices, size_t nInstances)
+{
+	this->vertexCount += vertices.size();
+
+	assert(this->vertexCount >= 3UL && "Vertex count must be at least 3");
+	assert(this->vertexCount % nInstances == 0UL && "Mismatch between vertexes and number of instances");
+
+	this->indexCount = instanceIndices.size() * nInstances;
+
+	size_t vertexSize = 0UL;
+	if (this->layout & VertexLayout::VERTEX) vertexSize += sizeof(vec3);
+	if (this->layout & VertexLayout::NORMAL) vertexSize += sizeof(vec3);
+	if (this->layout & VertexLayout::TEXTURE) vertexSize += sizeof(vec2);
+	assert(vertexSize > 0UL && "Empty layout for model");
+
+	VulkanBuffer	stagingBufferVertex(
+		this->vulkanDevice,
+		vertexSize,
+		this->vertexCount,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
+	);
+	stagingBufferVertex.map();
+
+	size_t			indexSize = sizeof(uint32_t);
+	VulkanBuffer	stagingBufferIndex(
+		this->vulkanDevice,
+		indexSize,
+		this->indexCount,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		BUFFER_RAW
+	);
+	stagingBufferIndex.map();
+
+	if (this->layout == DEFAULT_MODEL_LAYOUT)
+	{
+		uint32_t sizeData = this->vertexCount * vertexSize;
+		stagingBufferVertex.writeToBuffer(static_cast<const void*>(vertices.data()), sizeData, 0);
+	}
+	else
+	{
+		uint32_t offsetVertex = 0U;
+		for (Vertex const& vertex : vertices)
+		{
+			if (this->layout & VertexLayout::VERTEX)
+			{
+				stagingBufferVertex.writeToBuffer(static_cast<const void*>(&vertex.pos), sizeof(vec3), offsetVertex);
+				offsetVertex += sizeof(vec3);
+			}
+			if (this->layout & VertexLayout::NORMAL)
+			{
+				stagingBufferVertex.writeToBuffer(static_cast<const void*>(&vertex.normal), sizeof(vec3), offsetVertex);
+				offsetVertex += sizeof(vec3);
+			}
+			if (this->layout & VertexLayout::TEXTURE)
+			{
+				stagingBufferVertex.writeToBuffer(static_cast<const void*>(&vertex.textureUv), sizeof(vec2), offsetVertex);
+				offsetVertex += sizeof(vec2);
+			}
+		}
+	}
+
+	// index data doesn't 'exist' yet because the indexes depend
+	// on the vertexes already inserted, each one is manually written inside the staging buffer
+	uint32_t*	stagingIndexPtr = static_cast<uint32_t*>(stagingBufferIndex.getMappedMemory());
+	uint32_t	nVertexForInstance = this->vertexCount / nInstances;
+	for (uint32_t i = 0; i < nInstances; i++)
+	{
+		for (uint32_t index : instanceIndices)
+		{
+			*stagingIndexPtr = index + i * nVertexForInstance;
+			stagingIndexPtr++;
+		}
+	}
+
+	this->vertexBuffer = std::make_unique<VulkanBuffer>(
+		this->vulkanDevice,
+		vertexSize,
+		this->vertexCount,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_VERTEX
+	);
+	this->vulkanDevice.copyBuffer(stagingBufferVertex.getBuffer(), this->vertexBuffer->getBuffer(), this->vertexCount * vertexSize);
+
+	this->indexBuffer = std::make_unique<VulkanBuffer>(
+		this->vulkanDevice,
+		indexSize,
+		this->indexCount,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		BUFFER_INDEX
+	);
+	this->vulkanDevice.copyBuffer(stagingBufferIndex.getBuffer(), this->indexBuffer->getBuffer(), this->indexCount * indexSize);
 	this->isIndexed = true;
 }
 

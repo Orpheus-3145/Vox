@@ -169,7 +169,7 @@ mat4	mat4::operator*(const mat4& other) const
 		{
 			for (i32 k = 0; k < 4; k++)
 			{
-				result.data[row][col] += data[k][col] * other.data[row][k];
+				result.data[row][col] += data[row][k] * other.data[k][col];
 			}
 		}
 	}

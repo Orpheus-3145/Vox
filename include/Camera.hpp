@@ -18,6 +18,15 @@ struct CameraSettings {
 
 using WindowSize = VkExtent2D;
 
+struct Plane
+{
+	vec3	normal;
+	float	distance;
+};
+
+using FrustumBox = std::array<Plane, 6>;
+
+// NB bug flickering camera
 class Camera
 {
 	public:
@@ -45,6 +54,8 @@ class Camera
 
 		vec3	getRelativeMoveDirection(const vec3& rawDirection) const noexcept;
 		void	updateWindowSize( ui32 width, ui32 height ) noexcept;
+
+		FrustumBox getFrustum( void ) const noexcept;
 
 	private:
 		void	updateCameraAxis( void ) noexcept;

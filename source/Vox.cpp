@@ -14,7 +14,7 @@ Vox::Vox( void ) :
 	vulkanRenderer{vulkanWindow, vulkanDevice},
 	vulkanSetFactory{vulkanDevice},
 	camera{Config::cameraStartPos, Config::cameraForward.normalized(), this->vulkanWindow.getWindowSize()},
-	navigator{Config::worldLength, Config::worldHeight, Config::maxVRAM, Config::worldSeed},
+	navigator{vulkanDevice, Config::worldLength, Config::worldHeight, Config::maxVRAM, Config::worldSeed},
 	inputHandler{
 		[this](vec2 const& cursorPos) { this->rotateCameraFromCursorPos(cursorPos); },
 		[this](i32 width, i32 height) { this->resizeWindow(width, height); },
@@ -299,15 +299,9 @@ void Vox::moveCamera( float deltaTime )
 
 void Vox::updateMap( std::future<bool>& mapUpdateResult )
 {
-	(void) mapUpdateResult;
 	if (this->navigator.borderCrossed(this->camera.getCameraPos()) == true)
 	{
 		this->navigator.spawnCloseByWorlds(this->camera.getCameraPos());
-		if (this->navigator.spawnNewModel() == true)
-		{
-			this->terrainObject->setModel(this->navigator.createTerrainModel(this->vulkanDevice));
-			this->caveObject->setModel(this->navigator.createCaveModel(this->vulkanDevice));
-		}
 	}
 
 	(void) mapUpdateResult;
@@ -369,16 +363,14 @@ void Vox::drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame)
 	indexes.indexTexture = 0U;
 	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	this->terrainObject->bindBuffer(commandBuffer);
-	this->terrainObject->draw(commandBuffer);
+	this->navigator.drawTerrain(commandBuffer, this->camera.getFrustum());
 
 	indexes.indexModel = 1U;
 	indexes.indexMaterial = 1U;
 	indexes.indexTexture = 1U;
 	this->terrainPipeline->updatePushConstants(commandBuffer, &indexes);
 
-	this->caveObject->bindBuffer(commandBuffer);
-	this->caveObject->draw(commandBuffer);
+	this->navigator.drawCaves(commandBuffer, this->camera.getFrustum());
 }
 
 void Vox::drawSkybox(VkCommandBuffer commandBuffer, ui32 currentFrame)

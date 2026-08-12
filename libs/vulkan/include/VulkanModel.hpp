@@ -79,6 +79,7 @@ class VulkanModel
 	public:
 		VulkanModel() = delete;
 		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& indices, uint32_t binding = 0U, VertexLayout layout = DEFAULT_MODEL_LAYOUT);
+		VulkanModel(VulkanDevice& device, VertexVector const& vertices, IndexVector const& instanceIndices, size_t nInstances, uint32_t binding = 0U, VertexLayout layout = DEFAULT_MODEL_LAYOUT);
 		VulkanModel(VulkanDevice& device, std::vector<VertexVector*> const& vertices, IndexVector const& instanceIndices, size_t nInstances, uint32_t binding = 0U, VertexLayout layout = DEFAULT_MODEL_LAYOUT);
 		~VulkanModel(void) noexcept = default;
 
@@ -89,8 +90,9 @@ class VulkanModel
 		
 		void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
 		void	draw(VkCommandBuffer commandBuffer) const noexcept;
-		
+
 		static MeshLayoutDescription	getModelLayout(uint32_t binding = 0U, VertexLayout type = DEFAULT_MODEL_LAYOUT) noexcept;
+		VkDeviceSize					getBufferSize(void) const noexcept;
 
 	private:
 		VulkanDevice&	vulkanDevice;
@@ -106,6 +108,7 @@ class VulkanModel
 
 		void	createVertexBuffer(VertexVector const& vertices);
 		void	createIndexBuffer(IndexVector const& indices);
+		void	createVertexIndexBuffer(VertexVector const& vertexes, IndexVector const& instanceIndices, size_t nInstances);
 		void	createVertexIndexBuffer(std::vector<VertexVector*> const& vertexes, IndexVector const& instanceIndices, size_t nInstances);
 };
 
