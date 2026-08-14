@@ -1,7 +1,7 @@
 TARGET          := vox
 CC              := c++
 
-BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror
+BASE_FLAGS      := -std=c++2b -Wall -Wextra -Werror# NB set it to c++20
 CPP_FLAGS       := $(BASE_FLAGS)
 DEBUG_FLAGS     := -O0 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
 RELEASE_FLAGS   := -O2 -DNDEBUG -march=native -flto -fno-math-errno -fno-plt -ffast-math -funroll-loops

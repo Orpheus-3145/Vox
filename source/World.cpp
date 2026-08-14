@@ -1,4 +1,5 @@
 #include <map>
+#include <iostream>
 
 #include "World.hpp"
 #include "Config.hpp"
@@ -91,7 +92,6 @@ World::World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& 
 void World::createMap( void )
 {
 	std::fill(this->map.begin(), this->map.end(), VoxelType::Air);
-
 	for (ui32 z = 0U; z < this->worldSize.depth; z++)
 	{
 		for (ui32 x = 0U; x < this->worldSize.width; x++)
@@ -121,6 +121,7 @@ void World::createMap( void )
 			}
 		}
 	}
+	std::cout << "new world in " << this->indexWorld << std::endl;
 }
 
 ve::VertexVector World::createTerrainVertexes( bool applyFaceCulling ) const
@@ -165,6 +166,8 @@ ve::VertexVector World::createTerrainVertexes( bool applyFaceCulling ) const
 			}
 		}
 	}
+
+	std::cout << "new terr vertexes in " << this->indexWorld << std::endl;
 	return vertexes;
 }
 
@@ -210,6 +213,8 @@ ve::VertexVector World::createCaveVertexes( bool applyFaceCulling ) const
 			}
 		}
 	}
+
+	std::cout << "new cave vertexes in " << this->indexWorld << std::endl;
 	return vertexes;
 }
 
@@ -307,11 +312,85 @@ void WorldNavigator::spawnCloseByWorlds( vec3 const& start )
 		if (updated == false) continue;
 
 		this->generateModelWorld(worldPos);
-		while (this->getMemoryUsed() > this->maxVRAM)
-		{
-			this->dropWorld(this->findFurthestWorld());
-		}
 	}
+}
+
+void WorldNavigator::spawnCloseByWorldsMT( vec3 const& start )
+{
+	if (this->borderCrossed(start) == false) return;
+	this->currentWorldPos = this->getIndexWorld(start);
+
+	// add a world, if not existent already, in each of these 9 quadrants
+	//  __ __ __
+	// |NW|N |NE|
+	// |__|__|__|
+	// | W| M| E|
+	// |__|__|__|
+	// |SW|S |SE|
+	// |__|__|__|
+	//
+	std::vector<vec2i> surroundings{
+		vec2i{this->currentWorldPos.width - 1, this->currentWorldPos.depth - 1},	// SW
+		vec2i{this->currentWorldPos.width - 1, this->currentWorldPos.depth},		// W
+		vec2i{this->currentWorldPos.width - 1, this->currentWorldPos.depth + 1},	// NW
+		vec2i{this->currentWorldPos.width + 1, this->currentWorldPos.depth - 1},	// SE
+		vec2i{this->currentWorldPos.width + 1, this->currentWorldPos.depth},		// E
+		vec2i{this->currentWorldPos.width + 1, this->currentWorldPos.depth + 1},	// NE
+		vec2i{this->currentWorldPos.width, this->currentWorldPos.depth - 1},		// S
+		vec2i{this->currentWorldPos.width, this->currentWorldPos.depth + 1},		// N
+		vec2i{this->currentWorldPos.width, this->currentWorldPos.depth}			// M
+	};
+	std::cout<< "start world generation" << std::endl;
+
+	std::vector<vec2i> newWorlds;
+	for (vec2i const& worldPos : surroundings)
+	{
+		if (this->doesWorldExist(worldPos)) continue;
+
+		newWorlds.push_back(worldPos);
+		this->worlds.emplace(worldPos, World(worldPos, this->worldSize, *this, this->generator));
+	}
+	this->worlds.at(this->currentWorldPos).setLastAccess();
+
+	for (vec2i const& worldPos : newWorlds)
+	{
+		this->orchestrator.enqueue([this, worldPos] {
+			this->worlds.at(worldPos).createMap();
+		});
+	}
+	this->orchestrator.waitIdle();
+	std::cout<< "end world generation" << std::endl;
+	std::cout<< "start vertex generation" << std::endl;
+
+	std::vector<ve::VertexVector> terrainVertexes(newWorlds.size());
+	std::vector<ve::VertexVector> caveVertexes(newWorlds.size());
+	size_t memoryWorld = 0UL;
+
+	for (size_t i = 0; i < newWorlds.size(); i++)
+	{
+		vec2i pos = newWorlds[i];
+		this->orchestrator.enqueue([this, pos, i, &terrainVertexes, &caveVertexes, &memoryWorld] {
+			terrainVertexes[i] = this->worlds.at(pos).createTerrainVertexes(this->applyFaceCulling);
+			caveVertexes[i] = this->worlds.at(pos).createCaveVertexes(this->applyFaceCulling);
+			memoryWorld = (terrainVertexes[i].size() + caveVertexes[i].size()) * sizeof(ve::Vertex);								// memory for vertexes
+			memoryWorld += (terrainVertexes[i].size() + caveVertexes[i].size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
+		});
+	}
+	this->orchestrator.waitIdle();
+	std::cout<< "end vertex generation" << std::endl;
+
+	while ((this->getMemoryUsed() + memoryWorld) > this->maxVRAM)
+	{
+		this->dropWorld(this->findFurthestWorld());
+	}
+
+	for (size_t i = 0; i < newWorlds.size(); i++)
+	{
+		this->generateModelWorld(newWorlds[i], terrainVertexes[i], caveVertexes[i]);
+	}
+	std::cout<< "created models" << std::endl;
+
+	this->worldReady = true;
 }
 
 VoxelType WorldNavigator::getVoxelType( vec3 const& globalPos ) const noexcept
@@ -390,6 +469,7 @@ void WorldNavigator::addeNewWorld( vec2i const& worldIndex )
 {
 	assert(this->doesWorldExist(worldIndex) == false and "world already exists");
 
+	std::cout<< "adding world in: (thread) " << worldIndex << std::endl;
 	this->worlds.emplace(worldIndex, World(worldIndex, this->worldSize, *this, this->generator));
 	this->worlds.at(worldIndex).createMap();
 }
@@ -398,8 +478,44 @@ void WorldNavigator::generateModelWorld( vec2i const& worldIndex )
 {
 	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
 
+	std::cout<< "creating vertexes in: (thread) " << worldIndex << std::endl;
 	ve::VertexVector terrainVertexes = this->worlds.at(worldIndex).createTerrainVertexes(this->applyFaceCulling);
 	ve::VertexVector caveVertexes = this->worlds.at(worldIndex).createCaveVertexes(this->applyFaceCulling);
+
+	size_t memoryWorld = (terrainVertexes.size() + caveVertexes.size()) * sizeof(ve::Vertex);							// memory for vertexes
+	memoryWorld += (terrainVertexes.size() + caveVertexes.size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
+	while ((this->getMemoryUsed() + memoryWorld) > this->maxVRAM)
+	{
+		this->dropWorld(this->findFurthestWorld());
+	}
+
+	this->terrain[worldIndex].setModel(
+		std::make_shared<ve::VulkanModel>(
+			this->vulkanDevice,
+			terrainVertexes,
+			voxelFaceIndexes(),
+			static_cast<ui32>(terrainVertexes.size() / VERTEX_PER_FACE),
+			0U
+		)
+	);
+	this->cave[worldIndex].setModel(
+		std::make_shared<ve::VulkanModel>(
+			this->vulkanDevice,
+			caveVertexes,
+			voxelFaceIndexes(),
+			static_cast<ui32>(caveVertexes.size() / VERTEX_PER_FACE),
+			0U
+		)
+	);
+
+	assert(memoryWorld == (this->terrain.at(worldIndex).getModel()->getBufferSize() + this->cave.at(worldIndex).getModel()->getBufferSize()) and "delta between expected and uploaded memory");
+	this->currentVRAM += this->terrain.at(worldIndex).getModel()->getBufferSize();
+	this->currentVRAM += this->cave.at(worldIndex).getModel()->getBufferSize();
+}
+
+void WorldNavigator::generateModelWorld( vec2i const& worldIndex, ve::VertexVector const& terrainVertexes, ve::VertexVector const& caveVertexes )
+{
+	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
 
 	size_t memoryWorld = (terrainVertexes.size() + caveVertexes.size()) * sizeof(ve::Vertex);							// memory for vertexes
 	memoryWorld += (terrainVertexes.size() + caveVertexes.size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
@@ -446,29 +562,29 @@ void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 
 bool WorldNavigator::checkCollisionRadius( vec3 const& position ) const noexcept
 {
-    i32 const minX = static_cast<i32>(std::floor(position.x - WorldNavigator::RADIUS));
-    i32 const maxX = static_cast<i32>(std::ceil(position.x + WorldNavigator::RADIUS));
-    i32 const minY = static_cast<i32>(std::floor(position.y - WorldNavigator::RADIUS));
-    i32 const maxY = static_cast<i32>(std::ceil(position.y + WorldNavigator::RADIUS));
-    i32 const minZ = static_cast<i32>(std::floor(position.z - WorldNavigator::RADIUS));
-    i32 const maxZ = static_cast<i32>(std::ceil(position.z + WorldNavigator::RADIUS));
+	i32 const minX = static_cast<i32>(std::floor(position.x - WorldNavigator::RADIUS));
+	i32 const maxX = static_cast<i32>(std::ceil(position.x + WorldNavigator::RADIUS));
+	i32 const minY = static_cast<i32>(std::floor(position.y - WorldNavigator::RADIUS));
+	i32 const maxY = static_cast<i32>(std::ceil(position.y + WorldNavigator::RADIUS));
+	i32 const minZ = static_cast<i32>(std::floor(position.z - WorldNavigator::RADIUS));
+	i32 const maxZ = static_cast<i32>(std::ceil(position.z + WorldNavigator::RADIUS));
 
-    for (i32 x = minX; x < maxX; ++x)
-    {
-        for (i32 y = minY; y < maxY; ++y)
-        {
-            for (i32 z = minZ; z < maxZ; ++z)
-            {
-                const vec3 voxelCenter{
-                    static_cast<float>(x) + VOXEL_SIZE / 2.0f,
-                    static_cast<float>(y) + VOXEL_SIZE / 2.0f,
-                    static_cast<float>(z) + VOXEL_SIZE / 2.0f
-                };
-                if (this->getVoxelType(voxelCenter) != VoxelType::Air) return false;
-            }
-        }
-    }
-    return true;
+	for (i32 x = minX; x < maxX; ++x)
+	{
+		for (i32 y = minY; y < maxY; ++y)
+		{
+			for (i32 z = minZ; z < maxZ; ++z)
+			{
+				const vec3 voxelCenter{
+					static_cast<float>(x) + VOXEL_SIZE / 2.0f,
+					static_cast<float>(y) + VOXEL_SIZE / 2.0f,
+					static_cast<float>(z) + VOXEL_SIZE / 2.0f
+				};
+				if (this->getVoxelType(voxelCenter) != VoxelType::Air) return false;
+			}
+		}
+	}
+	return true;
 }
 
 vec2i WorldNavigator::findFurthestWorld( void ) const noexcept

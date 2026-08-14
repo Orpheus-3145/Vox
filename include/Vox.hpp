@@ -39,7 +39,7 @@ class Vox
 		std::shared_ptr<ve::VulkanModel> createModel( ve::VertexVector const& vertexes, ve::IndexVector const& indexes, ui32 binding = 0U, ve::VertexLayout layout = ve::DEFAULT_MODEL_LAYOUT);
 
 		void moveCamera( float );
-		void updateMap( std::future<bool>& mapUpdateResult );
+		void updateMap( std::future<void>& mapUpdateResult );
 
 		void updateUniforms(ui32 currentFrame);
 		void drawTerrain(VkCommandBuffer commandBuffer, ui32 currentFrame);

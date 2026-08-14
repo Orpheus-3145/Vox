@@ -8,6 +8,7 @@
 #include "NoiseGenerator.hpp"
 #include "Stopwatch.hpp"
 #include "Camera.hpp"
+#include "ThreadManager.hpp"
 
 
 namespace vox {
@@ -202,11 +203,13 @@ class WorldNavigator {
 		WorldNavigator& operator=( WorldNavigator&& other ) = delete;
 
 		void		spawnCloseByWorlds( vec3 const& start );
+		void		spawnCloseByWorldsMT( vec3 const& start );
 		VoxelType	getVoxelType( vec3 const& globalPos ) const noexcept;
 		size_t		getMemoryUsed( void ) const noexcept { return this->currentVRAM; };
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
 		vec3		checkClipping( vec3 const& startPos, vec3 const& endPos ) const noexcept;
+		bool		isReady( void ) const noexcept { return this->worldReady; }
 
 		void	drawTerrain( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
 		void	drawCaves( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
@@ -220,6 +223,7 @@ class WorldNavigator {
 	private:
 		void	addeNewWorld( vec2i const& worldIndex );
 		void	generateModelWorld( vec2i const& worldIndex );
+		void	generateModelWorld( vec2i const& worldIndex, ve::VertexVector const& terrainVertexes, ve::VertexVector const& caveVertexes );
 		void	dropWorld( vec2i const& worldIndex );
 		bool	checkCollisionRadius( vec3 const& position) const noexcept;
 
@@ -231,14 +235,16 @@ class WorldNavigator {
 		ve::VulkanDevice&	vulkanDevice;
 		vec3ui const		worldSize;
 		size_t const		maxVRAM;
-		
-		NoiseGenerator generator;
-		
+
+		NoiseGenerator	generator;
+		ThreadManager	orchestrator{};
+
 		vec2i	currentWorldPos{-1000};
 		size_t	currentVRAM{0UL};
 
 		bool	applyFaceCulling{true};
 		bool	applyFrustumCulling{true};
+		bool	worldReady{false};
 
 		std::unordered_map<vec2i,World>				worlds;
 		std::unordered_map<vec2i,ve::VulkanObject>	terrain;

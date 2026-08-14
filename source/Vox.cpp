@@ -39,12 +39,14 @@ Vox::Vox( void ) :
 void Vox::run( void )
 {
 	Stopwatch			fpsTimer, printTimer;
-	std::future<bool>	mapUpdateResult;
+	std::future<void>	mapUpdateResult;
 	ui32				currentFrame = 0U, fps = 0U;
 	VkCommandBuffer		commandBuffer = VK_NULL_HANDLE;
 
 	// NB add voxel destruction
 	this->skyboxObject->setModel(this->createModel(voxelAtlasVertexes(vec3(-0.5f)), voxelIndexes(), 0U, ve::ONLY_VERTEX_LAYOUT));
+	this->updateMap(mapUpdateResult);
+	while (this->navigator.isReady() == false);
 
 	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)
@@ -297,41 +299,27 @@ void Vox::moveCamera( float deltaTime )
 	}
 }
 
-void Vox::updateMap( std::future<bool>& mapUpdateResult )
+void Vox::updateMap( std::future<void>& mapUpdateResult )
 {
-	if (this->navigator.borderCrossed(this->camera.getCameraPos()) == true)
+	vec3 playerPos = this->camera.getCameraPos();
+	
+	if (mapUpdateResult.valid() == false)
 	{
-		this->navigator.spawnCloseByWorlds(this->camera.getCameraPos());
+		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+			this->navigator.spawnCloseByWorldsMT(playerPos);
+		});
 	}
-
-	(void) mapUpdateResult;
-	// NB add multi-threading support
-	// vec3	playerPos = this->camera.getCameraPos();
-	//
-	// if (mapUpdateResult.valid() == false)
-	// {
-	// 	mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-	// 		return voxelMap.update(playerPos);
-	// 	});
-	// }
-	// else
-	// {
-	// 	const std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
-	//
-	// 	if (status == std::future_status::ready)
-	// 	{
-	// 		const bool changed = mapUpdateResult.get(); // consumes future; now invalid
-	//
-	// 		if (changed == true)
-	// 		{
-	// 			this->terrainObject->setModel(this->voxelMap.createNewTerrainModel(vulkanDevice));
-	// 			this->caveObject->setModel(this->voxelMap.createNewUndergroundModel(vulkanDevice));
-	// 		}
-	// 		mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
-	// 			return voxelMap.update(playerPos);
-	// 		});
-	// 	}
-	// }
+	else
+	{
+		std::future_status status = mapUpdateResult.wait_for(std::chrono::milliseconds(0));
+	
+		if (status == std::future_status::ready)
+		{
+			mapUpdateResult = std::async(std::launch::async, [this, playerPos] {
+				this->navigator.spawnCloseByWorldsMT(playerPos);
+			});
+		}
+	}
 }
 
 void Vox::updateUniforms(ui32 currentFrame)
