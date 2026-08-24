@@ -163,11 +163,14 @@ class World {
 		void 				createMap( void );
 		ve::VertexVector	createTerrainVertexes( bool applyFaceCulling ) const;
 		ve::VertexVector	createCaveVertexes( bool applyFaceCulling ) const;
+		void				createTerrainVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
+		void				createCaveVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
 
 		VoxelType	getVoxelType( vec3ui const& index ) const;
 		VoxelType	getVoxelType( ui32 x, ui32 y, ui32 z ) const;
 		vec3		getRealWorldPos( ui32 x, ui32 y, ui32 z ) const noexcept;
 		vec3		getRealWorldPos( vec3ui const& worldPos ) const noexcept;
+		size_t		getVRAMsize( void ) const noexcept { return this->VRAMsize; }
 
 		void	setLastAccess( void ) noexcept { this->lastAccess.start(); }
 		float	getLastAccess( void ) const noexcept { return this->lastAccess.getTime(Unit::Milliseconds); }
@@ -179,11 +182,14 @@ class World {
 	private:
 		vec2i const				indexWorld;
 		vec3ui const			worldSize;
+		size_t					VRAMsize{0UL};
 
 		WorldNavigator const&	navigator;
 		NoiseGenerator const&	generator;
 
 		std::vector<VoxelType>	map;
+		ve::VulkanObject		terrainObject;
+		ve::VulkanObject		caveObject;
 
 		Stopwatch	lastAccess;
 };

@@ -83,7 +83,9 @@ World::World( vec2i const& indexWorld, vec3ui const& worldSize, WorldNavigator& 
 	indexWorld(indexWorld),
 	worldSize(worldSize),
 	navigator(navigator),
-	generator(generator)
+	generator(generator),
+	terrainObject(),
+	caveObject()
 {
 	this->map.resize(this->worldSize.width * this->worldSize.height * this->worldSize.depth);
 	this->setLastAccess();
@@ -111,11 +113,11 @@ void World::createMap( void )
 				{
 					if (y > heightValue - 4)
 					{
-						map[this->pos3DtoIndex(x, y, z)] = VoxelType::Dirt;
+						this->map[this->pos3DtoIndex(x, y, z)] = VoxelType::Dirt;
 					}
 					else
 					{
-						map[this->pos3DtoIndex(x, y, z)] = VoxelType::Stone;
+						this->map[this->pos3DtoIndex(x, y, z)] = VoxelType::Stone;
 					}
 				}
 			}
@@ -216,6 +218,125 @@ ve::VertexVector World::createCaveVertexes( bool applyFaceCulling ) const
 
 	std::cout << "new cave vertexes in " << this->indexWorld << std::endl;
 	return vertexes;
+}
+
+void World::createTerrainVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice )
+{
+	ve::VertexVector vertexes, buffer;
+
+	for (ui32 x = 0U; x < this->worldSize.width; x++)
+	{
+		for (ui32 z = 0U; z < this->worldSize.depth; z++)
+		{
+			for (i32 y = this->worldSize.height - 1U; y >= 0; y--)
+			{
+				VoxelType voxel = this->getVoxelType(x, static_cast<ui32>(y), z);
+				if (voxel == VoxelType::Air) continue;
+				else if (voxel == VoxelType::Stone) break;
+
+				vec3 globalPos = this->getRealWorldPos(x, static_cast<ui32>(y), z);
+				if (applyFaceCulling)
+				{
+					std::map<VoxelFace,vec3> surroundings{
+						std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - VOXEL_SIZE, globalPos.y, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + VOXEL_SIZE, globalPos.y, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + VOXEL_SIZE}),
+						std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - VOXEL_SIZE}),
+						std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - VOXEL_SIZE, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + VOXEL_SIZE, globalPos.z})
+					};
+
+					for (auto const& [faceDirection, position] : surroundings)
+					{
+						if (this->navigator.getVoxelType(position) != VoxelType::Air) continue;
+
+						buffer = voxelFaceAtlasVertexes(globalPos, faceDirection);
+						vertexes.insert(vertexes.end(), buffer.begin(), buffer.end());
+					}
+				}
+				else
+				{
+					buffer = voxelAtlasVertexes(globalPos);
+					vertexes.insert(vertexes.end(), buffer.begin(), buffer.end());
+				}
+			}
+		}
+	}
+
+	ui32 nInstances = vertexes.size() / ((applyFaceCulling) ? VERTEX_PER_FACE : VERTEX_PER_VOXEL);
+	ve::IndexVector instanceIndices = (applyFaceCulling) ? voxelFaceIndexes() : voxelIndexes();
+	this->terrainObject.setModel(
+		std::make_shared<ve::VulkanModel>(
+			vulkanDevice,
+			vertexes,
+			instanceIndices,
+			nInstances,
+			0U
+		)
+	);
+	size_t expectedMemoryWorld = vertexes.size() * sizeof(ve::Vertex);
+	size_t uploadedMemoryWorld = this->terrainObject.getModel()->getBufferSize();
+	assert(expectedMemoryWorld == uploadedMemoryWorld and "delta between expected and uploaded memory");
+	this->VRAMsize += uploadedMemoryWorld + nInstances * instanceIndices.size() * sizeof(ui32);
+}
+
+void World::createCaveVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice )
+{
+	ve::VertexVector vertexes, buffer;
+
+	for (ui32 z = 0U; z < this->worldSize.depth; z++)
+	{
+		for (ui32 x = 0U; x < this->worldSize.width; x++)
+		{
+			for (ui32 y = 0U; y < this->worldSize.height; y++)
+			{
+				VoxelType voxel = this->getVoxelType(x, y, z);
+				if (voxel == VoxelType::Air) continue;
+				else if (voxel == VoxelType::Dirt) break;
+
+				vec3 globalPos = this->getRealWorldPos(x, static_cast<ui32>(y), z);
+				if (applyFaceCulling)
+				{
+					std::map<VoxelFace,vec3> surroundings{
+						std::pair<VoxelFace,vec3>(VoxelFace::LEFT, vec3{globalPos.x - VOXEL_SIZE, globalPos.y, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::RIGHT, vec3{globalPos.x + VOXEL_SIZE, globalPos.y, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::BACK, vec3{globalPos.x, globalPos.y, globalPos.z + VOXEL_SIZE}),
+						std::pair<VoxelFace,vec3>(VoxelFace::FRONT, vec3{globalPos.x, globalPos.y, globalPos.z - VOXEL_SIZE}),
+						std::pair<VoxelFace,vec3>(VoxelFace::BOTTOM, vec3{globalPos.x, globalPos.y - VOXEL_SIZE, globalPos.z}),
+						std::pair<VoxelFace,vec3>(VoxelFace::TOP, vec3{globalPos.x, globalPos.y + VOXEL_SIZE, globalPos.z})
+					};
+
+					for (auto const& [faceDirection, position] : surroundings)
+					{
+						if (this->navigator.getVoxelType(position) != VoxelType::Air) continue;
+
+						buffer = voxelFaceVertexes(globalPos, faceDirection);
+						vertexes.insert(vertexes.end(), buffer.begin(), buffer.end());
+					}
+				}
+				else
+				{
+					buffer = voxelVertexes(globalPos);
+					vertexes.insert(vertexes.end(), buffer.begin(), buffer.end());
+				}
+			}
+		}
+	}
+	ui32 nInstances = vertexes.size() / ((applyFaceCulling) ? VERTEX_PER_FACE : VERTEX_PER_VOXEL);
+	ve::IndexVector instanceIndices = (applyFaceCulling) ? voxelFaceIndexes() : voxelIndexes();
+	this->caveObject.setModel(
+		std::make_shared<ve::VulkanModel>(
+			vulkanDevice,
+			vertexes,
+			instanceIndices,
+			nInstances,
+			0U
+		)
+	);
+	size_t expectedMemoryWorld = vertexes.size() * sizeof(ve::Vertex);
+	size_t uploadedMemoryWorld = this->terrainObject.getModel()->getBufferSize();
+	assert(expectedMemoryWorld == uploadedMemoryWorld and "delta between expected and uploaded memory");
+	this->VRAMsize += uploadedMemoryWorld + nInstances * instanceIndices.size() * sizeof(ui32);
 }
 
 VoxelType World::getVoxelType( vec3ui const& index ) const
@@ -348,47 +469,34 @@ void WorldNavigator::spawnCloseByWorldsMT( vec3 const& start )
 		if (this->doesWorldExist(worldPos)) continue;
 
 		newWorlds.push_back(worldPos);
-		this->worlds.emplace(worldPos, World(worldPos, this->worldSize, *this, this->generator));
-	}
-	this->worlds.at(this->currentWorldPos).setLastAccess();
-
-	for (vec2i const& worldPos : newWorlds)
-	{
+		this->worlds.try_emplace(worldPos, worldPos, this->worldSize, *this, this->generator);
 		this->orchestrator.enqueue([this, worldPos] {
 			this->worlds.at(worldPos).createMap();
 		});
 	}
+	this->worlds.at(this->currentWorldPos).setLastAccess();
+
 	this->orchestrator.waitIdle();
 	std::cout<< "end world generation" << std::endl;
 	std::cout<< "start vertex generation" << std::endl;
 
-	std::vector<ve::VertexVector> terrainVertexes(newWorlds.size());
-	std::vector<ve::VertexVector> caveVertexes(newWorlds.size());
-	size_t memoryWorld = 0UL;
-
 	for (size_t i = 0; i < newWorlds.size(); i++)
 	{
 		vec2i pos = newWorlds[i];
-		this->orchestrator.enqueue([this, pos, i, &terrainVertexes, &caveVertexes, &memoryWorld] {
-			terrainVertexes[i] = this->worlds.at(pos).createTerrainVertexes(this->applyFaceCulling);
-			caveVertexes[i] = this->worlds.at(pos).createCaveVertexes(this->applyFaceCulling);
-			memoryWorld = (terrainVertexes[i].size() + caveVertexes[i].size()) * sizeof(ve::Vertex);								// memory for vertexes
-			memoryWorld += (terrainVertexes[i].size() + caveVertexes[i].size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
+		this->orchestrator.enqueue([this, pos] {
+			this->worlds.at(pos).createTerrainVertexesMT(this->applyFaceCulling, this->vulkanDevice);
+			this->worlds.at(pos).createCaveVertexesMT(this->applyFaceCulling, this->vulkanDevice);
+			
+			while ((this->currentVRAM + this->worlds.at(pos).getVRAMsize()) > this->maxVRAM)
+			{
+				vec2i worldToDrop = this->findFurthestWorld();
+				assert(worldToDrop != pos and "anomaly in the world destruction");
+				this->dropWorld(worldToDrop);
+			}
+			this->currentVRAM += this->worlds.at(pos).getVRAMsize();
 		});
 	}
 	this->orchestrator.waitIdle();
-	std::cout<< "end vertex generation" << std::endl;
-
-	while ((this->getMemoryUsed() + memoryWorld) > this->maxVRAM)
-	{
-		this->dropWorld(this->findFurthestWorld());
-	}
-
-	for (size_t i = 0; i < newWorlds.size(); i++)
-	{
-		this->generateModelWorld(newWorlds[i], terrainVertexes[i], caveVertexes[i]);
-	}
-	std::cout<< "created models" << std::endl;
 
 	this->worldReady = true;
 }
@@ -470,8 +578,10 @@ void WorldNavigator::addeNewWorld( vec2i const& worldIndex )
 	assert(this->doesWorldExist(worldIndex) == false and "world already exists");
 
 	std::cout<< "adding world in: (thread) " << worldIndex << std::endl;
-	this->worlds.emplace(worldIndex, World(worldIndex, this->worldSize, *this, this->generator));
+	this->worlds.try_emplace(worldIndex, worldIndex, this->worldSize, *this, this->generator);
 	this->worlds.at(worldIndex).createMap();
+	this->terrain.try_emplace(worldIndex);
+	this->cave.try_emplace(worldIndex);
 }
 
 void WorldNavigator::generateModelWorld( vec2i const& worldIndex )
@@ -489,7 +599,7 @@ void WorldNavigator::generateModelWorld( vec2i const& worldIndex )
 		this->dropWorld(this->findFurthestWorld());
 	}
 
-	this->terrain[worldIndex].setModel(
+	this->terrain.at(worldIndex).setModel(
 		std::make_shared<ve::VulkanModel>(
 			this->vulkanDevice,
 			terrainVertexes,
@@ -498,7 +608,7 @@ void WorldNavigator::generateModelWorld( vec2i const& worldIndex )
 			0U
 		)
 	);
-	this->cave[worldIndex].setModel(
+	this->cave.at(worldIndex).setModel(
 		std::make_shared<ve::VulkanModel>(
 			this->vulkanDevice,
 			caveVertexes,
@@ -513,40 +623,40 @@ void WorldNavigator::generateModelWorld( vec2i const& worldIndex )
 	this->currentVRAM += this->cave.at(worldIndex).getModel()->getBufferSize();
 }
 
-void WorldNavigator::generateModelWorld( vec2i const& worldIndex, ve::VertexVector const& terrainVertexes, ve::VertexVector const& caveVertexes )
-{
-	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
+// void WorldNavigator::generateModelWorld( vec2i const& worldIndex, ve::VertexVector const& terrainVertexes, ve::VertexVector const& caveVertexes )
+// {
+// 	assert(this->doesWorldExist(worldIndex) and "world doesn't exist");
 
-	size_t memoryWorld = (terrainVertexes.size() + caveVertexes.size()) * sizeof(ve::Vertex);							// memory for vertexes
-	memoryWorld += (terrainVertexes.size() + caveVertexes.size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
-	while ((this->getMemoryUsed() + memoryWorld) > this->maxVRAM)
-	{
-		this->dropWorld(this->findFurthestWorld());
-	}
+// 	size_t memoryWorld = (terrainVertexes.size() + caveVertexes.size()) * sizeof(ve::Vertex);							// memory for vertexes
+// 	memoryWorld += (terrainVertexes.size() + caveVertexes.size()) / VERTEX_PER_FACE * INDEX_PER_FACE * sizeof(ui32);	// memory for indices
+// 	while ((this->getMemoryUsed() + memoryWorld) > this->maxVRAM)
+// 	{
+// 		this->dropWorld(this->findFurthestWorld());
+// 	}
 
-	this->terrain[worldIndex].setModel(
-		std::make_shared<ve::VulkanModel>(
-			this->vulkanDevice,
-			terrainVertexes,
-			voxelFaceIndexes(),
-			static_cast<ui32>(terrainVertexes.size() / VERTEX_PER_FACE),
-			0U
-		)
-	);
-	this->cave[worldIndex].setModel(
-		std::make_shared<ve::VulkanModel>(
-			this->vulkanDevice,
-			caveVertexes,
-			voxelFaceIndexes(),
-			static_cast<ui32>(caveVertexes.size() / VERTEX_PER_FACE),
-			0U
-		)
-	);
+// 	this->terrain[worldIndex].setModel(
+// 		std::make_shared<ve::VulkanModel>(
+// 			this->vulkanDevice,
+// 			terrainVertexes,
+// 			voxelFaceIndexes(),
+// 			static_cast<ui32>(terrainVertexes.size() / VERTEX_PER_FACE),
+// 			0U
+// 		)
+// 	);
+// 	this->cave[worldIndex].setModel(
+// 		std::make_shared<ve::VulkanModel>(
+// 			this->vulkanDevice,
+// 			caveVertexes,
+// 			voxelFaceIndexes(),
+// 			static_cast<ui32>(caveVertexes.size() / VERTEX_PER_FACE),
+// 			0U
+// 		)
+// 	);
 
-	assert(memoryWorld == (this->terrain.at(worldIndex).getModel()->getBufferSize() + this->cave.at(worldIndex).getModel()->getBufferSize()) and "delta between expected and uploaded memory");
-	this->currentVRAM += this->terrain.at(worldIndex).getModel()->getBufferSize();
-	this->currentVRAM += this->cave.at(worldIndex).getModel()->getBufferSize();
-}
+// 	assert(memoryWorld == (this->terrain.at(worldIndex).getModel()->getBufferSize() + this->cave.at(worldIndex).getModel()->getBufferSize()) and "delta between expected and uploaded memory");
+// 	this->currentVRAM += this->terrain.at(worldIndex).getModel()->getBufferSize();
+// 	this->currentVRAM += this->cave.at(worldIndex).getModel()->getBufferSize();
+// }
 
 void WorldNavigator::dropWorld( vec2i const& worldToDropIndex )
 {

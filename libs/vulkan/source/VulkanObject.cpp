@@ -5,8 +5,6 @@
 
 namespace ve {
 
-uint32_t	VulkanObject::currentID = 0U;
-
 void VulkanObject::rotate( vec3 const& axis, float angle ) noexcept
 {
 	if (this->transformationApplied == false)

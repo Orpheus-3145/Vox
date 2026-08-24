@@ -3,6 +3,7 @@
 #include <memory>
 #include <map>
 #include <string>
+#include <atomic>
 
 #include "Vectors.hpp"
 #include "VulkanModel.hpp"
@@ -46,7 +47,7 @@ struct ObjInfo
 class VulkanObject
 {
 	public:
-		VulkanObject() : id(currentID++) {};
+		VulkanObject() : id(currentID.fetch_add(1, std::memory_order_relaxed)) {};
 		VulkanObject(const VulkanObject& other) = delete;
 		VulkanObject(VulkanObject&& other) = default;
 		VulkanObject& operator=(const VulkanObject& other) = delete;
@@ -61,7 +62,7 @@ class VulkanObject
 		void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
 		void	draw(VkCommandBuffer commandBuffer) const noexcept;
 		
-		void							setModel(std::shared_ptr<VulkanModel> newModel) noexcept { this->model = newModel; };
+		void							setModel(std::shared_ptr<VulkanModel> newModel) noexcept { this->model = newModel; };  // NB add createModel (that takes the input for the VulkanModel constructor)
 		std::shared_ptr<VulkanModel>	getModel() const noexcept;
 		uint32_t						getID() const noexcept { return this->id; }
 		MeshLayoutDescription			getModelLayout() const noexcept;
@@ -81,7 +82,7 @@ class VulkanObject
 		bool	transformationApplied{false};
 		bool	uniformScale{true};
 
-		static uint32_t		currentID;		// NB bad in case of buffer creation in different threads
+		static inline std::atomic<uint32_t> currentID;
 };
 
 } // namespace ve
