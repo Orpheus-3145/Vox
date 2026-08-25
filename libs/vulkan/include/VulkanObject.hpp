@@ -65,7 +65,6 @@ class VulkanObject
 		void							setModel(std::shared_ptr<VulkanModel> newModel) noexcept { this->model = newModel; };  // NB add createModel (that takes the input for the VulkanModel constructor)
 		std::shared_ptr<VulkanModel>	getModel() const noexcept;
 		uint32_t						getID() const noexcept { return this->id; }
-		MeshLayoutDescription			getModelLayout() const noexcept;
 
 		mat4							getModelMatrix(bool columnMajor = false) const noexcept;
 		mat4							getNormalMatrix(bool columnMajor = false) const noexcept;
@@ -82,7 +81,7 @@ class VulkanObject
 		bool	transformationApplied{false};
 		bool	uniformScale{true};
 
-		static inline std::atomic<uint32_t> currentID;
+		static inline std::atomic<uint32_t> currentID{0U};
 };
 
 } // namespace ve

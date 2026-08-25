@@ -45,8 +45,10 @@ void Vox::run( void )
 
 	// NB add voxel destruction
 	this->skyboxObject->setModel(this->createModel(voxelAtlasVertexes(vec3(-0.5f)), voxelIndexes(), 0U, ve::ONLY_VERTEX_LAYOUT));
-	this->updateMap(mapUpdateResult);
-	while (this->navigator.isReady() == false);
+	// this->updateMap(mapUpdateResult);
+	this->navigator.spawnCloseByWorldsMT(this->camera.getCameraPos());
+	this->navigator.syncGeneration();
+	std::cout << "ready to go!" << std::endl;
 
 	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)

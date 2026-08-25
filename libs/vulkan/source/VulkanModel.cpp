@@ -74,7 +74,7 @@ void	VulkanModel::draw(VkCommandBuffer commandBuffer) const noexcept
 	}
 }
 
-VkDeviceSize	VulkanModel::getBufferSize(void) const noexcept
+VkDeviceSize	VulkanModel::getModelSize(void) const noexcept
 {
 	if (this->isIndexed == true)
 	{

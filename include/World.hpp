@@ -160,11 +160,19 @@ class World {
 		World& operator=( World const& other ) = delete;
 		World& operator=( World&& other ) = delete;
 
+		void				drawTerrain( VkCommandBuffer commandBuffer ) const;
+		void				drawCave( VkCommandBuffer commandBuffer ) const;
+
 		void 				createMap( void );
 		ve::VertexVector	createTerrainVertexes( bool applyFaceCulling ) const;
 		ve::VertexVector	createCaveVertexes( bool applyFaceCulling ) const;
+		void				createTerrainVertexes( bool applyFaceCulling, ve::VertexVector& vertexes ) const;
+		void				createCaveVertexes( bool applyFaceCulling, ve::VertexVector& vertexes ) const;
 		void				createTerrainVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
 		void				createCaveVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
+
+		void	createTerrainModel( ve::VertexVector const& vertexes, ve::VulkanDevice& vulkanDevice, bool applyFaceCulling );
+		void	createCaveModel( ve::VertexVector const& vertexes, ve::VulkanDevice& vulkanDevice, bool applyFaceCulling );
 
 		VoxelType	getVoxelType( vec3ui const& index ) const;
 		VoxelType	getVoxelType( ui32 x, ui32 y, ui32 z ) const;
@@ -215,7 +223,7 @@ class WorldNavigator {
 		bool		borderCrossed( vec3 const& currentPos ) const noexcept { return this->currentWorldPos != this->getIndexWorld(currentPos); }
 		bool		doesWorldExist( vec2i const& checkPos) const noexcept { return this->worlds.find(checkPos) != this->worlds.end(); }
 		vec3		checkClipping( vec3 const& startPos, vec3 const& endPos ) const noexcept;
-		bool		isReady( void ) const noexcept { return this->worldReady; }
+		void		syncGeneration( void ) noexcept { this->orchestrator.waitIdle(); }
 
 		void	drawTerrain( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
 		void	drawCaves( VkCommandBuffer commandBuffer, std::optional<FrustumBox> const& frustum = std::nullopt ) const noexcept;
@@ -250,7 +258,6 @@ class WorldNavigator {
 
 		bool	applyFaceCulling{true};
 		bool	applyFrustumCulling{true};
-		bool	worldReady{false};
 
 		std::unordered_map<vec2i,World>				worlds;
 		std::unordered_map<vec2i,ve::VulkanObject>	terrain;
