@@ -88,11 +88,11 @@ class VulkanModel
 		VulkanModel& operator=(VulkanModel const&) = delete;
 		VulkanModel& operator=(VulkanModel&&) = delete;
 		
-		void	bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
-		void	draw(VkCommandBuffer commandBuffer) const noexcept;
+		void			bindBuffer(VkCommandBuffer commandBuffer) const noexcept;
+		void			draw(VkCommandBuffer commandBuffer) const noexcept;
+		VkDeviceSize	getModelSize(void) const noexcept;
 
 		static MeshLayoutDescription	getModelLayout(uint32_t binding = 0U, VertexLayout type = DEFAULT_MODEL_LAYOUT) noexcept;
-		VkDeviceSize					getBufferSize(void) const noexcept;
 
 	private:
 		VulkanDevice&	vulkanDevice;

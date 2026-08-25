@@ -46,7 +46,7 @@ void Vox::run( void )
 	// NB add voxel destruction
 	this->skyboxObject->setModel(this->createModel(voxelAtlasVertexes(vec3(-0.5f)), voxelIndexes(), 0U, ve::ONLY_VERTEX_LAYOUT));
 	this->updateMap(mapUpdateResult);
-	while (this->navigator.isReady() == false);
+	while (this->navigator.isReady() == false);			// NB ugly
 
 	printTimer.start();
 	while (vulkanWindow.shouldClose() == false)

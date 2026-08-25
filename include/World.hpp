@@ -160,9 +160,14 @@ class World {
 		World& operator=( World const& other ) = delete;
 		World& operator=( World&& other ) = delete;
 
+		void				drawTerrain( VkCommandBuffer commandBuffer ) const;
+		void				drawCave( VkCommandBuffer commandBuffer ) const;
+
 		void 				createMap( void );
 		ve::VertexVector	createTerrainVertexes( bool applyFaceCulling ) const;
 		ve::VertexVector	createCaveVertexes( bool applyFaceCulling ) const;
+		void				createTerrainVertexes( bool applyFaceCulling, ve::VertexVector& vertexes ) const;
+		void				createCaveVertexes( bool applyFaceCulling, ve::VertexVector& vertexes ) const;
 		void				createTerrainVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
 		void				createCaveVertexesMT( bool applyFaceCulling, ve::VulkanDevice& vulkanDevice );
 

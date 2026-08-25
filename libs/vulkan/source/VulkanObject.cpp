@@ -158,10 +158,4 @@ mat4 VulkanObject::getNormalViewMatrix(const mat4& viewNoTranslation, bool colum
 	}
 }
 
-MeshLayoutDescription VulkanObject::getModelLayout() const noexcept
-{
-	assert(this->model != nullptr && "Model not set");
-	return this->model->getModelLayout();
-}
-
 }	// namespace ve
